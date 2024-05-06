@@ -1,0 +1,3629 @@
+
+library(shiny)
+library(shinydashboard)
+
+# Define UI ---- 
+ui <- dashboardPage(
+  dashboardHeader(title = tags$span(
+    tags$img(src = "bird.png", style = "height:3em; vertical-align:middle; padding-right:5px;"),
+    "MetaCalc"
+  )),
+  dashboardSidebar(width = 300,
+                   sidebarMenu(
+                     menuItem("Welcome!", tabName = "tab1", icon = icon("dashboard"),
+                              menuSubItem("Welcome!", tabName = "subtab10"),
+                              menuSubItem("Need Help?", tabName = "subtab11"),
+                              menuSubItem("Underlying R Code", tabName = "subtab12")
+                     ),
+                     menuItem("Effect Size Calculator", tabName = "tab2", icon = icon("chart-line"),
+                              menuSubItem("Standardized Mean Difference", tabName = "subtab31")
+                              ),
+                     menuItem("Conventional Meta-Analysis", tabName = "tab3", icon = icon("table"),
+                              menuSubItem("Data Formatting", tabName = "subtab30"),
+                              menuSubItem("Step 1: Run the Analysis", tabName = "subtab32"),
+                              menuSubItem("Step 2: Check for Outliers and Influence", tabName = "subtab33"),
+                              menuSubItem("Step 3a: Categorical Moderator Analysis", tabName = "subtab34"),
+                              menuSubItem("Step 3b: Continuous Moderator Analysis", tabName = "subtab341"),
+                              menuSubItem("Step 4: Publication Bias", tabName = "subtab35"),
+                              menuSubItem("R Code", tabName = "subtab36")
+                     ),
+                     menuItem("Three-Level Meta-Analysis", tabName = "tab4", icon = icon("table"),
+                              menuSubItem("Data Formatting", tabName = "subtab401"),
+                              menuSubItem("Step 1: Run the Analysis", tabName = "subtab42"),
+                              menuSubItem("Step 2: Explain the Variance", tabName = "subtab43"),
+                              menuSubItem("Step 3: Check for Outliers and Influence", tabName = "subtab44"),
+                              menuSubItem("Step 4a: Categorical Moderator Analysis", tabName = "subtab45"),
+                              menuSubItem("Step 4b: Continuous Moderator Analysis", tabName = "subtab451"),
+                              menuSubItem("Step 5: Publication Bias and Plots", tabName = "subtab46"),
+                              menuSubItem("R Code", tabName = "subtab45")
+                     ),
+                     menuItem("Three-Level Meta-Analysis with CHE RVE", tabName = "tab5", icon = icon("table"),
+                              menuSubItem("Data Formatting", tabName = "subtab401"),
+                              menuSubItem("Step 1: Run the Analysis", tabName = "subtab52"),
+                              menuSubItem("Step 2: Explain the Variance", tabName = "subtab53"),
+                              menuSubItem("Step 3: Check for Outliers and Influence", tabName = "subtab54"),
+                              menuSubItem("Step 4a: Categorical Moderator Analysis", tabName = "subtab55"),
+                              menuSubItem("Step 4b: Continuous Moderator Analysis", tabName = "subtab56"),
+                              menuSubItem("Step 5: Publication Bias and Plots", tabName = "subtab57")
+                     ),
+                     menuItem("Cite This Software", tabName = "tab6", icon = icon("table"),
+                              menuSubItem("Cite This Software", tabName = "subtab61")
+                     ),
+                     menuItem("References", tabName = "tab7", icon = icon("table"),
+                              menuSubItem("Reference List", tabName = "subtab71")
+                     ),
+                     menuItem("Validation Evidence", tabName = "tab8", icon = icon("table"),
+                              menuSubItem("Conventional Meta-Analysis", tabName = "subtab81"),
+                              menuSubItem("Three-Level Meta-Analysis", tabName = "subtab82"),
+                              menuSubItem("Three-Level Meta-Analysis with CHE RVE", tabName = "subtab83")
+                     ),
+                     menuItem("Acknowledgements", tabName = "tab9", icon = icon("table"),
+                              menuSubItem("Acknowledgements", tabName = "subtab91")
+                     )
+                   )
+  ),
+  dashboardBody(
+    tags$head(
+      tags$style(HTML(".scrollable {overflow-x: auto; }"))
+                 ),
+    # Main content area
+    tabItems(
+  ################# Define content for Welcome sub-tabs
+      tabItem(tabName = "subtab10",
+              h2("Welcome!"),
+              p("This software will help you run conventional, three-level, and three-level with correlated and hierarchical robust variance estimation.")
+      ), 
+      tabItem(tabName = "subtab11",
+              h2("Need Help Learning Meta-Analysis?"),
+              p("If you want help learning meta-analysis or interpreting the results presented by this app, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/'>my open book</a>"), ".")
+      ),
+      tabItem(tabName = "subtab12",
+              h2("Underlying R Code"),
+              p("If you want the source code for this app, please email me and I will be happy to link you to the repository.")
+      ),
+  ################# Define content for Start Here sub-tabs
+      tabItem(tabName = "subtab21",
+              h2("Sub Tab 2.1"),
+              p("Content for Sub Tab 2.1 goes here.")
+      ),
+      tabItem(tabName = "subtab22",
+              h2("Sub Tab 2.2"),
+              p("Content for Sub Tab 2.2 goes here.")
+      ),
+  ### Conventional MA sub-tabs----
+      tabItem(tabName = "subtab30",
+          h2("About Conventional Meta-Analysis"),
+          p("Content for Sub Tab 2.2 goes here.")
+  ),    
+       tabItem(tabName = "subtab31",
+              h2("Calculating effect sizes"), p("In order for this app to calcuate your standardized mean difference effect size (Hedge's g) for each comparison, there are two requirements."),
+              h3("Data File Requirements"),
+              p("1. Your file must be in .csv format."),
+              p("2. Your data must be organized in a specific way. You must have the treatment mean, treatment standard deviation, treatment sample size, control mean, control standard deviation, and control sample size each in their own columns."),
+              h4("The respective columns must be labeled as follows:"),
+              p("Treatment mean must be labeled", strong("intmean")),
+              p("Treatment standard deviation must be labeled", strong("intsd")),
+              p("Treatment sample size must be labeled", strong("intn")),
+              p("Control mean must be labeled", strong("cmean")),
+              p("Control standard deviation must be labeled", strong("csd")),
+              p("Control sample size must be labeled", strong("cn")),
+              h4("Sample Data File"),
+              p("A sample data file is available at:", HTML("<a href='https://github.com/noah-schroeder/reviewbook/blob/abfdb439ef81267b388ef75067a03262e1e59020/SC%20sample%20data.csv'>Sample Data File</a>")),
+              p("When your file is properly formatted, you can upload your file and proceed."),
+              fileInput("cesfile", "Data", accept = ".csv"),
+              actionButton("calc_es_c", "Calculate Effect Sizes and Variances"),
+              conditionalPanel(
+                condition = "input.calc_es_c > 0",
+                h2("Understand the results"),
+                p("Your results appear below. You will see your entire data file, but at the end are appended columns yi and vi, which are your effect size (Hedge's g) and variance, respectively. You are now ready to move forward to data analysis."), strong("You must download the result of this analysis to use for the rest of your analysis. Simply click 'download data' and save the file, then proceed to the next step."),
+                downloadButton("download_button_c", label = "Download Data"),
+                verbatimTextOutput("esresultc_output")
+              ),
+      ),
+      tabItem(tabName = "subtab32",
+              h2("Run the Meta-Analysis"),
+              p("Now you are ready to run your conventional meta-analysis. This app will help you run a random effects meta-analyis."),
+              h3("Upload Your Dataset"),
+              p("If you used Step 1 to calculate your effect sizes and variance, simply upload that file. If you did not use Step 1 of this app, ensure your effect sizes (Hedges' g) are in a column labeled yi and the effect size variances are in a column labeled vi. The file must be a .csv."),
+              fileInput("cmafilec", "Data", accept = ".csv"),
+              
+              h3("Run the Meta-Analysis"),
+              p("As long as your data uploaded, press the Run Meta-Analysis button to run a random effects meta-analysis of standardized mean differences."),
+              actionButton("run_cmac", "Run Meta-Analysis"),
+              conditionalPanel(
+                condition = "input.run_cmac > 0",
+                #display result
+                h3("Random Effects Meta-Analysis of Standardized Mean Differences Results"),
+                downloadButton("cmadownload_buttonc", label = "Download Results"),
+                verbatimTextOutput("cmaresultc_output"),
+                h3("Forest Plot"),
+                p("Note that within the app, the plot scales based on your window size. If you download the image it will be properly scaled."),
+                # Button to copy forest plot
+                downloadButton("forestplotdownload_buttonc", label = "Download Forest Plot"),
+                # Render the forest plot
+                plotOutput("forest_plotc"),
+                h3("Need Help Understanding The Results?"),
+                p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#interpreting-the-results'>my open book</a>"),
+                ),
+              ),
+      ),
+      tabItem(tabName = "subtab33",
+              h2("Check for Outliers and Influence"),
+              p("Now you that you ran your meta-analysis, we need to make sure there isn't undue influence or outliers in the data set. We will do that using the influence function in metafor. You should upload the same dataset file as you used to run the meta-analysis."),
+              h3("Upload Your Dataset"),
+              p("If you used Step 1 to calculate your effect sizes and variance, simply upload that file. If you did not use Step 1 of this app, ensure your effect sizes (Hedges' g) are in a column labeled yi and the effect size variances are in a column labeled vi. The file must be a .csv."),
+              fileInput("inffilec", "Data", accept = ".csv"),
+              actionButton("run_infc", "Run Outlier and Influence Analysis"),
+              conditionalPanel(
+                condition = "input.run_infc > 0",
+                h3("Outlier and Influence Results"),
+                downloadButton("infdownload_buttonc", label = "Download Infuence Analysis Results"),
+                verbatimTextOutput("resultforinf_outputc"),
+                h3("Need Help Understanding The Results?"),
+                p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#checking-for-outliers-and-influence'>my open book</a>"),
+                ),
+              ),
+      ),
+  tabItem(tabName = "subtab34",
+          h2("Check for Moderating Variables"),
+          p("This tool will help you check for", strong("categorical"), "moderating variables. Do not use this tool for continuous variables! The first step is to upload your data. This should be the same data you used to run the meta-analysis in Step 2."),
+          fileInput("modfilec", "Upload Moderator Analysis Data", accept = ".csv"),
+          p("Once your file is uploaded, you can choose which column in your spreadsheet you want to examine as a moderator variable. Again,", strong("this is for categorical moderators only."), "After you choose your variable from the dropdown menu, click run and your results will be shown."),
+          selectInput("dropdownc", "Choose Column for Moderator Analysis", choices = NULL),
+          actionButton("run_analysisCcat", "Run Moderator Analysis"),
+          uiOutput("dynamicResultsCcat")
+  ),
+  tabItem(tabName = "subtab341",
+          h2("Continuous Moderator Analysis"),
+          p("Continuous Moderator Analysis (single variable meta-regression) can be used to examine the impact of potentially moderating", strong("continuous"), "variables. Do not use this tool for categorical variables! The first step is to upload your data. This should be the same data you used to run the meta-analysis in Step 2."),
+          fileInput("modfilecc", "Upload Meta-Regression Analysis Data", accept = ".csv"),
+          p("Once your file is uploaded, you can choose which column in your spreadsheet you want to examine as a moderator variable. Again,", strong("this is for categorical moderators only."), "After you choose your variable from the dropdown menu, click run and your results will be shown."),
+          selectInput("dropdowncc", "Choose Column for Moderator Analysis", choices = NULL),
+          actionButton("run_analysiscc", "Run Moderator Analysis"),
+          uiOutput("dynamicResultsCc")
+  ),
+   tabItem(tabName = "subtab35",
+              h2("Publication Bias"),
+              p("There are a variety of ways to evaluate publication bias. This tool provides a number of computational and graphic options."),
+              h3("Upload Your Data"),
+              p("First you need to upload your data. This is the same data file you used for the overall meta-analysis and moderator analysis. Only .csv files are accepted."),
+              fileInput("pubbiasfilec", "Upload Data", accept = ".csv"),
+              actionButton("run_pubc", "Run Publication Bias Analyses"),
+              #display result
+              conditionalPanel(
+                condition = "input.run_pubc > 0",
+                h3("Funnel Plot"),
+                p("Note that within the app, the plot scales based on your window size. If you download the image it will be properly scaled."),
+                downloadButton("download_funnelc", "Download Funnel Plot"),
+                plotOutput("funnel_plotc"),
+                h3("Trim and Fill Analysis"),
+                downloadButton("download_trim_fill", "Download Trim and Fill Analysis"),
+                verbatimTextOutput("trim_fill_output"),
+                h3("Egger's Regression"),
+                downloadButton("download_eggers", "Download Egger's Regression"),
+                verbatimTextOutput("eggers_output"),
+                h3("Rosenthal's Fail Safe N"),
+                downloadButton("download_rosenthal", "Download Rosenthal's Fail Safe N"),
+                verbatimTextOutput("rosenthal_output"),
+                h3("Orwin's Fail Safe N"),
+                downloadButton("download_orwin", "Download Orwin's Fail Safe N"),
+                verbatimTextOutput("orwin_output"),
+                h3("Rosenberg's Fail Safe N"),
+                downloadButton("download_rosenberg", "Download Rosenberg's Fail Safe N"),
+                verbatimTextOutput("rosenberg_output"),
+                h3("Need Help Understanding The Results?"),
+                p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#publication-bias'>my open book</a>")),
+              ),
+      ),
+  
+  ### 3LMA MA sub-tabs ----
+  tabItem(tabName = "subtab40",
+          h1("About 3LMA"),
+          p("In conventional meta-analysis, each participant can only be counted once. That means we exclude A LOT of data when we use conventional meta-analysis in many education fields. We can use three-level meta-analysis to get around that because it allows us to use dependent data in our analysis. Let’s look at an example: Say you are comparing the impact of learning from a virtual character to a game on learning outcomes. The study you’re coding has two groups, a virtual character group and a game group. It has an immediate learning test, a one week delayed learning test, and a month delayed learning test. Which test do you code? In a three-level meta-analysis, you can code all three! This calculator will help you run a random effects three-level meta-analysis."),
+  ),    
+  tabItem(tabName = "subtab401",
+          h1("Getting Started"),
+          p("To run a three-level meta-analysis with this app, you need to have your data file organized in a certain fashion. Specifically, you need to have the following columns:"),
+          p("You should have a column labeled", strong("ES_number"), "which sequentially numbers every row."),
+          p("You should have a column labeled", strong("Study"), "which is the name of each study."),
+          p("Treatment mean must be labeled", strong("intmean")),
+          p("Treatment standard deviation must be labeled", strong("intsd")),
+          p("Treatment sample size must be labeled", strong("intn")),
+          p("Control mean must be labeled", strong("cmean")),
+          p("Control standard deviation must be labeled", strong("csd")),
+          p("Control sample size must be labeled", strong("cn")),
+          h2("What if I already calculated effect sizes?"),
+          p("If you already calculated your effect sizes, you will also need the variance. The columns will need to be labeled", strong("yi"), "and",strong("vi"), "respectively. I find it easier to code the descriptive statistics (mean, standard deviation, sample size) for each group and then use the effect size calculator from metafor (Step 1 in this app) to calculate my effect sizes and variances. So in the example below, you will see only the descriptive statistics in the table."),
+          h4("Sample Data File"),
+          p("In the table below you will see the columns as indicated above. The additional columns are moderator variables. The order of your columns does not matter, only the titles of the columns listed above. Your moderators can have any name, but I recommend having no spaces in the name."),
+          h4("Prefer a .csv?"),
+          p("If you prefer to see this sample data as a .csv, the data file is available at:", HTML("<a href='https://github.com/noah-schroeder/reviewbook/blob/abfdb439ef81267b388ef75067a03262e1e59020/360%20sample%20data.csv'>Sample Data File</a>")),
+          div(class = "scrollable", tableOutput("sampledatatable")),
+  ),    
+  tabItem(tabName = "subtab41",
+              h1("Calculating effect sizes"), p("In order for this app to calcuate your standardized mean difference effect size (Hedge's g) for each comparison, there are two requirements."),
+              h2("Data File Requirements"),
+              p("1. Your file must be in .csv format."),
+              p("2. Your data must be organized in a specific way. "),
+              h3("Your data file must contain columns labeled as follows:"),
+              p("You should have a column labeled", strong("ES_number"), "which sequentially numbers every row."),
+              p("You should have a column labeled", strong("Study"), "which is the name of each study."),
+              p("Treatment mean must be labeled", strong("intmean")),
+              p("Treatment standard deviation must be labeled", strong("intsd")),
+              p("Treatment sample size must be labeled", strong("intn")),
+              p("Control mean must be labeled", strong("cmean")),
+              p("Control standard deviation must be labeled", strong("csd")),
+              p("Control sample size must be labeled", strong("cn")),
+              h3("Sample Data File"),
+              p("A sample data file is available at:", HTML("<a href='https://github.com/noah-schroeder/reviewbook/blob/abfdb439ef81267b388ef75067a03262e1e59020/360%20sample%20data.csv'>Sample Data File</a>")),
+              p("When your file is properly formatted, you can upload your file and proceed."),
+              fileInput("file", "Data", accept = ".csv"),
+              actionButton("calc_es", "Calculate Effect Sizes and Variances"),
+              conditionalPanel(
+                condition = "input.calc_es > 0",
+                h2("Understand the results"),
+                p("Your results appear below. You will see your entire data file, but at the end are appended columns yi and vi, which are your effect size (Hedge's g) and variance, respectively. You are now ready to move forward to data analysis."), strong("You must download the result of this analysis to use for the rest of your analysis. Simply click 'download data' and save the file, then proceed to the next step."),
+                downloadButton("download_button", label = "Download Data"),
+                verbatimTextOutput("esresult_output")
+              ),
+      ),
+      tabItem(tabName = "subtab42",
+              h2("Run the Meta-Analysis"),
+              p("Now you are ready to run your three-level meta-analysis. This app will help you run a random effects meta-analyis."),
+              h3("Upload Your Dataset"),
+              p("If you used Step 1 to calculate your effect sizes and variance, simply upload the file the app let you download, assuming you have all the required Study and ES_number columns (see ****Read Before Starting**** tab). If you did not use Step 1 of this app, ensure your effect sizes (Hedges' g) are in a column labeled yi and the effect size variances are in a column labeled vi. The file must be a .csv."),
+              fileInput("cmafile", "Data", accept = ".csv"),
+              
+              h3("Run the Meta-Analysis"),
+              p("As long as your data uploaded, press the Run Meta-Analysis button to run a random effects meta-analysis of standardized mean differences."),
+              actionButton("run_cma", "Run Meta-Analysis"),
+              conditionalPanel(
+                condition = "input.run_cma > 0",
+                #display result
+                h3("Random Effects Meta-Analysis of Standardized Mean Differences Results"),
+                downloadButton("cmadownload_button", label = "Download Results"),
+                verbatimTextOutput("cmaresult_output"),
+                h3("Need Help Understanding The Results?"),
+                p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#interpreting-the-results'>my open book</a>"),
+                ),
+              ),
+      ),
+      tabItem(tabName = "subtab43",
+              h2("Explaining the Variance"),
+              p("Before moving forward, it is important to understand the variance within your three-level meta-analysis. Let's explore that by calculating I", HTML("<sup>2</sup>.")),
+              h3("Upload Your Dataset"),
+              p("You should use the same data file you used to run the meta-analysis. The file must be a .csv."),
+              fileInput("i2file", "Data", accept = ".csv"),
+              
+              h3("Calculate I2"),
+              p("As long as your data uploaded, press the Calculate I2", "button to examine where the variance in your model can be attributed to."),
+              actionButton("run_i2", "Calculate I2"),
+              conditionalPanel(
+                condition = "input.run_i2 > 0",
+                #display result
+                h3("I2 Results"),
+                downloadButton("download_i2_results", label = "Download Results"),
+                verbatimTextOutput("i2result_output"),
+                verbatimTextOutput("totalI2_output"),
+                h3("Need Help Understanding The Results?"),
+                p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#interpreting-the-results'>my open book</a>"),
+                ),
+              ),
+      ),
+  tabItem(tabName = "subtab44",
+          h2("Check for Outliers and Influence"),
+          p("Now you that you ran your meta-analysis, we need to make sure there isn't undue influence or outliers in the data set. We will do that using the van Lissa's (n.d.) method of checking for outliers, and examining the Cook's Distance, DFBETAs, and hat values for influence."),
+          h3("Upload Your Dataset"),
+          p("You should use the same data file you used to run the meta-analysis. The file must be a .csv."),
+          fileInput("inffile", "Data", accept = ".csv"),
+          actionButton("run_inf", "Run Outlier and Influence Analysis"),
+          conditionalPanel(
+            condition = "input.run_inf > 0",
+            #progress bar
+            conditionalPanel(
+              condition = "output.progressActive",
+              uiOutput("progress")),
+            h2("*Important Note*"),
+            p("The results may take a minute (literally a minute) to load. Please be patient. If you're seeing this message, the app is processing the analyses."),
+            h3("Outlier Results"),
+            downloadButton("download_outliers", "Download Outlier Plot"),
+            plotOutput("outlier_plot"),
+            h3("Influence Results"),
+            p("It is important to see if the outliers significantly influence our results. We'll examine three metrics: Cook's distance, DFBETAS, and hat values. You will see that there are columns with these names _flag. If there is an asterisk in that column, that means that study had significant influence according to that metric."),
+            downloadButton("download_influence", "Download .csv with Influence Results"),
+            h4("Influence Statistics"),
+            tableOutput("influence_table"),
+            h3("Need Help Understanding The Results?"),
+            p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#checking-for-outliers-and-influence'>my open book</a>"),
+            ),
+          ),
+  ),
+      tabItem(tabName = "subtab45",
+              h2("Check for Moderating Variables"),
+              p("This tool will help you check for", strong("categorical"), "moderating variables. Do not use this tool for continuous variables! The first step is to upload your data. This should be the same data you used to run the meta-analysis in Step 2."),
+              fileInput("modfile", "Upload Moderator Analysis Data", accept = ".csv"),
+              p("Once your file is uploaded, you can choose which column in your spreadsheet you want to examine as a moderator variable. Again,", strong("this is for categorical moderators only."), "After you choose your variable from the dropdown menu, click run and your results will be shown."),
+              selectInput("dropdown", "Choose Column for Moderator Analysis", choices = NULL),
+              actionButton("run_analysis", "Run Moderator Analysis"),
+              uiOutput("dynamicResults3lCcat")
+      ),
+  tabItem(tabName = "subtab451",
+          h2("Continuous Moderator Analysis"),
+          p("This tool will help you check for", strong("continuous"), "moderating variables. Do not use this tool for categorical variables! The first step is to upload your data. This should be the same data you used to run the meta-analysis in Step 2."),
+          fileInput("modfilea", "Upload Moderator Analysis Data", accept = ".csv"),
+          p("Once your file is uploaded, you can choose which column in your spreadsheet you want to examine as a moderator variable. Again,", strong("this is for categorical moderators only."), "After you choose your variable from the dropdown menu, click run and your results will be shown."),
+          selectInput("dropdowna", "Choose Column for Moderator Analysis", choices = NULL),
+          actionButton("run_analysisa", "Run Moderator Analysis"),
+          uiOutput("dynamicResults3lCcont")
+  ),
+      tabItem(tabName = "subtab46",
+              h2("Publication Bias"),
+              p("There are a variety of ways to evaluate publication bias. This tool provides a number of computational and graphic options."),
+              h3("Upload Your Data"),
+              p("First you need to upload your data. This is the same data file you used for the overall meta-analysis and moderator analysis. Only .csv files are accepted."),
+              fileInput("pubbiasfile", "Upload Data", accept = ".csv"),
+              actionButton("run_pub", "Run Publication Bias Analyses"),
+              #display result
+              conditionalPanel(
+                condition = "input.run_pub > 0",
+                h3("Check The Data Preparation"),
+                p("The app has added a few columns to your data, so it is imporant to check them before creating our plots. The most important item to check is to make sure that your unique studies are sequentially numbered. The table below presents your data, organized by author name alphabetically. Each unique study should be assigned a unique number in the Study column. If that is correct, the other items should be correct as well. Column 'out' refers to unique outcomes; these are organized by how they are organized in your data file so they may not be sequentially numbered here. That is OK and you generally do not need to check this column. You also generally do not need to check the standard error calculation, however you are of course welcome to if you wish."),
+                div(class = "scrollable",  tableOutput("data_summary")),
+                h3("Forest Plot"),
+                actionButton("forest", "Generate Forest and Funnel Plots"),
+                conditionalPanel(
+                  condition = "input.forest > 0",
+                  p("This is a forest plot for dependent data, based on code by Fernández-Castilla et al. (2020). the black boxes represent the average effect size from the comparisons within each study, and the black lines are the study precision. The grey lines are the median precision of one effect size from each study. The size of the effect size box is representative of its weight in the analysis. J represents how many comparisons were analyzed from each study."),
+                  p("Note that within the app, the plot scales based on your window size. If you download the image it will be properly scaled."),
+                  plotOutput("forest_plot"),
+                  downloadButton("download_forest", "Download Forest Plot"),
+                  h3("Funnel Plots"),
+                  h4("Comparison-Level Funnel Plot"),
+                  p("This is a funnel plot of every comparison within the analysis."),
+                  downloadButton("download_compfunnel", "Download Comparison-Level Funnel Plot"),
+                  plotOutput("comp_level_funnel"),
+                  h4("Study-Level Funnel Plot"),
+                  p("This is a funnel plot of every study that contributed comparisons to the analysis."),
+                  downloadButton("download_studyfunnel", "Download Study-Level Funnel Plot"),
+                  plotOutput("three_level_study_funnel"),
+                  h3("Need Help Understanding The Results?"),
+                  p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#publication-bias'>my open book</a>")),
+                ),
+              ),
+      ),
+### CHERVE 3LMA Subtabs ---- 
+      tabItem(tabName = "subtab51",
+              h2("Sub Tab 3.5"),
+              p("Content for Sub Tab 3.5 goes here.")
+      ),
+  tabItem(tabName = "subtab52",
+          # Header and paragraph for data upload
+          h3("Upload Your Data"),
+          p("First you need to upload your data. This is the same data file you used for the overall meta-analysis and moderator analysis. Only .csv files are accepted."),
+          fileInput("chefile", "Upload Data", accept = ".csv"),
+          
+          
+          # Header and paragraph for correlation setting
+          h2("Set The Correlation"),
+          p("You must select the correlation between effects to be assumed in the analysis. If you do not know the actual correlation, you may assume .60, however sensitivity analyses are recommended."),
+          
+          # Dropdown for selecting the correlation
+          h4("Correlation to be assumed"),
+          selectInput("correlation", label = NULL, choices = seq(-1, 1, by = 0.01), selected = 0.60),
+          actionButton("run_che", "Run CHE RVE Meta-Analysis"),
+          uiOutput("dynamicResultsche"),
+     ),
+  tabItem(tabName = "subtab53",
+          h2("Explaining the Variance"),
+          p("Before moving forward, it is important to understand the variance within your three-level CHE RVE meta-analysis. Let's explore that by calculating I", HTML("<sup>2</sup>.")),
+          h3("Upload Your Dataset"),
+          p("You should use the same data file you used to run the meta-analysis. The file must be a .csv."),
+          fileInput("i2fileRVE", "Data", accept = ".csv"),
+          h3("Set The Correlation"),
+          selectInput("correlationi2", "Set rho value:", choices = seq(-1, 1, by = 0.01), selected = 0.60),
+          h3("Calculate I2"),
+          p("As long as your data uploaded, press the Calculate I2", "button to examine where the variance in your model can be attributed to."),
+          actionButton("run_i2RVE", "Calculate I2"),
+          uiOutput("dynamicResultschevar")
+  ),
+  tabItem(tabName = "subtab54",
+          h2("Check for Outliers and Influence"),
+          p("Now you that you ran your meta-analysis, we need to make sure there isn't undue influence or outliers in the data set. We will do that using the van Lissa's (n.d.) method of checking for outliers, and examining the Cook's Distance, DFBETAs, and hat values for influence."),
+          h3("Upload Your Dataset"),
+          p("You should use the same data file you used to run the meta-analysis. The file must be a .csv."),
+          fileInput("inffilerve", "Data", accept = ".csv"),
+          
+          # Header and paragraph for correlation setting
+          h3("Correlation to be assumed"),
+          selectInput("correlationrve", "Set rho value:", choices = seq(-1, 1, by = 0.01), selected = 0.60),
+          # Button to run analysis
+          actionButton("run_infrve", "Run Outlier and Influence Analysis"),
+          p("After clicking run, please be patient. A progress bar will appear in the bottom right corner. This analysis can take a minute to compute."),
+          conditionalPanel(
+            condition = "output.progressActiverve",
+            uiOutput("progressrve"),
+          ),
+          uiOutput("dynamicResultsinf"),  
+  ),
+  tabItem(tabName = "subtab55",
+          # Header and paragraph for data upload
+          h3("Upload Your Data"),
+          p("First you need to upload your data. This is the same data file you used for the overall meta-analysis and moderator analysis. Only .csv files are accepted."),
+          fileInput("chefileCat", "Upload Data", accept = ".csv"),
+          
+          
+          # Header and paragraph for correlation setting
+          h3("Correlation to be assumed"),
+          selectInput("correlationCat", "Set rhoCat value:", choices = seq(-1, 1, by = 0.01), selected = 0.60),
+          
+          #choose Moderator
+          h3("Choose the Categorical Moderator"),
+          selectInput("mod_RVECat", "Select Moderator Variable:", choices = NULL),
+          # Button to run analysis
+          actionButton("run_cheCat", "Run Analysis", icon = icon("play")),
+          uiOutput("dynamicResults"),
+  ),
+  tabItem(tabName = "subtab57",
+          h3("Upload Your Data"),
+          p("First you need to upload your data. This is the same data file you used for the overall meta-analysis and moderator analysis. Only .csv files are accepted."),
+          fileInput("chefileplot", "Upload Data", accept = ".csv"),
+          
+          
+          # Header and paragraph for correlation setting
+          h3("Correlation to be assumed"),
+          selectInput("correlationplot", "Set rho value:", choices = seq(-1, 1, by = 0.01), selected = 0.60),
+          
+          # Button to run analysis
+          actionButton("run_cheplot", "Create Plots", icon = icon("play")),
+          uiOutput("dynamicResultcheplot"),
+  ),
+### References----
+      tabItem(tabName = "subtab71",
+              h2("References"),
+              p("Chang, W, Cheng, J, Allaire, J, Sievert, C, Schloerke, B, Xie, Y, Allen, J, McPherson, J, Dipert, A, Borges, B. (2023). _shiny: Web Application Framework for R_. R package version 1.8.0, <https://CRAN.R-project.org/package=shiny>."),
+              p("Cheung, M. W. L. (2015). Meta-analysis: A structural equation modeling approach. Wiley Interdisciplinary Reviews: Computational Statistics, 7(3), 149-161. doi:10.1002/wics.1340"),
+              p("Dowle, M., Srinivasan, A., Gorecki, J., & Chirico, M. (2021). data.table: Extension of 'data.frame'. R package version 1.14.2. https://CRAN.R-project.org/package=data.table"),
+              p("Fernández-Castilla, B., Declercq, L., Jamshidi, L., Beretvas, S. N., Onghena, P., & Van Den Noortgate, W. (2020). Visual representations of meta-analyses of multiple outcomes: Extensions to forest plots, funnel plots, and caterpillar plots. Methodology, 16(4), 299–315. https://doi.org/10.5964/meth.4013"),
+              p("R Core Team (2021). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/"),
+              p("Schroeder, N. L. (2024). A beginner’s guide to systematic review and meta-analysis. Available at https://noah-schroeder.github.io/reviewbook/"),
+              p("Slowikowski, K. (2020). ggrepel: Automatically position non-overlapping text labels with 'ggplot2'. R package version 0.9.1. https://CRAN.R-project.org/package=ggrepel"),
+              p("Viechtbauer, W. (2010). Conducting meta-analyses in R with the metafor package. Journal of Statistical Software, 36(3), 1-48. https://doi.org/10.18637/jss.v036.i03"),
+              p("Wickham, H. (2011). The split-apply-combine strategy for data analysis. Journal of Statistical Software, 40(1), 1-29. Retrieved from https://www.jstatsoft.org/v40/i01/"),
+              p("Wickham, H., Averick, M., Bryan, J., Chang, W., McGowan, L. D. A., François, R., ... & Yutani, H. (2019). Welcome to the Tidyverse. Journal of open source software, 4(43), 1686."),
+              p("Wickham, H., François, R., Henry, L., & Müller, K. (2021). dplyr: A grammar of data manipulation. R package version 1.0.8. https://CRAN.R-project.org/package=dplyr")
+              
+      ),
+  ################# Define content for Acknowledgments sub-tabs
+   tabItem(tabName = "subtab91",
+          h2("Acknowledgements"),
+          p("I was not famililar with Shiny when I began building this app, so a lot of the code was created with the assistance of ChatGPT 3.5 and Claude Haiku."),
+             
+      )
+    )
+  )
+)
+  
+  
+  
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+# Main Panel
+
+# Functions ----
+library(plyr)
+library(grid)
+library(clubSandwich)
+library(metaSEM)
+library(ggrepel)
+forest_plot_3 <- function(author, study, ES, out, var, se, size_lines){
+                            size_lines=size_lines
+                            dataset<-data.frame(study, author, ES, out, var, se)
+                            row = 1
+                            nrow=max(dataset$study)
+                            studyn=max(dataset$study)
+                            studyinfo = data.frame(Study = numeric(nrow),
+                                                   author = numeric(nrow),
+                                                   id = numeric(nrow),
+                                                   ES= numeric(nrow),
+                                                   SE= numeric(nrow),
+                                                   Var=numeric(nrow),
+                                                   cilb= numeric(nrow),
+                                                   ciub= numeric(nrow),
+                                                   k= numeric(nrow),
+                                                   out=numeric(nrow),
+                                                   median_Var=numeric(nrow),
+                                                   S_cilb=numeric(nrow),
+                                                   S_ciub=numeric(nrow),
+                                                   Weight=numeric(nrow))
+                            Study1 =c()
+                            Study2 =c()
+                            dataset$author<-as.character(dataset$author)
+                            meta_abu <- summary(meta3(y=ES, v=var, cluster=study, data=dataset))
+                            estimate<-round(meta_abu$coefficients$Estimate[1], digits=2)
+                            tau<-meta_abu$coefficients$Estimate[3]
+                            out<-meta_abu$coefficients$Estimate[2]
+                            
+                            
+                            
+                            for (i in 1:max(dataset$study)){
+                              data<-subset(dataset, study==i)
+                              uni=nrow(data)
+                              
+                              if (uni==1) {
+                                studyinfo$ES[row]<-data$ES
+                                studyinfo$SE[row]<-data$se
+                                studyinfo$cilb[row]<-(data$ES-(data$se*1.96))
+                                studyinfo$ciub[row]<-(data$ES+(data$se*1.96))
+                                studyinfo$S_cilb[row]<-(data$ES-(data$se*1.96))
+                                studyinfo$S_ciub[row]<-(data$ES+(data$se*1.96))
+                                studyinfo$Weight[row]<-1/ (data$se^2)
+                              }
+                              else {
+                                a<-rma(y=data$ES, vi=data$var, data=data, method="REML")
+                                
+                                diagonal<-1/(data$var+out)
+                                D<-diag(diagonal)
+                                obs<-nrow(data)
+                                I<-matrix(c(rep(1,(obs^2))),nrow=obs)
+                                M<-D%*%I%*%D
+                                inv_sumVar<-sum(1/(data$var+out))
+                                O<-1/((1/tau)+inv_sumVar)
+                                V<-D-(O*M)
+                                T<-as.matrix(data$ES)
+                                X<-matrix(c(rep(1,obs)), ncol=1)
+                                var_effect<-solve(t(X)%*%V%*%X)
+                                
+                                studyinfo$ES[row]<-a$b
+                                studyinfo$SE[row]<-a$se
+                                studyinfo$cilb[row]<-a$ci.lb
+                                studyinfo$ciub[row]<-a$ci.ub
+                                studyinfo$S_cilb[row]<-a$b - 1.96*median(data$se)
+                                studyinfo$S_ciub[row]<-a$b + 1.96*median(data$se)
+                                studyinfo$Weight[row]<-1/ var_effect
+                              }
+                              
+                              studyinfo$Study[row]<-c(Study1,paste("Study",i))
+                              studyinfo$id[row]<-i
+                              studyinfo$k[row]<-nrow(data)
+                              studyinfo$author[row]<-data$author[1]
+                              studyinfo$out[row] <- c(Study2, paste("J =",studyinfo$k[i]))
+                              studyinfo$median_Var[row]<-median(data$var)
+                              studyinfo$Var<-(studyinfo$SE)^2
+                              row = row + 1      
+                            }
+                            
+                            
+                            minimum<-min(studyinfo$S_cilb)
+                            maximum<-max(studyinfo$S_ciub)
+                            lim_minimum<-minimum-0.10
+                            lim_maximum<-maximum+0.25
+                            r_lim_minimum<-round(lim_minimum, digits=0)
+                            r_lim_maximum<-round(lim_maximum, digits=0)
+                            abs_r_lim_minimum<-abs(r_lim_minimum)
+                            abs_r_lim_maximum<-abs(r_lim_maximum)
+                            dec_min<-round(abs((lim_minimum-r_lim_minimum)*100), digits=0)
+                            dec_max<-round(abs((lim_maximum-r_lim_maximum)*100), digits=0)
+                            
+                            if (dec_min < 25) {
+                              c=25/100
+                            } else if (dec_min>25 & dec_min<50) {
+                              c=50/100
+                            } else if (dec_min>50 & dec_min<75) {
+                              c=75/100
+                            } else {
+                              c=abs_r_lim_minimum+1
+                            }
+                            
+                            if (dec_max < 25) {
+                              d=25/100
+                            } else if (dec_max>25 & dec_max<50) {
+                              d=50/100
+                            } else if (dec_max>50 & dec_max<75) {
+                              d=75/100
+                            } else {
+                              d=abs_r_lim_maximum+1
+                            }
+                            
+                            lim_minimum<-r_lim_minimum-c
+                            lim_maximum<-r_lim_maximum+d
+                            
+                            Axis_ES <- seq(lim_minimum, lim_maximum, by=0.50)
+                            Axis_ES<-Axis_ES[order(Axis_ES)]
+                            empty <- data.frame(id=c(NA,NA), ES=c(NA, NA), cilb=c(NA, NA),ciub=c(NA,NA),
+                                                k=c(NA,NA), Study=c(NA,NA), SE=c(NA, NA), 
+                                                out=c(NA,NA),median_Var=c(NA,NA), S_cilb=c(NA,NA), S_ciub=c(NA,NA),
+                                                Var=c(NA, NA), Weight=c(NA,NA), author=c("","Summary"))
+                            
+                            studyinfo <- rbind(studyinfo, empty)
+                            studyinfo$Study=factor(studyinfo$Study ,levels=unique(studyinfo$Study))
+                            studyinfo$author=factor(studyinfo$author ,levels=unique(studyinfo$author))
+                            r_diam<-studyn-2
+                            sum.y <- c(1, 0.7, 1, 1.3, rep(NA,r_diam )) 
+                            sum.x <- c(meta_abu$coefficients$lbound[1], meta_abu$coefficients$Estimate[1], meta_abu$coefficients$ubound[1], meta_abu$coefficients$Estimate[1], rep(NA, r_diam))
+                            studyinfo<-data.frame(studyinfo, sum.x, sum.y )
+                            studyinfo<-studyinfo[, c(15,16,3,4,5,6,7,8,9,10,11,12,13,14,1,2)]
+                            
+                            forest<-ggplot()+ geom_point(data=studyinfo, aes(y=factor(author), x = ES, xmin =cilb, xmax = ciub, size=Weight), shape=15) +
+                              #scale_size_area()+
+                              geom_errorbarh(data=studyinfo, aes(y=factor(author), x = ES, xmin =cilb, xmax = ciub), size=1, height=.2)+
+                              scale_x_continuous(limits=c(lim_minimum,lim_maximum),breaks=Axis_ES)+ 
+                              scale_y_discrete(limits=rev(levels(studyinfo$author)))+
+                              geom_vline(xintercept=0)+
+                              theme(panel.grid.major = element_blank(),
+                                    panel.grid.minor = element_blank(),
+                                    legend.position="none",
+                                    panel.background = element_blank(),
+                                    axis.line.x = element_line(colour = "black"),
+                                    axis.ticks.y =element_blank(),
+                                    axis.title.x=element_text(size=10, color ="black",family="sans"),
+                                    axis.title.y=element_blank(),
+                                    axis.text.y = element_text(family="sans",size=10, color = "black",hjust=0, angle=0),
+                                    axis.text.x = element_text(size=10, color="black",family="sans"), 
+                                    axis.line.y =element_blank())+
+                              labs(x = paste("Pooled Effect Size", estimate), hjust=-2)+
+                              geom_polygon(aes(x=sum.x, y=sum.y))+
+                              geom_vline(xintercept=estimate, colour="black",linetype=4)+
+                              geom_text(aes(x=lim_maximum, y=factor(studyinfo$author),label = studyinfo$out), size=3)
+                            
+                            if (size_lines==1){
+                              
+                              forest<-forest+geom_point(data=studyinfo, aes(y=factor(author), x=ES, xmin = S_cilb, xmax =  S_ciub), shape=15)+
+                                geom_errorbarh(data=studyinfo, aes(y=factor(author), x=ES, xmin = S_cilb, xmax =  S_ciub, size=k), width=.8,  height=.4, alpha=.2) #Cambiar .3 por .8
+                            } else{
+                              
+                              forest<-forest+geom_point(data=studyinfo, aes(y=factor(author), x=ES, xmin = S_cilb, xmax =  S_ciub), shape=15)+
+                                geom_errorbarh(data=studyinfo, aes(y=factor(author), x=ES, xmin = S_cilb, xmax =  S_ciub), width=.8,  height=.4, alpha=.5) #Cambiar .3 por .8
+                              
+                            }
+                            print(forest)
+                            
+                          }
+
+
+three_funnel<-function(study, ES, out, var, se){
+  
+  dataset<-data.frame(study, ES, out, var, se)
+  contour.points=200
+  meta_abu <- summary(meta3(y=ES, v=var, cluster=study, data=dataset))
+  estimate<-meta_abu$coefficients$Estimate[1]
+  tau<-meta_abu$coefficients$Estimate[3]
+  out<-meta_abu$coefficients$Estimate[2]
+  
+  maxse<-max(dataset$se)
+  ylim<-c(0, maxse)
+  csize <- seq(ylim[1], ylim[2], length.out = contour.points)
+  csize[csize <= 0] <- 1e-07 * min(dataset$se)
+  csize
+  
+  CI_Lim<-matrix(0, nrow=length(csize), ncol=2)
+  colnames(CI_Lim)<-c("lb_total", "ub_total")
+  
+  for (i in 1:length(csize)){
+    CI_Lim[i,1]<-estimate-1.96*sqrt((csize[i]^2)+tau+out) #add 1.96*
+    CI_Lim[i,2]<-estimate+1.96*sqrt((csize[i]^2)+tau+out)
+  }
+  CI_Lim<-as.data.frame(CI_Lim)
+  
+  dataset$study<-as.character(dataset$study)
+  dataset$study <- factor(dataset$study)
+  geom.text.size = 3
+  max_SE<-max(dataset$se)
+  le<-length(CI_Lim[,1])
+  
+  if ((CI_Lim[le,1])< 0) {
+    minimum=min(CI_Lim[,1])
+  } else {
+    minimum=max(CI_Lim[,1])
+  } 
+  
+  if ((CI_Lim[le,2]) > 0) {
+    maximum=max(CI_Lim[,2])
+  } else {
+    maximum=min(CI_Lim[,2])
+  } 
+  
+  
+  lim_minimum<-floor(minimum-0.10)
+  lim_maximum<-ceiling(maximum+0.10)
+  Axis_ES <- seq(lim_minimum, lim_maximum, by=1)
+  
+  d <- ggplot(data=dataset, aes(x = se, y = ES, ylim(0,max_SE)))+
+    geom_point()+
+    xlab('Standard Error')+ 
+    ylab('Effect size: g')+
+    geom_hline(yintercept= estimate)+
+    geom_hline(yintercept= 0, color='grey')+
+    scale_x_reverse()+
+    scale_y_continuous(breaks=Axis_ES, limits =c(lim_minimum,lim_maximum))+
+    coord_flip()+
+    theme(panel.grid.major=element_blank(),
+          panel.grid.minor=element_blank(),
+          panel.border=element_blank(),
+          panel.background = element_blank(),
+          axis.line=element_line(),
+          axis.title = element_text(size=14),
+          axis.text = element_text(size=12, color="black"),
+          text=element_text())
+  
+  d <- d + geom_line(data=CI_Lim, aes(y=lb_total, x=csize), colour="black")+
+    geom_line(data=CI_Lim, aes(y=ub_total, x=csize), colour="black")
+  print(d)
+}
+
+                          
+
+three_funnel_study<-function(study, ES, out, var, se, size_dots, numbers){
+  numbers=numbers
+  size_dots=size_dots
+  dataset<-data.frame(study, ES, out, var, se)
+  contour.points=200
+  
+  meta_abu <- summary(meta3(y=ES, v=var, cluster=study, data=dataset))
+  estimate<-meta_abu$coefficients$Estimate[1]
+  tau<-meta_abu$coefficients$Estimate[3]
+  out<-meta_abu$coefficients$Estimate[2]
+  
+  row = 1
+  nrow=max(dataset$study)
+  studyinfo = data.frame(Study = numeric(nrow),
+                         id = numeric(nrow),
+                         ES= numeric(nrow),
+                         SE= numeric(nrow),
+                         k= numeric(nrow),
+                         median_SE=numeric(nrow))
+  Study1 =c()
+  geom.text.size = 3
+  
+  for (i in 1:max(dataset$study)){
+    data<-subset(dataset, study==i)
+    uni=nrow(data)
+    
+    if (uni==1) {
+      studyinfo$ES[row]<-data$ES
+      studyinfo$SE[row]<-data$se
+      studyinfo$median_SE[row]<-data$se
+    }
+    
+    else {
+      
+      a<-rma(y=data$ES, vi=data$var, data=data, method="REML")
+      studyinfo$ES[row]<-a$b
+      studyinfo$SE[row]<-a$se
+      studyinfo$median_SE[row]<-median(data$se)
+    }
+    
+    studyinfo$id[row]<-i
+    studyinfo$k[row]<-nrow(data)
+    studyinfo$Study[row]<-c(Study1,paste("Study",i))
+    row = row + 1      
+  }
+  
+  median_k<- median(studyinfo$k)
+  maxse<-max(studyinfo$SE)
+  ylim<-c(0, maxse)
+  csize <- seq(ylim[1], ylim[2], length.out = contour.points)
+  csize[csize <= 0] <- 1e-07 * min(studyinfo$SE)
+  CI_Lim<-matrix(0, nrow=length(csize), ncol=2)
+  colnames(CI_Lim)<-c("lb_total", "ub_total")
+  
+  for (i in 1:length(csize)){
+    CI_Lim[i,1]<-estimate-1.96*sqrt((((csize[i]^2)+out)/median_k)+tau)#add 1.96*
+    CI_Lim[i,2]<-estimate+1.96*sqrt((((csize[i]^2)+out)/median_k)+tau)
+  }
+  CI_Lim<-as.data.frame(CI_Lim)
+  
+  le<-length(CI_Lim[,1])
+  
+  
+  
+  if ((CI_Lim[le,1])< 0) {
+    minimum=min(CI_Lim[,1])
+  } else {
+    minimum=max(CI_Lim[,1])
+  } 
+  
+  if ((CI_Lim[le,2]) > 0) {
+    maximum=max(CI_Lim[,2])
+  } else {
+    maximum=min(CI_Lim[,2])
+  } 
+  
+  
+  lim_minimum<-floor(minimum-0.10)
+  lim_maximum<-ceiling(maximum+0.10)
+  Axis_ES <- seq(lim_minimum, lim_maximum, by=1)
+  
+  if (size_dots==1){
+    if(numbers==1){
+      e <- ggplot(data=studyinfo, aes(x = SE, y = ES, ylim(0,maxse))) +
+        geom_point(data=studyinfo, aes(size=k)) +
+        geom_text_repel(aes(label=factor(studyinfo$k)), hjust=0, vjust=-0.40, size=geom.text.size, direction="x", segment.size  = 0.2, segment.color = "grey50")+
+        xlab('Meta-analytic standard error') + ylab('Study mean effect')+
+        geom_hline(yintercept= estimate)+
+        geom_hline(yintercept= 0, color='grey')+
+        scale_x_reverse()+
+        scale_y_continuous(breaks=Axis_ES , limits =c(lim_minimum,lim_maximum))+
+        coord_flip()+
+        theme_bw()+
+        theme(panel.grid.major=element_blank(),
+              panel.grid.minor=element_blank(),
+              panel.border=element_blank(),
+              panel.background = element_blank(),
+              axis.line=element_line(),
+              axis.title = element_text(size=14),
+              axis.text = element_text(size=12, colour = "black"),
+              text=element_text(),
+              legend.position="none")
+    } else {
+      e <- ggplot(data=studyinfo, aes(x = SE, y = ES, ylim(0,maxse))) +
+        geom_point(data=studyinfo, aes(size=k)) +
+        xlab('Meta-analytic standard error') + ylab('Study mean effect')+
+        geom_hline(yintercept= estimate)+
+        geom_hline(yintercept= 0, color='grey')+
+        scale_x_reverse()+
+        scale_y_continuous(breaks=Axis_ES , limits =c(lim_minimum,lim_maximum))+
+        coord_flip()+
+        theme_bw()+
+        theme(panel.grid.major=element_blank(),
+              panel.grid.minor=element_blank(),
+              panel.border=element_blank(),
+              panel.background = element_blank(),
+              axis.line=element_line(),
+              axis.title = element_text(size=14),
+              axis.text = element_text(size=12, colour = "black"),
+              text=element_text(),
+              legend.position="none")
+    }
+    
+  } else {
+    
+    if (numbers==1){
+      e <- ggplot(data=studyinfo, aes(x = SE, y = ES, ylim(0,maxse))) +
+        geom_point() +
+        geom_text_repel(aes(label=factor(studyinfo$k)), hjust=0, vjust=-0.40, size=geom.text.size, direction="x", segment.size  = 0.2, segment.color = "grey50")+
+        xlab('Meta-analytic standard error') + ylab('Study mean effect')+
+        geom_hline(yintercept= estimate)+
+        geom_hline(yintercept= 0, color='grey')+
+        scale_x_reverse()+
+        scale_y_continuous(breaks=Axis_ES , limits =c(lim_minimum,lim_maximum))+
+        coord_flip()+
+        theme_bw()+
+        theme(panel.grid.major=element_blank(),
+              panel.grid.minor=element_blank(),
+              panel.border=element_blank(),
+              panel.background = element_blank(),
+              axis.line=element_line(),
+              axis.title = element_text(size=14),
+              axis.text = element_text(size=12, colour = "black"),
+              text=element_text(),
+              legend.position="none")
+    }else{
+      e <- ggplot(data=studyinfo, aes(x = SE, y = ES, ylim(0,maxse))) +
+        geom_point() +
+        xlab('Meta-analytic standard error') + ylab('Study mean effect')+
+        geom_hline(yintercept= estimate)+
+        geom_hline(yintercept= 0, color='grey')+
+        scale_x_reverse()+
+        scale_y_continuous(breaks=Axis_ES , limits =c(lim_minimum,lim_maximum))+
+        coord_flip()+
+        theme_bw()+
+        theme(panel.grid.major=element_blank(),
+              panel.grid.minor=element_blank(),
+              panel.border=element_blank(),
+              panel.background = element_blank(),
+              axis.line=element_line(),
+              axis.title = element_text(size=14),
+              axis.text = element_text(size=12, colour = "black"),
+              text=element_text(),
+              legend.position="none")
+    }
+  }
+  
+  e <- e + geom_line(data=CI_Lim, aes(y=lb_total, x=csize), colour="black")+
+    geom_line(data=CI_Lim, aes(y=ub_total, x=csize), colour="black")
+  print(e)
+  
+} 
+
+
+          
+
+# server logic---- 
+server <- function(input, output, session) {
+  #load metafor
+  library(metafor)
+  library(ggplot2)
+  library(dplyr)
+  library(tidyverse)
+  library(data.table)
+  ##ES calc ----  
+  # Reactive expression to read uploaded file and return result
+  esresultc <- eventReactive(input$calc_es_c, {
+    req(input$cesfile)  # Check if a file is uploaded
+    
+    # Read the uploaded CSV file
+    data <- read.csv(input$cesfile$datapath)
+    # Assuming the file contains columns 'n1', 'n2', and 'r'
+    escalc(measure="SMD", m1i=Exp_mean, sd1i=Exp_sd, n1i=Exp_n,
+           m2i=Ctrl_mean, sd2i=Ctrl_sd, n2i=Ctrl_n, data=data)
+  })
+  # Render the result
+  output$esresultc_output <- renderPrint({
+    esresultc()
+    
+  })
+  #download button
+  # Download handler for the button
+  output$download_button_c <- downloadHandler(
+    filename = function() {
+      "mydata.csv"  
+    },
+    content = function(file) {
+      savedata <- esresultc()
+      # Write data to CSV file
+      write.csv(savedata, file)
+    })
+  
+  ##Conventional MA----- 
+  
+  # Reactive expression to run conventional MA
+  cmaresultc <- eventReactive(input$run_cmac, {
+    req(input$cmafilec)  # Check if a file is uploaded
+    
+    # Read the uploaded CSV file
+    data <- read.csv(input$cmafilec$datapath)
+    
+    # Check if required columns exist in the data
+    req(c("yi", "vi") %in% names(data), message = "Columns 'yi' and 'vi' are required.")
+    
+    # Run random effects MA
+    result <- rma(yi, vi, data=data)
+    return(result)
+    # Create forest plot
+    forest_plot <- ggforest(result)
+  })
+  
+  # Render the result
+  output$cmaresultc_output <- renderPrint({
+    cmaresultc()
+  })
+  #download button
+  # Download handler for the button
+  output$cmadownload_buttonc <- downloadHandler(
+    filename = function() {
+      "myoverallresult.txt"  
+    },
+    content = function(file) {
+      # Retrieve the result
+      result <- cmaresultc()
+      
+      # Convert result to text
+      result_textc <- capture.output(result)
+      
+      # Write result to text file
+      writeLines(result_textc, file)
+    }
+  )
+  ### Forest plot----
+  # Reactive value to store forest plot
+  forest_plotc <- reactive({
+    # Read the uploaded CSV file
+    data <- read.csv(input$cmafilec$datapath)
+    # Check if the "run_cma" button has been clicked
+    if (input$run_cmac > 0) {
+      # Perform meta-analysis and create forest plot
+      result <- cmaresultc()
+      forest(result, slab = data$studyauthor, main = "Forest Plot of Observed Effects", header="Author(s) and Year")
+    }
+  })
+  
+  
+  # Render the forest plot
+  output$forest_plotc <- renderPlot({
+    # Check if the "run_cma" button has been clicked
+    if (input$run_cmac > 0) {
+      # Display the forest plot
+      print(forest_plotc())
+    }
+  })
+  # Download handler for the forest plot button
+  output$forestplotdownload_buttonc <- downloadHandler(
+    filename = function() {
+      "forestplot.png"  # Specify file name
+    },
+    content = function(file) {
+      # Capture the plot as a PNG file
+      png(file, width = 2800, height = 2400, res = 300)
+      data <- read.csv(input$cmafilec$datapath)
+      if (input$run_cma > 0) {
+        # Perform meta-analysis and create forest plot
+        result <- cmaresultc()
+        forest(result, slab = data$studyauthor, main = "Forest Plot of Observed Effects", header="Author(s) and Year")
+      }
+      dev.off()
+    }
+  )
+  
+  ###Outlier and Influence Analysis----
+  
+  # Reactive expression to run conventional MA and influence analysis
+  infresult <- eventReactive(input$run_infc, {
+    req(input$inffilec)  # Check if a file is uploaded
+    
+    # Read the uploaded CSV file
+    infdata <- read.csv(input$inffilec$datapath)
+    
+    # Run random effects MA
+    resultforinf <- rma(yi, vi, data=infdata)
+    
+    # Perform influence analysis
+    infresc <- influence(resultforinf)
+    
+    # Return both the MA result and influence analysis result
+    return(list(resultforinf = resultforinf, infres = infresc))
+  })
+  
+  # Render the result on the screen
+  output$resultforinf_outputc <- renderPrint({
+    # Check if the "run_inf" button has been clicked
+    if (input$run_infc > 0) {
+      # Display the influence analysis result
+      inf_result <- infresult()
+      print(inf_result$infres)
+    }
+  })
+  
+  #inf download button
+  # Download handler for the button
+  output$infdownload_buttonc <- downloadHandler(
+    filename = function() {
+      "influenceresult.csv"  
+    },
+    content = function(file) {
+      # Retrieve the influence analysis result from the reactive expression
+      inf_result <- infresult()
+      
+      # Extract the influence statistics from the infres object
+      inf_statistics <- inf_result$infres$inf
+      
+      # Convert the influence statistics into a data frame
+      inf_table <- as.data.frame(inf_statistics)
+      
+      # Write data to CSV file
+      write.csv(inf_table, file, row.names = FALSE)
+    })
+  
+  ###Cat Mod Analysis----
+  # Initialize a reactive value for displaying results
+  resultsvisibleCcat <- reactiveVal(FALSE)
+  
+  observeEvent(input$run_analysisCcat, {
+    resultsvisibleCcat(TRUE)
+  })
+  
+  observeEvent(input$dropdownc, {
+    resultsvisibleCcat(FALSE)
+  })
+  
+  output$dynamicResultsCcat <- renderUI({
+    if (resultsvisibleCcat()) {
+      tagList(
+        # Display the results
+        h3("Test of Moderators"),
+        p("First, we conduct a test of moderators to see if there are significant differences between levels of the moderator."),
+        p(strong("You must write down or copy paste the Qbetween results."), "Because of how I had to code the app to display the results in a format that users would be familiar with, you cannot download them directly at this time. Sorry!"),
+        verbatimTextOutput("results_outputc"),
+        h3("Effect Size Table"),
+        p("Next, we see our table that shows the effect sizes and accompanying statistics for each level of the moderator. Remember, your Test of Moderators above tells you if there are significant differences between levels."),
+        downloadButton("download_resultsc", "Download Results"),
+        tableOutput("modtable_outputc"),
+        h3("Need Help Understanding The Results?"),
+        p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#moderator-analysis'>my open book</a>"),
+        ),
+      )
+    }
+  })
+  
+  
+  # Reactive expression to read uploaded CSV file for rma analysis
+  uploaded_datacc_convc <- reactive({
+    req(input$modfilec)
+    read.csv(input$modfilec$datapath)
+  })
+  
+  # Update selectInput choices when file is uploaded
+  observeEvent(input$modfilec, {
+    updateSelectInput(session, "dropdownc", choices = colnames(uploaded_datacc_convc()))
+  })
+  
+  # Reactive expression to run rma analysis without intercept
+  modfortable_convc <- reactive({
+    req(input$run_analysisCcat, input$dropdownc)  # Ensure dropdown choice is available
+    
+    # Construct the moderator formula without the intercept
+    mod_formula_convc <- as.formula(paste("~ -1 + factor(", input$dropdownc, ")"))
+    
+    # Run the moderator analysis with rma
+    mod_result_convc <- rma(yi, vi, mods = mod_formula_convc, data = uploaded_datacc_convc())
+    
+    # Extract coefficients and standard errors
+    coef_table_convc <- coef(summary(mod_result_convc))
+    
+    # Summarize participants in each group
+    participants_summary_convc <- uploaded_datacc_convc() %>%
+      group_by(!!sym(input$dropdownc)) %>%
+      summarise(nexp = sum(Exp_n, na.rm = TRUE),
+                nctrl = sum(Ctrl_n, na.rm = TRUE),
+                kcomp = n())
+    
+    # Combine participants summary with coefficient table
+    result_table_convc <- cbind(participants_summary_convc, coef_table_convc)
+    
+    # Convert numeric columns to numeric (in case they were read as factors)
+    numeric_cols_convc <- c("estimate", "se", "zval", "pval", "ci.lb", "ci.ub")
+    result_table_convc[, numeric_cols_convc] <- lapply(result_table_convc[, numeric_cols_convc], as.numeric)
+    
+    # Round numeric columns to 3 decimal places
+    result_table_convc[, numeric_cols_convc] <- round(result_table_convc[, numeric_cols_convc], 3)
+    
+    result_table_convc
+  })
+  
+  # Reactive expression for capturing the "Test of Moderators" information
+  mod_summary1_convc <- reactive({
+    req(input$run_analysisCcat, input$dropdownc)  # Ensure dropdown choice is available
+    
+    # Construct the moderator formula with intercept
+    mod_formula1_convc <- as.formula(paste("~ factor(", input$dropdownc, ")"))
+    
+    # Run the moderator analysis with intercept
+    mod_result_with_intercept1r_convc <- rma(yi, vi, mods = mod_formula1_convc, data = uploaded_datacc_convc())
+    
+    # Extract the QM statistic and p-value for the "Test of Moderators"
+    QM_convc <- round(mod_result_with_intercept1r_convc$QM, 3)
+    QMp_convc <- round(mod_result_with_intercept1r_convc$QMp, 3)
+    
+    # Create a data frame with the "Test of Moderators" information
+    data.frame(Test_of_Moderators = paste("Qb(", mod_result_with_intercept1r_convc$QMdf[1], ") =", QM_convc, ", p-val =", QMp_convc))
+  })
+  
+  # Display results of the moderator analysis in a table
+  output$modtable_outputc <- renderTable({
+    # Check if the "Run Moderator Analysis" button has been pressed
+    if (input$run_analysisCcat > 0) {
+      # Get the result table without intercept
+      result_table_data_convc <- modfortable_convc()
+      
+      # Add the "Test of Moderators" row to the result table
+      mod_summary_data_convc <- mod_summary1_convc()
+      
+      # Convert the result to a data frame
+      result_table_df_convc <- as.data.frame(result_table_data_convc)
+      
+      # Create a new data frame for the "Test of Moderators" row
+      test_of_moderators_df_convc <- data.frame(Qbetween = mod_summary_data_convc$Test_of_Moderators)
+      
+      # Combine the result table and the "Test of Moderators" row
+      final_table_convc <- bind_rows(result_table_df_convc, test_of_moderators_df_convc)
+      
+      # Replace NA values with empty strings in the final table
+      final_table_convc <- final_table_convc %>%
+        mutate_all(~ ifelse(is.na(.), "", .))
+      
+      # Return the final table
+      final_table_convc
+    }
+  })
+  
+  # Download handler for the results
+  output$download_resultsc <- downloadHandler(
+    filename = function() {
+      paste("mod.", input$dropdownc, Sys.Date(), ".csv", sep = "")
+    },
+    content = function(file) {
+      # Get the result table with "Test of Moderators" row for download
+      result_table_data_convc <- modfortable_convc()
+      mod_summary_data_convc <- mod_summary1_convc()
+      
+      # Create a new data frame for the "Test of Moderators" row
+      test_of_moderators_df_convc <- data.frame(Qbetween = mod_summary_data_convc$Test_of_Moderators)
+      
+      # Combine the result table and the "Test of Moderators" row
+      final_table_convc <- bind_rows(result_table_data_convc, test_of_moderators_df_convc)
+      
+      # Replace NA values with empty strings in the final table
+      final_table_convc <- final_table_convc %>%
+        mutate_all(~ ifelse(is.na(.), "", .))
+      
+      # Write csv file
+      write.csv(final_table_convc, file, row.names = FALSE)
+    }
+  )
+  
+  
+  ### Cont Mod Analysis ----
+  
+  # Initialize a reactive value for displaying results
+  resultsvisibleCc <- reactiveVal(FALSE)
+  
+  observeEvent(input$run_analysiscc, {
+    resultsvisibleCc(TRUE)
+  })
+  
+  observeEvent(input$dropdowncc, {
+    resultsvisibleCc(FALSE)
+  })
+  
+  output$dynamicResultsCc <- renderUI({
+    if (resultsvisibleCc()) {
+      tagList(
+        # Display the results
+        h3("Test of Moderators"),
+        p("First, we conduct a test of moderators to see if there are significant differences between levels of the moderator."),
+        p(strong("You must write down or copy paste the Qbetween results."), "Because of how I had to code the app to display the results in a format that users would be familiar with, you cannot download them directly at this time. Sorry!"),
+        verbatimTextOutput("results_outputcc"),
+        
+        h3("Effect Size Table"),
+        p("Next, we see our table that shows the effect sizes and accompanying statistics for each level of the moderator. Remember, your Test of Moderators above tells you if there are significant differences between levels."),
+        downloadButton("download_resultscc", "Download Results"),
+        tableOutput("modtable_outputcc"),
+        h3("Need Help Understanding The Results?"),
+        verbatimTextOutput("modelSummary"),
+        p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#moderator-analysis'>my open book</a>"),
+        ),
+      )
+    }
+  })
+  
+  
+  
+  
+  
+  
+  
+  uploaded_datacc <- reactive({
+    req(input$modfilecc)
+    read.csv(input$modfilecc$datapath)
+  })
+  
+  observeEvent(input$modfilecc, {
+    updateSelectInput(session, "dropdowncc", choices = colnames(uploaded_datacc()))
+  })
+  
+  # This reactive generates the complete table including the test of moderators
+  complete_table <- reactive({
+    req(input$run_analysiscc, input$dropdowncc)
+    mod_formular <- as.formula(paste("~", input$dropdowncc))
+    mod_resultr <- rma(yi, vi, mods = mod_formular, data = uploaded_datacc())
+    model_summary <- summary(mod_resultr)
+    summary_table <- coef(model_summary)
+    
+    result_table <- data.frame(
+      Term = rownames(summary_table),
+      Estimate = round(summary_table[, "estimate"], 3),
+      StdError = round(summary_table[, "se"], 3),
+      ZValue = round(summary_table[, "zval"], 3),
+      PValue = round(summary_table[, "pval"], 3),
+      CI_Lower = round(summary_table[, "ci.lb"], 3),
+      CI_Upper = round(summary_table[, "ci.ub"], 3),
+      Test_of_Moderator = rep("", nrow(summary_table))  # Initialize with empty strings
+    )
+    
+    # Append the test of moderators as the last row
+    test_mod_info <- paste("Qb(", model_summary$QMdf[1], ") =", round(model_summary$QM, 3), ", p-val =", round(model_summary$QMp, 3))
+    test_mod_row <- data.frame(
+      Term = "Test of Moderator",
+      Estimate = "",
+      StdError = "",
+      ZValue = "",
+      PValue = "",
+      CI_Lower = "",
+      CI_Upper = "",
+      Test_of_Moderator = test_mod_info
+    )
+    
+    rbind(result_table, test_mod_row)  # Combine the result table with the test of moderators row
+  })
+  
+  output$modtable_outputcc <- renderTable({
+    complete_table()  # Display the complete table
+  })
+  
+  output$download_resultscc <- downloadHandler(
+    filename = function() {
+      paste("mod.", input$dropdowncc, Sys.Date(), ".csv", sep = "")
+      },
+    content = function(file) {
+      write.csv(complete_table(), file, row.names = FALSE)  # Use the complete table for download
+    }
+  )
+  
+  
+  
+  ### Publication bias ----
+  # Reactive expression to perform meta-analysis and diagnostics
+  perform_meta_analysis <- eventReactive(input$run_pubc, {
+    req(input$pubbiasfilec)  # Check if a file is uploaded
+    
+    # Read data
+    data <- read.csv(input$pubbiasfilec$datapath)
+    
+    # Run meta-analysis
+    res <- tryCatch({
+      rma(yi, vi, data = data)
+    }, error = function(e) {
+      NULL  # Return NULL if there's an error
+    })
+    
+    if (!is.null(res)) {
+      # Perform funnel plot
+      funnel_plotc <- tryCatch({
+        funnel(res)
+      }, error = function(e) {
+        NULL
+      })
+      
+      # Perform Egger's regression
+      eggers <- tryCatch({
+        regtest(res)
+      }, error = function(e) {
+        NULL
+      })
+      
+      # Perform Rosenthal's fail-safe N
+      rosenthal <- tryCatch({
+        fsn(yi, vi, data = data)
+      }, error = function(e) {
+        NULL
+      })
+      
+      # Perform Orwin's fail-safe N
+      orwin <- tryCatch({
+        fsn(yi, vi, data = data, type = "Orwin")
+      }, error = function(e) {
+        NULL
+      })
+      
+      # Perform Rosenberg's fail-safe N
+      rosenberg <- tryCatch({
+        fsn(yi, vi, data = data, type = "Rosenberg")
+      }, error = function(e) {
+        NULL
+      })
+      
+      # Return the results
+      list(
+        funnel_plot = funnel_plotc,
+        eggers = eggers,
+        rosenthal = rosenthal,
+        orwin = orwin,
+        rosenberg = rosenberg
+      )
+    } else {
+      # Return NULL if meta-analysis fails
+      NULL
+    }
+  })
+  
+  # Reactive expression to perform trim and fill analysis
+  perform_trim_fill <- eventReactive(input$run_pubc, {
+    req(input$pubbiasfilec)  # Check if a file is uploaded
+    
+    # Read data
+    data <- read.csv(input$pubbiasfilec$datapath)
+    
+    # Run meta-analysis
+    res <- tryCatch({
+      rma(yi, vi, data = data)
+    }, error = function(e) {
+      NULL  # Return NULL if there's an error
+    })
+    
+    if (!is.null(res)) {
+      # Perform trim and fill analysis
+      trim_fill_result <- tryCatch({
+        trimfill(res)
+      }, error = function(e) {
+        NULL
+      })
+      
+      # Return the trim and fill result
+      trim_fill_result
+    } else {
+      # Return NULL if meta-analysis fails
+      NULL
+    }
+  })
+  
+  
+  # Render the UI components
+  output$funnel_plotc <- renderPlot({
+    perform_meta_analysis()$funnel_plotc
+  })
+  
+  
+  output$trim_fill_output <- renderPrint({
+    perform_trim_fill()
+  })
+  
+  output$eggers_output <- renderPrint({
+    perform_meta_analysis()$eggers
+  })
+  
+  output$rosenthal_output <- renderPrint({
+    perform_meta_analysis()$rosenthal
+  })
+  output$orwin_output <- renderPrint({
+    perform_meta_analysis()$orwin
+  })
+  
+  output$rosenberg_output <- renderPrint({
+    perform_meta_analysis()$rosenberg
+  })
+
+  # Download handler for the funnel plot button
+  output$download_funnelc <- downloadHandler(
+    filename = function() {
+      "funnelplot.png"  # Specify file name
+    },
+    content = function(file) {
+      # Capture the plot as a PNG file
+      png(file, width = 2800, height = 2400, res = 300)
+      if (!is.null(perform_meta_analysis()$funnel_plotc)) {
+        # Print the funnel plot to the PNG file
+        # Read data
+        data <- read.csv(input$pubbiasfilec$datapath)
+        
+        # Run meta-analysis
+        res <- tryCatch({
+          rma(yi, vi, data = data)
+        }, error = function(e) {
+          NULL  # Return NULL if there's an error
+        })
+        funnel(res)
+      }
+      dev.off()
+    }
+  )
+  
+  
+  
+  # Download handler for the trim and fill analysis
+  output$download_trim_fill <- downloadHandler(
+    filename = function() {
+      "trim_fill_analysis.txt"
+    },
+    content = function(file) {
+      # Convert result to text
+      result_text <- capture.output(perform_trim_fill())
+      
+      # Write result to text file
+      writeLines(result_text, file)
+      
+    }
+  )
+  
+  # Download handler for Egger's regression
+  output$download_eggers <- downloadHandler(
+    filename = function() {
+      "eggers_regression.txt"
+    },
+    content = function(file) {
+      # Convert result to text
+      result_text <- capture.output(perform_meta_analysis()$eggers)
+      
+      # Write result to text file
+      writeLines(result_text, file)
+      
+    }
+  )
+  
+  
+  # Download handler for Rosenthal's fail safe N
+  output$download_rosenthal <- downloadHandler(
+    filename = function() {
+      "rosenthal_failsafe_n.txt"
+    },
+    content = function(file) {
+      # Convert result to text
+      result_text <- capture.output(perform_meta_analysis()$rosenthal)
+      
+      # Write result to text file
+      writeLines(result_text, file)
+      
+    }
+  )
+  
+  # Download handler for Orwin's fail safe N
+  output$download_orwin <- downloadHandler(
+    filename = function() {
+      "orwin_failsafe_n.txt"
+    },
+    content = function(file) {
+      # Convert result to text
+      result_text <- capture.output(perform_meta_analysis()$orwin)
+      
+      # Write result to text file
+      writeLines(result_text, file)
+      
+    }
+  )
+  
+  # Download handler for Rosenberg's fail safe N
+  output$download_rosenberg <- downloadHandler(
+    filename = function() {
+      "rosenberg_failsafe_n.txt"
+    },
+    content = function(file) {
+      # Convert result to text
+      result_text <- capture.output(perform_meta_analysis()$rosenberg)
+      
+      # Write result to text file
+      writeLines(result_text, file)
+      
+    }
+  )
+  
+
+  ## 3LMA code----
+  ###About ---- example coding form
+  # Read the CSV file
+  sampledata <- read.csv("mydata.csv")
+  
+  # Render the table
+  output$sampledatatable <- renderTable({
+    sampledata})
+###ES calc  
+  # Reactive expression to read uploaded file and return result
+  esresult <- eventReactive(input$calc_es, {
+    req(input$file)  # Check if a file is uploaded
+    
+    # Read the uploaded CSV file
+    data <- read.csv(input$file$datapath)
+    
+    # Assuming the file contains columns 'n1', 'n2', and 'r'
+    escalc(measure="SMD", m1i=Exp_mean, sd1i=Exp_sd, n1i=Exp_n,
+           m2i=Ctrl_mean, sd2i=Ctrl_sd, n2i=Ctrl_n, data=data)
+  })
+  # Render the result
+  output$esresult_output <- renderPrint({
+    esresult()
+    
+  })
+    #download button
+    # Download handler for the button
+    output$download_button <- downloadHandler(
+      filename = function() {
+        "mydata.csv"  
+      },
+      content = function(file) {
+        savedata <- esresult()
+        # Write data to CSV file
+        write.csv(savedata, file)
+      })
+
+
+### Three-Level MA ----
+    # Reactive expression to run 3LMA
+    cmaresult <- eventReactive(input$run_cma, {
+      req(input$cmafile)  # Check if a file is uploaded
+      
+      # Check if the input file exists
+      if (is.null(input$cmafile)) {
+        return(NULL)
+      }
+      
+      # Read the uploaded CSV file
+      data <- read.csv(input$cmafile$datapath)
+      
+      # Check if required columns are present
+      required_cols <- c("yi", "vi")
+      if (!all(required_cols %in% names(data))) {
+        return(NULL)
+      }
+      
+      # Run random effects MA
+      result <- tryCatch({
+        rma.mv(yi, vi,
+               random = ~ 1 | Study/ES_number,
+               method = "REML",
+               test = "t",
+               dfs = "contain",
+               data = data) 
+      }, error = function(e) {
+        return(NULL)
+      })
+      
+      return(result)
+    })
+    
+    # Render the result
+    output$cmaresult_output <- renderPrint({
+      cmaresult()
+    })
+    
+    # Download handler for the button
+    output$cmadownload_button <- downloadHandler(
+      filename = function() {
+        "myoverallresult.txt"  
+      },
+      content = function(file) {
+        # Retrieve the result
+        result <- cmaresult()
+        
+        # Check if result is NULL or an error occurred
+        if (is.null(result)) {
+          return()
+        }
+        
+        # Convert result to text
+        result_text <- capture.output(result)
+        
+        # Write result to text file
+        writeLines(result_text, file)
+      }
+    )
+    
+###Variance 3lma----
+    
+    # Load the script containing the functions
+    source("i2code.r")
+    
+    # Create an eventReactive to read the uploaded CSV file and run the code when action button is pressed
+    i2_result <- eventReactive(input$run_i2, {
+      req(input$i2file)  # Check if a file is uploaded
+      
+      # Read the uploaded CSV file and rename as data
+      data <- read.csv(input$i2file$datapath)
+      
+      # Run the model
+      m_multi <- rma.mv(yi, vi,
+                        random = ~ 1 | Study/ES_number,
+                        method = "REML",
+                        test = "t",
+                        dfs = "contain",
+                        data = data)
+      
+      # Calculate I-squared values and variance distribution
+      i2 <- mlm.variance.distribution(m_multi)
+      
+      # Extract the results and total I2
+      results <- i2$results
+      totalI2 <- i2$totalI2
+      
+      # Return the results and total I2 for rendering in the UI
+      return(list(results = results, totalI2 = totalI2))
+    })
+    
+    # Render the results output in the UI
+    output$i2result_output <- renderPrint({
+      i2_result()$results
+    })
+    
+    # Render the totalI2 output in the UI with label
+    output$totalI2_output <- renderText({
+      paste("Total I2:", i2_result()$totalI2)
+    })
+    
+    # Add a download button to download both the i2 results and the total i2 results as a .txt file
+    output$download_i2_results <- downloadHandler(
+      filename = function() {
+        paste("i2_results_", Sys.Date(), ".txt", sep = "")
+      },
+      content = function(file) {
+        # Retrieve the i2 results and total i2 results
+        i2_results <- i2_result()$results
+        total_i2 <- i2_result()$totalI2
+        
+        # Convert i2 results and total i2 results to text
+        i2_results_text <- capture.output(i2_results)
+        total_i2_text <- paste("Total I2:", total_i2)
+        
+        # Combine i2 results and total i2 results text
+        combined_text <- c(i2_results_text, total_i2_text)
+        
+        # Write combined text to a .txt file
+        writeLines(combined_text, file)
+      }
+    )
+
+
+###Outlier and Influence Analysis 3lma ----
+
+    
+    # Define a reactive value to hold the influence data
+    influence_data <- reactiveVal(NULL)
+    infprog <- reactiveVal(0)
+    progress_active <- reactiveVal(FALSE)
+    # Reactive function to perform analysis and update influence data
+    observeEvent(input$run_inf, {
+      req(input$inffile)
+      infprog(0)
+      progress_active(TRUE)  # Activate progress bar
+      withProgress(message = "Running Meta-Analysis...", value = 0, {
+        # Read uploaded CSV file
+        data <- read.csv(input$inffile$datapath)
+        
+        # Run the meta-analysis
+        m_multi <- rma.mv(yi, vi,
+                          random = ~ 1 | Study/ES_number,
+                          method = "REML",
+                          test = "t",
+                          dfs = "contain",
+                          data = data)
+        incProgress(1/8, message = "Performing outlier analysis") 
+        # Perform outlier and influence analysis
+        data$upperci <- data$yi + 1.96 * sqrt(data$vi)
+        data$lowerci <- data$yi - 1.96 * sqrt(data$vi)
+        data$outlier <- data$upperci < m_multi$ci.lb | data$lowerci > m_multi$ci.ub
+        
+        incProgress(2/8, message = "Calculating Cook's Distance") 
+        # Calculate Cook's distance
+        cooks <- cooks.distance(m_multi)
+        incProgress(3/8, message = "Calculating DFBETAS") 
+        # Calculate dfbetas
+        dfbetas <- dfbetas(m_multi)
+        incProgress(4/8, message = "Calculating hat values") 
+        # Calculate hat values
+        hatvalues <- hatvalues(m_multi)
+        
+        # Calculate p/k
+        p <- length(coef(m_multi))
+        k <- nrow(data)
+        incProgress(5/8, message = "Checking for influential studies") 
+        # Check if there are more predictors than just the intercept
+        if (length(coef(m_multi)) > 1) {
+          # Remove the intercept term from the count of coefficients
+          p <- p - 1
+        }
+        
+        p_over_k <- 3 * (p / k)
+        
+        # Calculate hat_flag
+        hat_flag <- ifelse(hatvalues > p_over_k, "TRUE", "")
+        
+        incProgress(6/8, message = "Building table...")
+        # Combine influence metrics with correct column names
+        influence <- data.frame(Study = data$Study,
+                                effect_size = data$yi,
+                                outlier = ifelse(data$outlier == FALSE, "", "TRUE"),  # Include outlier column                                cooks = cooks,
+                                cooks_flag = ifelse(cooks > 0.5, "TRUE", ""),
+                                dfbetas = dfbetas,
+                                dfbetas_flag = ifelse(abs(dfbetas) > 1, "TRUE", ""),
+                                hatvalues = hatvalues,
+                                hat_flag = hat_flag)
+        
+        # Rename the columns with proper names
+        colnames(influence)[which(colnames(influence) == "intrcpt")] <- "dfbetas"
+        colnames(influence)[which(colnames(influence) == "intrcpt.1")] <- "dfbetas_flag"
+        
+        
+        # Update influence data
+        influence_data(influence)
+        incProgress (7/8, detail = "Analyses complete, building plots...")
+        progress_active(FALSE)  # Deactivate progress bar
+      })
+    })
+    
+    # Make progressActive available to JavaScript
+    output$progressActive <- reactive({
+      progress_active()
+    })
+    outputOptions(output, "progressActive", suspendWhenHidden = FALSE)
+    
+    
+    output$progressActive <- reactive({
+      progress_active()
+    })
+    
+    # Render outlier plot
+    output$outlier_plot <- renderPlot({
+      analysis_data <- influence_data()
+      
+      ggplot(data = analysis_data, aes(x = effect_size, colour = outlier, fill = outlier)) +
+        geom_histogram(alpha = 0.2) +
+        geom_vline(xintercept = analysis_data$m_multi$b[1]) +
+        theme_bw()
+    })
+    
+    
+    # Render influence table
+    output$influence_table <- renderTable({
+      influence_data()
+    })
+    
+    # Download influence table as CSV
+    output$download_influence <- downloadHandler(
+      filename = function() {
+        "influence_table.csv"
+      },
+      content = function(file) {
+        # Write the influence table to a CSV file
+        write.csv(influence_data(), file, row.names = FALSE)
+      }
+    )
+    
+    
+    
+    # Download handler for the outlier plot button
+    output$download_outliers <- downloadHandler(
+      filename = function() {
+        "outlier_plot.png"  # Specify file name
+      },
+      content = function(file) {
+        # Capture the plot as a PNG file
+        png(file, width = 2800, height = 2400, units = "px", res = 300)
+        # Create the outlier plot
+        p <- ggplot(data = influence_data(), aes(x = effect_size, colour = outlier, fill = outlier)) +
+          geom_histogram(alpha = 0.2) +
+          geom_vline(xintercept = mean(influence_data()$effect_size)) +  # Example line at mean effect size
+          theme_bw()
+        print(p)  # Print the plot
+        dev.off()  # Turn off the PNG device
+      }
+    )
+    
+    
+    
+### Cat Mod Analysis 3lma----
+    # Initialize a reactive value for displaying results
+    resultsvisible3lCcat <- reactiveVal(FALSE)
+    
+    observeEvent(input$run_analysis, {
+      resultsvisible3lCcat(TRUE)
+    })
+    
+    observeEvent(input$dropdown, {
+      resultsvisible3lCcat(FALSE)
+    })
+    
+    observeEvent(input$modfile, {
+      resultsvisible3lCcat(FALSE)
+    })
+    
+    output$dynamicResults3lCcat <- renderUI({
+      if (resultsvisible3lCcat()) {
+        tagList(
+          # Display the results
+          h2("*Important Note*"),
+          p("In metafor there are two different tests of the moderator. The table below presents the omnibus test of moderators from the model with an intercept. This is the same statistic as you may be used to seeing as Qbetween in conventional meta-analysis. The effect sizes etc. provided in the moderator table below are from the model without an intercept. In a conventional meta-analysis, this is a presentation consistent with what you may expect to see from other software packages such as Comprehensive Meta-Analysis."),
+          downloadButton("download_results", "Download Results"),
+          tableOutput("modtable_output"),
+          h3("Basic Interpretation Tips"),
+          p("First you should look at the", strong("Qbetween"), "column. If this is significant, it means there are significant differences between levels of your moderator."),
+          p("Note the following columns I have created to aid in interpretation:"),
+          p(strong("nexp"),"is the sample size of the intervention group, and", strong("nctrl"), "is the sample size of the control group. Note that this is not calculating the actual number of unique participants, because this code is simply conditionally summing the sample size columns in our data set. For example, if a study had one experimental group (n = 10) and one control group (n = 10), and had three outcomes that were included in the analysis (meaning, each appears as its own row in the data set), this code will say there were 30 participants in each group rather than 10. While this is expected in dependent data such as this, it is something to be aware of so you do not make a claim such as, “our analysis of 60 participants” when in reality, your analysis is only 20 unique participants. So, please be careful of your wording when you describe the participant numbers to ensure strict accuracy."),
+          p(strong("kcomp"),"is the number of comparisons examined. The total number of kcomp in the table should correspond to the number of rows in your dataset."),
+          p(strong("kstudies"),"is the number of studies providing comparisons in the analysis. Note that it is possible for this not to sum to the same number as appears in your data set. For example, if Study A provided 4 comparisons and 1 or more were at different levels of this moderator variable, kstudies will not equal the total number of unique studies in the dataset because it is being counted in multiple moderator levels."),
+          h3("Need Help Understanding The Results?"),
+          p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#moderator-analysis'>my open book</a>"),
+          ),
+        )
+      }
+    })
+    
+    
+    
+    # Reactive expression to read uploaded CSV file
+    uploaded_data3lc <- reactive({
+      req(input$modfile)
+      read.csv(input$modfile$datapath)
+    })
+    
+    # Update selectInput choices when file is uploaded
+    observeEvent(input$modfile, {
+      updateSelectInput(session, "dropdown", choices = colnames(uploaded_data3lc()))
+    })
+    
+    # Define a reactive expression for running the moderator analysis without intercept
+    mod_without_intercept_3lc <- reactive({
+      req(input$run_analysis, input$dropdown)  # Ensure dropdown choice is available
+      mod_formula_3lc <- as.formula(paste("~ -1 + factor(", input$dropdown, ")"))
+      mod_result_no_intercept_3lc <- rma.mv(yi, vi, random = ~ 1 | Study/ES_number, mods = mod_formula_3lc, 
+                                            test = "t", dfs = "contain", data = uploaded_data3lc())
+      model_summary_no_intercept_3lc <- summary(mod_result_no_intercept_3lc)
+      summary_table_no_intercept_3lc <- coef(model_summary_no_intercept_3lc)
+      
+      if(is.null(summary_table_no_intercept_3lc) || nrow(summary_table_no_intercept_3lc) == 0) {
+        stop("The summary table for the model without intercept has no data.")
+      }
+      
+      # Summarize participants and compute kstudies
+      participants_summary_3lc <- uploaded_data3lc() %>%
+        group_by(!!sym(input$dropdown)) %>%
+        summarise(
+          nexp = sum(Exp_n, na.rm = TRUE),
+          ctrl = sum(Ctrl_n, na.rm = TRUE),
+          kcomp = n(),
+          kstudies = n_distinct(Study),
+          .groups = 'drop'
+        )
+      
+      # Add participant summary data directly to summary_table_no_intercept_3lc
+      summary_table_no_intercept_3lc$nexp <- participants_summary_3lc$nexp
+      summary_table_no_intercept_3lc$ctrl <- participants_summary_3lc$ctrl
+      summary_table_no_intercept_3lc$kcomp <- participants_summary_3lc$kcomp
+      summary_table_no_intercept_3lc$kstudies <- participants_summary_3lc$kstudies
+      
+      # Add row names as a column called "Term"
+      summary_table_no_intercept_3lc$Term <- NA
+      
+      # Reorder columns to start with Term, followed by participant summaries, then model results
+      summary_table_no_intercept_3lc <- summary_table_no_intercept_3lc %>%
+        select(Term, nexp, ctrl, kcomp, kstudies, everything())
+      
+      summary_table_no_intercept_3lc
+    })
+    
+    # Define a reactive expression for capturing only the "Test of Moderators" information from a model with intercept
+    mod_with_intercept_3lc <- reactive({
+      req(input$run_analysis, input$dropdown)
+      mod_formula_with_intercept_3lc <- as.formula(paste("~ factor(", input$dropdown, ")"))
+      mod_result_with_intercept_3lc <- rma.mv(yi, vi, random = ~ 1 | Study/ES_number, mods = mod_formula_with_intercept_3lc, 
+                                              test = "t", dfs = "contain", data = uploaded_data3lc())
+      
+      if(is.null(mod_result_with_intercept_3lc$QM)) {
+        return(NA)  # Return NA if there is no Test of Moderators data available
+      }
+      
+      # Format Test of Moderators data as a string
+      QM_3lc <- mod_result_with_intercept_3lc$QM
+      QMp_3lc <- mod_result_with_intercept_3lc$QMp
+      df1_3lc <- mod_result_with_intercept_3lc$QMdf[1]
+      df2_3lc <- mod_result_with_intercept_3lc$QMdf[2]
+      sprintf("F(%d, %d) = %.3f, p-val = %.3f", df1_3lc, df2_3lc, QM_3lc, QMp_3lc)
+    })
+    
+    # Define a reactive expression for running the moderator analysis without intercept
+    mod_without_intercept_3lc <- reactive({
+      req(input$run_analysis, input$dropdown)  # Ensure dropdown choice is available
+      mod_formula_3lc <- as.formula(paste("~ -1 + factor(", input$dropdown, ")"))
+      mod_result_no_intercept_3lc <- rma.mv(yi, vi, random = ~ 1 | Study/ES_number, mods = mod_formula_3lc, 
+                                            test = "t", dfs = "contain", data = uploaded_data3lc())
+      model_summary_no_intercept_3lc <- summary(mod_result_no_intercept_3lc)
+      summary_table_no_intercept_3lc <- coef(model_summary_no_intercept_3lc)
+      
+      if(is.null(summary_table_no_intercept_3lc) || nrow(summary_table_no_intercept_3lc) == 0) {
+        stop("The summary table for the model without intercept has no data.")
+      }
+      
+      participants_summary_3lc <- uploaded_data3lc() %>%
+        group_by(!!sym(input$dropdown)) %>%
+        summarise(
+          nexp = sum(Exp_n, na.rm = TRUE),
+          ctrl = sum(Ctrl_n, na.rm = TRUE),
+          kcomp = n(),
+          kstudies = n_distinct(Study),
+          .groups = 'drop'
+        )
+      
+      summary_table_no_intercept_3lc$nexp <- participants_summary_3lc$nexp
+      summary_table_no_intercept_3lc$ctrl <- participants_summary_3lc$ctrl
+      summary_table_no_intercept_3lc$kcomp <- participants_summary_3lc$kcomp
+      summary_table_no_intercept_3lc$kstudies <- participants_summary_3lc$kstudies
+      summary_table_no_intercept_3lc$Term <- rownames(summary_table_no_intercept_3lc)
+      
+      # Add row names as a column called "Term"
+      summary_table_no_intercept_3lc$Term <- rownames(summary_table_no_intercept_3lc)
+      
+      # Ensure 'TestOfModerators' column exists
+      if (!"TestOfModerators" %in% names(summary_table_no_intercept_3lc)) {
+        summary_table_no_intercept_3lc$TestOfModerators <- NA
+      }
+      
+      summary_table_no_intercept_3lc <- summary_table_no_intercept_3lc %>%
+        select(Term, nexp, ctrl, kcomp, kstudies, everything())
+      
+      summary_table_no_intercept_3lc
+    })
+    
+    # Display results in a table
+    output$modtable_output <- renderTable({
+      req(input$run_analysis > 0)
+      
+      # Define the numeric columns list here to ensure visibility
+      numeric_columns <- c("nexp", "ctrl", "kcomp", "kstudies", "estimate", "se", "pval", "tval", "ci.lb", "ci.ub")  # Adjust list as necessary
+      
+      result_table_data_3lc <- mod_without_intercept_3lc()
+      
+      # Apply rounding to numeric columns first
+      result_table_data_3lc[numeric_columns] <- lapply(result_table_data_3lc[numeric_columns], function(x) {
+        # Convert to numeric if not already, then round
+        if(!is.numeric(x)) x <- as.numeric(as.character(x))
+        round(x, 3)
+      })
+      
+      # Replace NA with empty string after rounding
+      result_table_data_3lc <- replace(result_table_data_3lc, is.na(result_table_data_3lc), "")
+      
+      # Add the "Test of Moderators" after numeric handling to prevent structure mismatch
+      test_of_mods_3lc <- mod_with_intercept_3lc()  # Get Test of Moderators
+      if (!is.na(test_of_mods_3lc)) {
+        # Create a row for the Test of Moderators
+        test_mods_row <- setNames(as.data.frame(matrix("", ncol = ncol(result_table_data_3lc), nrow = 1)), names(result_table_data_3lc))
+        test_mods_row$TestOfModerators <- test_of_mods_3lc
+        result_table_data_3lc <- rbind(result_table_data_3lc, test_mods_row)
+      }
+      
+      result_table_data_3lc
+    })
+    
+    # Define the server logic for the download handler
+    output$download_results <- downloadHandler(
+      filename = function() {
+        paste("mod.", input$dropdown, Sys.Date(), ".csv", sep = "")
+        },
+      content = function(file) {
+        req(input$run_analysis > 0)  # Ensure the analysis has been run
+        
+        # Generate the table data using the same logic as for display
+        result_table_data_3lc <- mod_without_intercept_3lc()
+        
+        # Get Test of Moderators, if available
+        test_of_mods_3lc <- mod_with_intercept_3lc()
+        if (!is.na(test_of_mods_3lc)) {
+          test_mods_row <- setNames(as.data.frame(matrix("", ncol = ncol(result_table_data_3lc), nrow = 1)), names(result_table_data_3lc))
+          test_mods_row$TestOfModerators <- test_of_mods_3lc
+          result_table_data_3lc <- rbind(result_table_data_3lc, test_mods_row)
+        }
+        
+        # Replace NA with empty string for CSV output
+        result_table_data_3lc <- replace(result_table_data_3lc, is.na(result_table_data_3lc), "")
+        
+        # Define the numeric columns that should be rounded
+        numeric_columns <- c("nexp", "ctrl", "kcomp", "kstudies", "estimate", "se", "pval", "tval", "ci.lb", "ci.ub")   # Adjust list as necessary
+        
+        # Apply rounding to numeric columns
+        result_table_data_3lc[numeric_columns] <- lapply(result_table_data_3lc[numeric_columns], function(x) {
+          if(is.numeric(x)) round(x, 3) else x
+        })
+        
+        # Write the data frame to a CSV file
+        write.csv(result_table_data_3lc, file, row.names = FALSE, na = "")
+      }
+    )
+###Cont Mod Analysis 3lma ----
+    
+    # Initialize a reactive value for displaying results
+    resultsvisibleRVECont3lCcont <- reactiveVal(FALSE)
+    
+    observeEvent(input$run_analysisa, {
+      resultsvisibleRVECont3lCcont(TRUE)
+    })
+    
+    observeEvent(input$dropdowna, {
+      resultsvisibleRVECont3lCcont(FALSE)
+    })
+    
+    observeEvent(input$modfilea, {
+      resultsvisibleRVECont3lCcont(FALSE)
+    })
+    
+    output$dynamicResults3lCcont <- renderUI({
+      if (resultsvisibleRVECont3lCcont()) {
+        tagList(
+          # Display the results
+          h2("*Important Note*"),
+          p("In metafor there are two different tests of the moderator. The table below presents the omnibus test of moderators from the model with an intercept. This is the same statistic as you may be used to seeing as Qbetween in conventional meta-analysis. The effect sizes etc. provided in the moderator table below are from the model without an intercept. In a conventional meta-analysis, this is a presentation consistent with what you may expect to see from other software packages such as Comprehensive Meta-Analysis."),
+          downloadButton("download_resultsa", "Download Results"),
+          tableOutput("modtable_outputa"),
+          h3("Basic Interpretation Tips"),
+          p("First you should look at the", strong("Qbetween"), "column. If this is significant, it means there are significant differences between levels of your moderator."),
+          p("Note the following columns I have created to aid in interpretation:"),
+          p(strong("nexp"),"is the sample size of the intervention group, and", strong("nctrl"), "is the sample size of the control group. Note that this is not calculating the actual number of unique participants, because this code is simply conditionally summing the sample size columns in our data set. For example, if a study had one experimental group (n = 10) and one control group (n = 10), and had three outcomes that were included in the analysis (meaning, each appears as its own row in the data set), this code will say there were 30 participants in each group rather than 10. While this is expected in dependent data such as this, it is something to be aware of so you do not make a claim such as, “our analysis of 60 participants” when in reality, your analysis is only 20 unique participants. So, please be careful of your wording when you describe the participant numbers to ensure strict accuracy."),
+          p(strong("kcomp"),"is the number of comparisons examined. The total number of kcomp in the table should correspond to the number of rows in your dataset."),
+          p(strong("kstudies"),"is the number of studies providing comparisons in the analysis. Note that it is possible for this not to sum to the same number as appears in your data set. For example, if Study A provided 4 comparisons and 1 or more were at different levels of this moderator variable, kstudies will not equal the total number of unique studies in the dataset because it is being counted in multiple moderator levels."),
+          h3("Need Help Understanding The Results?"),
+          p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#moderator-analysis'>my open book</a>"),
+          ),
+        )
+      }
+    })
+    
+    
+    
+    
+    
+    uploaded_dataa <- reactive({
+      req(input$modfilea)
+      read.csv(input$modfilea$datapath)
+    })
+    
+    observeEvent(input$modfilea, {
+      updateSelectInput(session, "dropdowna", choices = colnames(uploaded_dataa()))
+    })
+    
+    mod_summary <- reactive({
+      req(input$run_analysisa, input$dropdowna)
+      mod_formula <- as.formula(paste("~", input$dropdowna))
+      
+      mod_result_with_intercept <- rma.mv(yi, vi, random = ~ 1 | Study/ES_number, mods = mod_formula,
+                                          test = "t", dfs = "contain", data = uploaded_dataa())
+      model_summarya <- summary(mod_result_with_intercept)
+      summary_tablea <- coef(model_summarya)
+      
+      if(is.null(summary_tablea) || nrow(summary_tablea) == 0) {
+        stop("The summary table has no data.")
+      }
+      
+      QMa <- round(mod_result_with_intercept$QM, 3)
+      QMpa <- round(mod_result_with_intercept$QMp, 3)
+      df1a <- mod_result_with_intercept$QMdf[1]
+      df2a <- mod_result_with_intercept$QMdf[2]
+      
+      result_tablea <- data.frame(
+        Term = c(rownames(summary_tablea), "Test of Moderator"),
+        Estimate = c(round(summary_tablea[, "estimate"], 3), NA),
+        StdError = c(round(summary_tablea[, "se"], 3), NA),
+        TValue = c(round(summary_tablea[, "tval"], 3), NA),
+        PValue = c(round(summary_tablea[, "pval"], 3), NA),
+        CI_Lower = c(round(summary_tablea[, "ci.lb"], 3), NA),
+        CI_Upper = c(round(summary_tablea[, "ci.ub"], 3), NA),
+        TestOfModerator = c(rep(NA, nrow(summary_tablea)), sprintf("F(%d, %d) = %.3f, p-val = %.3f", 
+                                                                   df1a, df2a, QMa, QMpa))
+      )
+      # Replace values less than 0.001 with "<0.001" in the "p-value" column
+      result_tablea$PValue[result_tablea$PValue < 0.001] <- "< 0.001"
+      return(result_tablea)
+    })
+    
+    output$modtable_outputa <- renderTable({
+      req(mod_summary())
+      mod_summary()
+    }, na = '')  # Display NA as empty cells
+    
+    # Define a download handler for exporting the results as a CSV file
+    output$download_resultsa <- downloadHandler(
+      filename = function() {
+        paste("mod.", input$dropdowna, Sys.Date(), ".csv", sep = "")
+        },
+      content = function(file) {
+        req(mod_summary())
+        write.csv(mod_summary(), file, row.names = FALSE, na = "")  # Write empty strings instead of NA
+      }
+    )
+
+### Publication bias 3lma ---- 
+
+# Reactive function to read the uploaded file
+data <- reactive({
+  req(input$pubbiasfile)
+  read.table(input$pubbiasfile$datapath, header = TRUE, sep = ",", stringsAsFactors = FALSE)
+})
+
+# Reactive function to process data upon button click
+processed_data <- eventReactive(input$run_pub, {
+  req(data())
+  data_with_totaln <- data()
+  
+  # Check if required columns exist
+  if ("Exp_n" %in% colnames(data_with_totaln) && "Ctrl_n" %in% colnames(data_with_totaln)) {
+    # Calculate total number of participants for each row
+    data_with_totaln$totaln <- rowSums(data_with_totaln[c("Exp_n", "Ctrl_n")], na.rm = TRUE)
+    
+    # Calculate standard error
+    data_with_totaln$standard_error <- sqrt(data_with_totaln$vi) / sqrt(data_with_totaln$totaln)
+    
+    # Create sequentially numbered unique cases within each study
+    data_with_totaln <- data_with_totaln %>%
+      mutate(study = as.integer(factor(Study))) %>%
+      select(study, author = Study, out = ES_number, yi, vi, standard_error)
+
+    # Assign vectors for subsequent analyses
+    study <- data_with_totaln$study
+    out <- data_with_totaln$out
+    ES <- data_with_totaln$yi
+    var <- data_with_totaln$vi
+    se <- data_with_totaln$standard_error
+    author <- data_with_totaln$author
+    
+    return(data_with_totaln)
+  } else {
+    # Show error message if required columns are missing
+    showModal(modalDialog(
+      title = "Error",
+      "Required columns 'Exp_n' and/or 'Ctrl_n' are missing in the uploaded file.",
+      easyClose = TRUE
+    ))
+    return(NULL)
+  }
+})
+
+# Render data summary as a table
+output$data_summary <- renderTable({
+  req(processed_data())
+  processed_data() %>%
+    arrange(author)  # Sort the table by 'author' column
+})
+
+
+
+# Render the forest plot
+output$forest_plot <- renderPlot({
+  req(input$forest, processed_data())
+  processed <- processed_data()
+  author <- processed_data()$author
+  study <- processed_data()$study
+  ES <- processed_data()$yi
+  out <- processed_data()$out
+  var <- processed_data()$vi
+  se <- processed_data()$standard_error
+
+  # Print lengths of vectors for debugging
+  print(c(author = length(author), study = length(study), ES = length(ES), out = length(out), var = length(var), se = length(se)))
+  
+  # Generate forest plot
+  # Pass study to the forest_plot_3 function
+  forest_plot_3(author, study, ES, out, var, se, size_lines = 1)
+})
+
+# Render the comp level funnel plot
+output$comp_level_funnel <- renderPlot({
+  req(input$forest,processed_data())  # Assuming processed_data() contains the necessary data
+  processed <- processed_data()
+  study <- processed$study
+  ES <- processed$yi
+  out <- processed$out
+  var <- processed$vi
+  se <- processed$standard_error
+  
+  # Generate comp level funnel plot
+  three_funnel(study, ES, out, var, se)
+})
+
+# Render the three level study funnel plot
+output$three_level_study_funnel <- renderPlot({
+  req(input$forest, processed_data())  # Assuming processed_data() contains the necessary data
+  processed <- processed_data()
+  study <- processed$study
+  ES <- processed$yi
+  out <- processed$out
+  var <- processed$vi
+  se <- processed$standard_error
+  
+  # Generate three level study funnel plot
+  three_funnel_study(study, ES, out, var, se, size_dots=1, numbers=0)  # Make sure size_dots and numbers are defined
+})
+
+# Download handler for the forest plot
+output$download_forest <- downloadHandler(
+  filename = function() {
+    "forest_plot.png"  # Specify file name
+  },
+  content = function(file) {
+    # Capture the plot as a PNG file
+    png(file, width = 2800, height = 2400, units = "px", res = 300)
+    
+    # Generate the forest plot
+    processed <- processed_data()
+    author <- processed$author
+    study <- processed$study
+    ES <- processed$yi
+    out <- processed$out
+    var <- processed$vi
+    se <- processed$standard_error
+    forest_plot_3(author, study, ES, out, var, se, size_lines = 1)  # Generate the forest plot
+    
+    dev.off()  # Turn off the PNG device
+  }
+)
+
+# Download handler for three_funnel plot
+output$download_compfunnel <- downloadHandler(
+  filename = function() {
+    "three_funnel_plot.png"  # Specify file name
+  },
+  content = function(file) {
+    # Capture the plot as a PNG file
+    png(file, width = 2800, height = 2400, units = "px", res = 300)
+    
+    # Generate the three_funnel plot
+    processed <- processed_data()  # Assuming processed_data() contains required data
+    study <- processed$study
+    ES <- processed$yi
+    out <- processed$out
+    var <- processed$vi
+    se <- processed$standard_error
+    three_funnel(study, ES, out, var, se)  # Generate the three_funnel plot
+    
+    dev.off()  # Turn off the PNG device
+  }
+)
+
+# Download handler for three_funnel_study plot
+output$download_studyfunnel <- downloadHandler(
+  filename = function() {
+    "three_funnel_study_plot.png"  # Specify file name
+  },
+  content = function(file) {
+    # Capture the plot as a PNG file
+    png(file, width = 2800, height = 2400, units = "px", res = 300)
+    
+    # Generate the three_funnel_study plot
+    processed <- processed_data()  # Assuming processed_data() contains required data
+    study <- processed$study
+    ES <- processed$yi
+    out <- processed$out
+    var <- processed$vi
+    se <- processed$standard_error
+    three_funnel_study(study, ES, out, var, se, size_dots=1, numbers=0)  # Generate the three_funnel_study plot
+    
+    dev.off()  # Turn off the PNG device
+  }
+)
+
+
+##3LMA CHE RVE----
+### Main Analysis----
+# Initialize a reactive value for displaying results
+resultsVisibleRVE <- reactiveVal(FALSE)
+
+observeEvent(input$run_che, {
+  resultsVisibleRVE(TRUE)
+})
+
+observeEvent(input$correlation, {
+  resultsVisibleRVE(FALSE)
+})
+
+observeEvent(input$chefile, {
+  resultsVisibleRVE(FALSE)
+})
+
+output$dynamicResultsche <- renderUI({
+  if (resultsVisibleRVE()) {
+    tagList(
+      h3("Model Result"),
+      downloadButton("downloadRVEvar", "Download RVE Results"),
+      verbatimTextOutput("che_resultsrobust"),
+      h2("Sensitivity Check"),
+      downloadButton("downloadRVE", "Download Sensitivity Results"),
+      tableOutput("custom_results")
+    )
+  }
+})
+
+# Reactive value for rho
+rho <- reactive({
+  as.numeric(input$correlation)
+})
+
+# Reactive data preparation
+uploaded_data <- reactive({
+  req(input$chefile)
+  read.csv(input$chefile$datapath)
+})
+
+# Reactive covariance matrix calculation
+V <- reactive({
+  req(uploaded_data())
+  with(uploaded_data(), impute_covariance_matrix(vi = vi, cluster = Study, r = rho()))
+})
+
+# Compute CHE results
+CHEresult <- eventReactive(input$run_che, {
+  tryCatch({
+    rma.mv(yi, V(),
+           random = ~ 1 | Study/ES_number,
+           method = "REML",
+           test = "t",
+           dfs = "contain",
+           data = uploaded_data(),
+           Sparse = TRUE)
+  }, error = function(e) {
+    print(e)  # Print error for debugging
+    showNotification(conditionMessage(e), type = "error")
+    return(NULL)
+  })
+})
+
+CHEresultrobust <- eventReactive(input$run_che, {
+  tryCatch({
+    resultrobust <- CHEresult()  # Retrieve the reactive value
+    robust(resultrobust, cluster = Study, clubSandwich = TRUE, digits = 3)
+  }, error = function(e) {
+    print(e)  # Print error for debugging
+    # Display error as a notification
+    showNotification(conditionMessage(e), type = "error")
+    return(NULL)
+  })
+})
+
+# Display the robust rma.mv results
+output$che_resultsrobust <- renderPrint({
+  req(CHEresult(), CHEresultrobust)
+  result <- CHEresultrobust()
+  print(summary(result))  # For debugging
+})
+
+# Download Handler for the RVE Results
+output$downloadRVEvar <- downloadHandler(
+  filename = function() {
+    "myCHERVEresult.txt"  
+  },
+  content = function(file) {
+    # Retrieve the result
+    RVEresult <- CHEresultrobust()
+    
+    # Convert result to text
+    RVEresult_textc <- capture.output(RVEresult)
+    
+    # Write result to text file
+    writeLines(RVEresult_textc, file)
+  }
+)
+
+new_rho1 <- reactive({
+  req(uploaded_data(), rho())
+  new_rho1 <- min(1.0, rho() + 0.2)  # Ensure rho does not exceed 1.0
+})
+# Reactive covariance matrix calculation
+V_upper <- reactive({
+  req(uploaded_data())
+  with(uploaded_data(), impute_covariance_matrix(vi = vi, cluster = Study, r = new_rho1()))
+})
+
+# Analyses with rho adjusted by +0.2
+rhoUpperResult <- eventReactive(input$run_che, {
+  tryCatch({
+    rma.mv(yi, V_upper(),
+           random = ~ 1 | Study/ES_number,
+           method = "REML",
+           test = "t",
+           dfs = "contain",
+           data = uploaded_data(),
+           rho = new_rho1,
+           Sparse = TRUE)
+  }, error = function(e) {
+    print(e)  # Print error for debugging
+    showNotification(conditionMessage(e), type = "error")
+    return(NULL)
+  })
+})
+
+rhoupperrobust <- eventReactive(input$run_che, {
+  tryCatch({
+    rhoupperresultrobust <- rhoUpperResult()  # Retrieve the reactive value
+    robust(rhoupperresultrobust, cluster = Study, clubSandwich = TRUE, digits = 3)
+  }, error = function(e) {
+    print(e)  # Print error for debugging
+    showNotification(conditionMessage(e), type = "error")
+    return(NULL)
+  })
+})
+
+
+new_rho <- reactive({
+  req(uploaded_data(), rho())
+  new_rho <- max(-1.0, rho() - 0.2)
+})# Ensure rho does not go below -1.0
+# Reactive covariance matrix calculation
+V_lower <- reactive({
+  req(uploaded_data())
+  with(uploaded_data(), impute_covariance_matrix(vi = vi, cluster = Study, r = new_rho()))
+})
+
+# Analyses with rho adjusted by -0.2
+rhoLowerResult <- eventReactive(input$run_che, {
+  tryCatch({
+    rma.mv(yi, V_lower(),
+           random = ~ 1 | Study/ES_number,
+           method = "REML",
+           test = "t",
+           dfs = "contain",
+           data = uploaded_data(),
+           rho = new_rho,
+           Sparse = TRUE)
+  }, error = function(e) {
+    print(e)  # Print error for debugging
+    showNotification(conditionMessage(e), type = "error")
+    return(NULL)
+  })
+})
+
+rholowerrobust <- eventReactive(input$run_che, {
+  tryCatch({
+    rholowerresultrobust <- rhoLowerResult()  # Retrieve the reactive value
+    robust(rholowerresultrobust, cluster = Study, clubSandwich = TRUE, digits = 3)
+  }, error = function(e) {
+    print(e)  # Print error for debugging
+    showNotification(conditionMessage(e), type = "error")
+    return(NULL)
+  })
+})
+
+# Don't forget to define safe_round() and any other necessary components
+safe_round <- function(x) {
+  if (is.numeric(x)) {
+    round(x, 3)
+  } else {
+    NA  # Return NA if the input is not numeric
+  }
+}
+# Create a globally accessible reactive expression for results_df
+results_df <- reactive({
+  req(CHEresultrobust(), rholowerrobust(), rhoupperrobust())
+  
+  robust_model <- data.frame(
+    Model = sprintf("Your model rho = %.2f", rho()),
+    Estimate = safe_round(CHEresultrobust()$b),
+    SE = safe_round(CHEresultrobust()$se),
+    `t-value` = safe_round(CHEresultrobust()$zval),
+    df = safe_round(CHEresultrobust()$QMdf[2]),
+    `p-value` = safe_round(CHEresultrobust()$pval),
+    `95% CI` = sprintf("[%s, %s]", safe_round(CHEresultrobust()$ci.lb), safe_round(CHEresultrobust()$ci.ub))
+  )
+  
+  robust_model_lower <- data.frame(
+    Model = sprintf("Sensitivity Test rho = %.2f", max(-1.0, rho() - 0.2)),
+    Estimate = safe_round(rholowerrobust()$b),
+    SE = safe_round(rholowerrobust()$se),
+    `t-value` = safe_round(rholowerrobust()$zval),
+    df = safe_round(rholowerrobust()$QMdf[2]),
+    `p-value` = safe_round(rholowerrobust()$pval),
+    `95% CI` = sprintf("[%s, %s]", safe_round(rholowerrobust()$ci.lb), safe_round(rholowerrobust()$ci.ub))
+  )
+  
+  robust_model_upper <- data.frame(
+    Model = sprintf("Sensitivity Test rho = %.2f", min(1.0, rho() + 0.2)),
+    Estimate = safe_round(rhoupperrobust()$b),
+    SE = safe_round(rhoupperrobust()$se),
+    `t-value` = safe_round(rhoupperrobust()$zval),
+    df = safe_round(rhoupperrobust()$QMdf[2]),
+    `p-value` = safe_round(rhoupperrobust()$pval),
+    `95% CI` = sprintf("[%s, %s]", safe_round(rhoupperrobust()$ci.lb), safe_round(rhoupperrobust()$ci.ub))
+  )
+  
+  # Combine the rows into a single data frame and explicitly set column names
+  combined_results <- rbind(robust_model, robust_model_lower, robust_model_upper)
+  colnames(combined_results) <- c("Model", "Estimate", "SE", "t-value", "df", "p-value", "95% CI")
+  combined_results
+})
+
+output$custom_results <- renderTable({
+  req(results_df())
+  results_df()
+}, digits = 3, align = 'l', sanitize.text.function = function(x) {x})  # Correcting placement of options within renderTable
+
+# Download handler for downloading the results table
+output$downloadRVE <- downloadHandler(
+  filename = function() {
+    paste("CHERVE-Sensitivity-Results-", Sys.Date(), ".csv", sep = "")
+  },
+  content = function(file) {
+    req(results_df())
+    write.csv(results_df(), file, row.names = FALSE)
+  }
+)
+###Variance CHERVE----
+
+
+# Initialize a reactive value for displaying results
+resultsVisibleRVEvar <- reactiveVal(FALSE)
+
+observeEvent(input$run_i2RVE, {
+  resultsVisibleRVEvar(TRUE)
+})
+
+observeEvent(input$correlationi2, {
+  resultsVisibleRVEvar(FALSE)
+})
+
+observeEvent(input$i2fileRVE, {
+  resultsVisibleRVEvar(FALSE)
+})
+
+output$dynamicResultschevar <- renderUI({
+  if (resultsVisibleRVEvar()) {
+    tagList(
+      h3("I2 Results"),
+      downloadButton("download_i2_resultsRVE", label = "Download Results"),
+      verbatimTextOutput("i2result_outputRVE"),
+      verbatimTextOutput("totalI2_outputRVE"),
+      h3("Need Help Understanding The Results?"),
+      p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#interpreting-the-results'>my open book</a>"),
+      ),
+    )
+  }
+})
+
+
+
+# Load the script containing the functions
+source("i2code.r")
+
+# Reactive value for rho
+rhoi2 <- reactive({
+  as.numeric(input$correlationi2)
+})
+
+# Data loading and initial processing
+i2_datRVE <- eventReactive(input$run_i2RVE, {
+  req(input$i2fileRVE)
+  read.csv(input$i2fileRVE$datapath)
+})
+
+# Reactive covariance matrix calculation
+Vi2 <- eventReactive(input$run_i2RVE, {
+  req(i2_datRVE())
+  datavi2 <- i2_datRVE()
+  vii <- with(datavi2, impute_covariance_matrix(vi = vi, cluster = Study, r = rhoi2()))
+  vii
+})
+
+# i2 results computation
+i2_resultRVE <- eventReactive(input$run_i2RVE, {
+  req(i2_datRVE())
+  datai2RVE <- i2_datRVE()
+  # Ensure `yi` and `Study` are part of your dataset
+  if (!("yi" %in% names(datai2RVE)) || !("Study" %in% names(datai2RVE))) {
+    stop("Data is missing 'yi' or 'Study' columns")
+  }
+  # Run the model
+  m_multii2 <- rma.mv(yi, V = Vi2(),
+                      random = ~ 1 | Study/ES_number,
+                      method = "REML",
+                      test = "t",
+                      dfs = "contain",
+                      data = datai2RVE,
+                      Sparse = TRUE)
+  
+  # Calculate I-squared values and variance distribution
+  i2RVE <- mlm.variance.distribution(m_multii2)
+  # Extract the results and total I2, ensure they exist
+  resultsi2RVE <- if("results" %in% names(i2RVE)) i2RVE$results else NULL
+  totalI2RVE <- if("totalI2" %in% names(i2RVE)) i2RVE$totalI2 else "Empty"
+  
+  
+  # Return the results and total I2 for rendering in the UI
+  return(list(results = i2RVE$results, totalI2 = i2RVE$totalI2))
+  
+})
+
+# Render the results output in the UI
+output$i2result_outputRVE <- renderPrint({
+  req(i2_resultRVE())  # Ensure the reactive is resolved before accessing
+  if (!is.null(i2_resultRVE()$results)) {
+    # Rounding numerical columns to two decimal places
+    rounded_results <- i2_resultRVE()$results
+    numeric_columns <- sapply(rounded_results, is.numeric)  # Identify numeric columns
+    rounded_results[numeric_columns] <- lapply(rounded_results[numeric_columns], round, 2)
+    print(rounded_results)
+  }
+})
+
+# Render the totalI2 output in the UI with label
+output$totalI2_outputRVE <- renderText({
+  req(i2_resultRVE())  # Ensure the reactive is resolved before accessing
+  if(!is.na(i2_resultRVE()$totalI2) && !is.null(i2_resultRVE()$totalI2)) {
+    paste("Total I2:", sprintf("%.2f", i2_resultRVE()$totalI2))   #  ROund 2 decimal places
+  } else {
+    "Total I2: Not available"
+  }
+})
+
+# Add a download button to download both the i2 results and the total i2 results as a .txt file
+output$download_i2_resultsRVE <- downloadHandler(
+  filename = function() {
+    paste("i2_results_", Sys.Date(), ".txt", sep = "")
+  },
+  content = function(file) {
+    # Retrieve the i2 results and total i2 results
+    i2_results <- i2_resultRVE()$results
+    total_i2 <- i2_resultRVE()$totalI2
+    
+    # Round numeric columns in the results data frame to two decimal places
+    numeric_columns <- sapply(i2_results, is.numeric)  # Identify numeric columns
+    i2_results[numeric_columns] <- lapply(i2_results[numeric_columns], round, 2)
+    
+    # Convert i2 results to text
+    i2_results_text <- capture.output(print(i2_results))
+    
+    # Format total I2 to two decimal places and convert to text
+    total_i2_text <- sprintf("Total I2: %.2f", total_i2)
+    
+    # Combine i2 results and total i2 results text
+    combined_text <- c(i2_results_text, total_i2_text)
+    
+    # Write combined text to a .txt file
+    writeLines(combined_text, file)
+  }
+)
+###Outlier and Influence Analysis CHERVE----
+
+
+# Initialize a reactive value for displaying results
+resultsVisibleRVEinf <- reactiveVal(FALSE)
+
+observeEvent(input$run_infrve, {
+  resultsVisibleRVEinf(TRUE)
+  print("Run analysis clicked, setting resultsVisibleRVECat to TRUE.")
+})
+
+observeEvent(input$correlationrve, {
+  resultsVisibleRVEinf(FALSE)
+})
+
+observeEvent(input$inffilerve, {
+  resultsVisibleRVEinf(FALSE)
+})
+
+output$dynamicResultsinf <- renderUI({
+  if (resultsVisibleRVEinf()) {
+    tagList(
+      h3("Outlier Results"),
+      downloadButton("download_outliersrve", "Download Outlier Plot"),
+      plotOutput("outlier_plotrve"),
+      h3("Influence Results"),
+      p("It is important to see if the outliers significantly influence our results. We'll examine three metrics: Cook's distance, DFBETAS, and hat values. You will see that there are columns with these names _flag. If there is an asterisk in that column, that means that study had significant influence according to that metric."),
+      downloadButton("download_influencerve", "Download .csv with Influence Results"),
+      h4("Influence Statistics"),
+      tableOutput("influence_tablerve"),
+      h3("Need Help Understanding The Results?"),
+      p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#checking-for-outliers-and-influence'>my open book</a>"),
+      ),
+    )
+  }
+})
+
+
+
+# Reactive value for rhorve
+rhorve <- reactive({
+  rho_value <- as.numeric(input$correlationrve)
+  if (is.na(rho_value)) {
+    print("Invalid rho value")
+    return(0)  # Default or error handling value
+  }
+  print(paste("Rho updated:", rho_value))
+  rho_value
+})
+
+# Reactive covariance matrix calculation 
+V_RVErve <- reactive({
+  req(input$inffilerve)  # Depend on the filtered data
+  # Read uploaded CSV file
+  data <- read.csv(input$inffilerve$datapath)
+  
+  if (!"vi" %in% names(data) || !is.numeric(data$vi)) {
+    stop("Column 'vi' is missing or not numeric.")
+  }
+  if (!"Study" %in% names(data)) {
+    stop("Column 'Study' is missing.")
+  }
+  
+  tryCatch({
+    result <- impute_covariance_matrix(vi = data$vi, cluster = data$Study, r = rhorve())  # Use rhorve() directly
+  }, error = function(e) {
+    stop("Error in computing V_RVErve: ", e$message)
+  })
+})
+
+
+# Define a reactive value to hold the influence data
+influence_datarve <- reactiveVal(NULL)
+infprogrve <- reactiveVal(0)
+progress_activerve <- reactiveVal(FALSE)
+# Reactive function to perform analysis and update influence data
+observeEvent(input$run_infrve, {
+  req(input$inffilerve)
+  infprog(0)
+  progress_active(TRUE)  # Activate progress bar
+  withProgress(message = "Running Meta-Analysis...", value = 0, {
+    # Read uploaded CSV file
+    data <- read.csv(input$inffilerve$datapath)
+    
+    # Run the meta-analysis
+    m_multi <- rma.mv(yi, V_RVErve(),
+                      random = ~ 1 | Study/ES_number,
+                      method = "REML",
+                      test = "t",
+                      dfs = "contain",
+                      data = data)
+    robrveinf <- robust(m_multi, cluster = data$Study, clubSandwich = TRUE, digits = 3)
+    incProgress(1/8, message = "Performing outlier analysis") 
+    # Perform outlier and influence analysis
+    data$upperci <- data$yi + 1.96 * sqrt(data$vi)
+    data$lowerci <- data$yi - 1.96 * sqrt(data$vi)
+    data$outlier <- data$upperci < robrveinf$ci.lb | data$lowerci > robrveinf$ci.ub
+    
+    incProgress(2/8, message = "Calculating Cook's Distance") 
+    # Calculate Cook's distance
+    cooks <- cooks.distance(robrveinf)
+    
+    incProgress(3/8, message = "Calculating DFBETAS") 
+    # Calculate hat values
+    hatvalues <- hatvalues(robrveinf)
+    
+    
+    # Calculate dfbetas
+    dfbetas <- dfbetas(m_multi)
+    incProgress(4/8, message = "Calculating hat values") 
+    
+    # Calculate p/k
+    p <- length(coef(robrveinf))
+    k <- nrow(data)
+    incProgress(5/8, message = "Checking for influential studies") 
+    # Check if there are more predictors than just the intercept
+    if (length(coef(robrveinf)) > 1) {
+      # Remove the intercept term from the count of coefficients
+      p <- p - 1
+    }
+    
+    p_over_k <- 3 * (p / k)
+    
+    # Calculate hat_flag
+    hat_flag <- ifelse(hatvalues > p_over_k, "TRUE", "")
+    
+    incProgress(6/8, message = "Building table...")
+    # Combine influence metrics with correct column names
+    influence <- data.frame(Study = data$Study,
+                            effect_size = data$yi,
+                            outlier = ifelse(data$outlier == FALSE, "", "TRUE"),  # # Include outlier column
+                            cooks = cooks,
+                            cooks_flag = ifelse(cooks > 0.5, "TRUE", ""),
+                            dfbetas = dfbetas,
+                            dfbetas_flag = ifelse(abs(dfbetas) > 1, "TRUE", ""),
+                            hatvalues = hatvalues,
+                            hat_flag = hat_flag)
+    
+    # Rename the columns with proper names
+    colnames(influence)[which(colnames(influence) == "intrcpt")] <- "dfbetas*"
+    colnames(influence)[which(colnames(influence) == "intrcpt.1")] <- "dfbetas_flag"
+    
+    new_row <- data.frame(
+      Study = "*Note that DFBETAS is based on the three-level CHE model and not the three-level CHE RVE model as the other metrics are.", 
+      effect_size = NA, 
+      outlier = NA,
+      cooks = NA,
+      cooks_flag = NA,
+      dfbetas = NA,
+      dfbetas_flag = NA,
+      hatvalues = NA,
+      hat_flag = NA
+    )
+    # Ensure column names of new_row match those of influence exactly
+    colnames(new_row) <- colnames(influence)
+    
+    influence <- rbind(influence, new_row)
+    # Update influence data
+    influence_datarve(influence)
+    #  Only one or a few cells should contain "see this information", adjust like so:
+    
+    incProgress (7/8, detail = "Analyses complete, building plots...")
+    progress_activerve(FALSE)  # Deactivate progress bar
+  })
+})
+
+# Make progressActive available to JavaScript
+output$progressActiverve <- reactive({
+  progress_active()
+})
+outputOptions(output, "progressActiverve", suspendWhenHidden = FALSE)
+
+
+output$progressActiverve<- reactive({
+  progress_activerve()
+})
+
+
+# Debugging for plot data
+observeEvent(input$run_infrve, {
+  print(str(influence_datarve()))  # Check the structure right after updating
+})
+
+# Render influence table
+output$influence_tablerve <- renderTable({
+  influence_datarve()
+}, na = '')
+
+# Adjusted histogram plot
+output$outlier_plotrve <- renderPlot({
+  req(influence_datarve())  # Ensure data is available
+  analysis_data <- influence_datarve()
+  
+  if("effect_size" %in% names(analysis_data)) {
+    ggplot(data = analysis_data, aes(x = effect_size, colour = outlier, fill = outlier)) +
+      geom_histogram(alpha = 0.2) +  # Added binwidth to avoid another common error
+      geom_vline(xintercept = mean(analysis_data$effect_size, na.rm = TRUE)) +  # Handle possible NAs
+      theme_bw()
+  } else {
+    print("effect_size not found in the data")
+  }
+})
+
+
+
+# Download influence table as CSV
+output$download_influencerve <- downloadHandler(
+  filename = function() {
+    "influence_table.csv"
+  },
+  content = function(file) {
+    # Retrieve the data
+    temp_data <- influence_datarve()  # Get the reactive data
+    
+    # Replace NA with empty strings and round numeric columns to 2 decimal places
+    temp_data[] <- lapply(temp_data, function(x) {
+      if(is.numeric(x)) {
+        x <- round(x, 2)  # Round numeric columns to 2 decimal places
+      }
+      ifelse(is.na(x), "", x)  # Replace NA with empty string after rounding
+    })
+    
+    # Write the modified data frame to a CSV file
+    write.csv(temp_data, file, row.names = FALSE, quote = FALSE)
+  }
+)
+
+
+
+# Download handler for the outlier plot button
+output$download_outliersrve <- downloadHandler(
+  filename = function() {
+    "outlier_plot.png"  # Specify file name
+  },
+  content = function(file) {
+    # Capture the plot as a PNG file
+    png(file, width = 2800, height = 2400, units = "px", res = 300)
+    # Create the outlier plot
+    p <- ggplot(data = influence_datarve(), aes(x = effect_size, colour = outlier, fill = outlier)) +
+      geom_histogram(alpha = 0.2) +
+      geom_vline(xintercept = mean(influence_datarve()$effect_size)) +  # Example line at mean effect size
+      theme_bw()
+    print(p)  # Print the plot
+    dev.off()  # Turn off the PNG device
+  }
+)
+#####Cat Mod CHERVE ----
+
+# Initialize a reactive value for displaying results
+resultsVisibleRVECat <- reactiveVal(FALSE)
+
+observeEvent(input$run_cheCat, {
+  resultsVisibleRVECat(TRUE)
+  print("Run analysis clicked, setting resultsVisibleRVECat to TRUE.")
+})
+
+observeEvent(input$mod_RVECat, {
+  resultsVisibleRVECat(FALSE)
+})
+observeEvent(input$correlationCat, {
+  resultsVisibleRVECat(FALSE)
+})
+observeEvent(input$chefileCat, {
+  resultsVisibleRVECat(FALSE)
+})
+
+output$dynamicResults <- renderUI({
+  if (resultsVisibleRVECat()) {
+    tagList(
+      h3("Model Result"),
+      downloadButton("downloadRVE_RVE", "Download Results"),
+      div(class = "scrollable", tableOutput("custom_results_RVE"))
+    )
+  }
+})
+
+# Make sure to correctly trigger and use results_df_RVE
+output$custom_results_RVE <- renderTable({
+  req(results_df_RVE())
+  results_df_RVE()
+})
+
+
+# Reactive value for rhoCat
+rhoCat <- reactive({
+  rho_value <- as.numeric(input$correlationCat)
+  if (is.na(rho_value)) {
+    print("Invalid rho value")
+    return(0)  # Default or error handling value
+  }
+  print(paste("Rho updated:", rho_value))
+  rho_value
+})
+
+# Reactive data preparation
+uploaded_dataRVECAT <- reactive({
+  req(input$chefileCat)
+  data <- read.csv(input$chefileCat$datapath)
+  print("Data loaded successfully.")  # Debug print
+  data
+})
+
+# Correct use of reactive expressions with parentheses
+V_RVE <- reactive({
+  req(filtered_data())  # Notice the parentheses
+  data_filtered <- filtered_data()  # Accessing the reactive result
+  tryCatch({
+    result <- with(data_filtered, impute_covariance_matrix(vi = vi, cluster = Study, r = rhoCat()))  # Correctly calling rhoCat()
+    print("Covariance matrix calculated.")  # Debug print
+    result
+  }, error = function(e) {
+    print(paste("Error in computing V_RVE:", e$message))  # More informative error message
+    NULL
+  })
+})
+
+# Update the select input once the file is uploaded
+observe({
+  req(input$chefileCat)
+  data <- read.csv(input$chefileCat$datapath)
+  updateSelectInput(session, "mod_RVECat", choices = names(data))
+})
+
+
+
+
+# Reactive value to store excluded levels
+excludedLevels <- reactiveVal()
+
+# Reactive for data preparation and identifying excluded levels
+filtered_data <- reactive({
+  req(input$chefileCat)
+  data <- read.csv(input$chefileCat$datapath)
+  
+  # Group and count
+  group_data <- data %>%
+    group_by(Moderator = get(input$mod_RVECat)) %>%
+    summarise(Count = n(), .groups = 'drop')
+  
+  # Find excluded levels
+  excluded_levels <- group_data %>%
+    filter(Count == 1) %>%
+    pull(Moderator)
+  
+  # Update reactive value
+  excludedLevels(excluded_levels)
+  
+  # Filter data
+  data %>%
+    filter(!(get(input$mod_RVECat) %in% excluded_levels))
+})
+
+
+# Reactive for summarizing data after filtering
+summarized_data <- reactive({
+  req(filtered_data())  # Ensure filtered data is ready
+  data <- filtered_data()
+  
+  # Summarize the data now that it's been filtered
+  data %>%
+    group_by(Moderator = get(input$mod_RVECat)) %>%
+    summarise(
+      nexp = sum(Exp_n, na.rm = TRUE),
+      nctrl = sum(Ctrl_n, na.rm = TRUE),
+      kcomp = n(),  # Number of comparisons
+      kstudies = n_distinct(Study),
+      .groups = 'drop'
+    )
+})
+
+# Reactive covariance matrix calculation using filtered data
+V_RVE <- reactive({
+  req(filtered_data())  # Depend on the filtered data
+  data <- filtered_data()
+  
+  if (!"vi" %in% names(data) || !is.numeric(data$vi)) {
+    stop("Column 'vi' is missing or not numeric.")
+  }
+  if (!"Study" %in% names(data)) {
+    stop("Column 'Study' is missing.")
+  }
+  
+  tryCatch({
+    impute_covariance_matrix(vi = data$vi, cluster = data$Study, r = rhoCat())  # Use rhoCat() directly
+  }, error = function(e) {
+    stop("Error in computing V_RVE: ", e$message)
+  })
+})
+
+# Meta-analysis computation
+CHEresult_RVE <- eventReactive(input$run_cheCat, {  # Triggered by a button
+  req(filtered_data(), V_RVE())  # Ensure data and covariance matrix are ready
+  data <- filtered_data()
+  
+  tryCatch({
+    rob <- rma.mv(yi = data$yi, V = V_RVE(), mods = ~ -1 + factor(data[[input$mod_RVECat]]),
+                  random = ~ 1 | Study/ES_number, method = "REML", test = "t", data = data)
+  }, error = function(e) {
+    stop("Error in CHE analysis: ", e$message)
+  })
+  robrob <- robust(rob, cluster = data$Study, clubSandwich = TRUE, digits = 3)
+  robrob
+})
+
+# Generate a results data frame
+results_df_RVE <- reactive({
+  req(CHEresult_RVE())
+  robust_result <- CHEresult_RVE()
+  
+  if (is.null(robust_result)) {
+    print("Robust result is null.")
+    return(data.frame())  # Return an empty data frame if no results
+  }
+  
+  # Ensure the moderator variable is properly factorized
+  data <- filtered_data()
+  mod_levels <- levels(factor(data[[input$mod_RVECat]]))
+  
+  # Check for alignment between model results and levels
+  if(length(robust_result$b) != length(mod_levels)) {
+    print("Mismatch between number of estimates and moderator levels.")
+    return(data.frame())  # Return an empty frame if mismatch found
+  }
+  
+  # Prepare a data frame
+  df <- data.frame(
+    Model = mod_levels,  # Moderator levels
+    Estimate = safe_round(robust_result$b),  # Assuming robust_result$b is correctly ordered and corresponds to mod_levels
+    SE = safe_round(robust_result$se),
+    `t-value` = safe_round(robust_result$zval),
+    `p-value` = safe_round(robust_result$pval),
+    `95% CI` = sprintf("[%s, %s]", safe_round(robust_result$ci.lb), safe_round(robust_result$ci.ub))
+  )
+  
+  df
+})
+
+# Compute CHE results including the moderator variable with intercept
+CHEresult_RVECatInt <- eventReactive(input$run_cheCat, {
+  req(filtered_data(), V_RVE())  # Ensure filtered data and V_RVE are ready
+  data <- filtered_data()  # Use the already filtered data
+  
+  if (nrow(data) == 0) {
+    print("No valid data after filtering out single-comparison levels.")
+    return(NULL)
+  }
+  
+  tryCatch({
+    resultRVECat <- rma.mv(
+      yi = data$yi, 
+      V = V_RVE(),  # Use filtered yi and V
+      mods = ~ factor(data[[input$mod_RVECat]]),  # Include the intercept
+      random = ~ 1 | Study/ES_number,
+      method = "REML",
+      test = "t",
+      dfs = "contain",
+      data = data,
+      Sparse = TRUE
+    )
+    robust_modelRVECatInt <- robust(resultRVECat, cluster = data$Study, clubSandwich = TRUE, digits = 3)
+    print("CHE analysis with moderator and intercept completed successfully.")
+    robust_modelRVECatInt
+  }, error = function(e) {
+    message <- paste("Error in CHE analysis with moderator and intercept:", e$message)
+    print(message)
+    NULL
+  })
+})
+
+results_df_RVEInt <- reactive({
+  result_with_intercept <- req(CHEresult_RVECatInt())
+  
+  # Ensure the result is not null and contains the required fields
+  if (!is.null(result_with_intercept) && !is.null(result_with_intercept$QM)) {
+    QM_RVECat <- result_with_intercept$QM
+    QMp_RVECat <- result_with_intercept$QMp
+    df1_RVECat <- result_with_intercept$QMdf[1]
+    df2_RVECat <- result_with_intercept$QMdf[2]
+    
+    # Return the formatted string indicating the results of the test of moderators
+    sprintf("F(%.2f, %.2f) = %.3f, p-val = %.3f", df1_RVECat, df2_RVECat, QM_RVECat, QMp_RVECat)
+  } else {
+    # Return NA if the required data is not available
+    NA
+  }
+})
+
+# Generate a results data frame that includes summarized data
+results_df_RVE <- reactive({
+  req(CHEresult_RVE(), summarized_data())
+  robust_result <- CHEresult_RVE()
+  summary_data <- summarized_data()
+  
+  if (is.null(robust_result)) {
+    print("Robust result is null.")
+    return(data.frame())  # Return an empty data frame if no results
+  }
+  
+  # Prepare the main results data frame using these levels
+  df <- data.frame(
+    Model = summary_data$Moderator,  # Use the actual levels from the moderator variable
+    nexp = summary_data$nexp,
+    nctrl = summary_data$nctrl,
+    kcomp = summary_data$kcomp,
+    kstudies = summary_data$kstudies,
+    Estimate = safe_round(robust_result$b),
+    SE = safe_round(robust_result$se),
+    `t-value` = safe_round(robust_result$zval),
+    `p-value` = safe_round(robust_result$pval),
+    `95% CI` = sprintf("[%s, %s]", safe_round(robust_result$ci.lb), safe_round(robust_result$ci.ub)),
+    `Test of Moderator` = rep("", nrow(summary_data))  # Initially, fill with empty strings
+  )
+  # Replace values less than 0.001 with "<0.001" in the "p-value" column
+  df$p.value[df$p.value < 0.001] <- "< 0.001"
+  
+  # Append the test of moderator result if available
+  test_of_moderator <- results_df_RVEInt()
+  if (!is.na(test_of_moderator) && !is.null(test_of_moderator)) {
+    moderator_row <- data.frame(
+      Model = "",  # Leave this empty for the Test of Moderator row
+      nexp = "",   # Empty string for other cells
+      nctrl = "",
+      kcomp = "",
+      kstudies = "",
+      Estimate = "",
+      SE = "",
+      `t-value` = "",
+      `p-value` = "",
+      `95% CI` = "",
+      `Test of Moderator` = test_of_moderator
+    )
+    df <- rbind(df, moderator_row)  # Append this row
+  }
+  
+  # Append excluded levels text in the first column of the "Test of Moderator" row
+  if (length(excludedLevels()) > 0) {
+    excluded_text <- sprintf("The following levels of the moderator were not examined because they only contained one comparison: %s",
+                             toString(excludedLevels()))
+    df[nrow(df), "Model"] <- excluded_text  # Set the excluded text in the last row's "Model" column
+  }
+  
+  # Set custom column names using colnames()
+  colnames(df) <- c(
+    "Level",
+    "nexp",
+    "nctrl",
+    "kcomp",
+    "kstudies",
+    "Estimate",
+    "SE",
+    "t-value",
+    "p-value",
+    "95% CI",
+    "Test of Moderator"
+  )
+  df
+})
+
+
+# Update the outputs
+output$custom_results_RVE <- renderTable({
+  req(results_df_RVE())
+  results_df_RVE()
+})
+
+
+# Download handler for downloading the results table
+output$downloadRVE_RVE <- downloadHandler(
+  filename = function() {
+    paste("mod.", input$mod_RVECat, Sys.Date(), ".csv", sep = "") 
+    },
+  content = function(file) {
+    req(results_df_RVE())
+    write.csv(results_df_RVE(), file, row.names = FALSE)
+  }
+)
+
+
+
+
+### Publication Bias CHERVE---- 
+# Initialize a reactive value for displaying results
+resultsVisibleRVEplots <- reactiveVal(FALSE)
+
+observeEvent(input$run_cheplot, {
+  resultsVisibleRVEplots(TRUE)
+})
+
+observeEvent(input$chefileplot, {
+  resultsVisibleRVEplots(FALSE)
+})
+observeEvent(input$correlationplot, {
+  resultsVisibleRVEplots(FALSE)
+})
+
+
+output$dynamicResultcheplot <- renderUI({
+  if (resultsVisibleRVEplots()) {
+    tagList(
+      h4("Comparison-level Forest Plot"),
+      p("This plot uses CHE RVE Three-Level Meta-Analysis"),
+      downloadButton("downloadcheForest", "Download Comparison-Level Forest Plot (Half-Page)"), downloadButton("downloadcheForestb", "Download Comparison-Level Forest Plot (Full-Page)"),
+      plotOutput("cheforest", width = 800, height = 600),
+      h4("Study-level Forest Plot"),
+      p("This plot includes effect sizes that are by study. In short, we calculated weighted means for each study, then run the CHE RVE Three-Level Meta-Analysis"),
+      downloadButton("downloadCheForest2", "Download Study-Level Forest Plot (Half-Page)"), downloadButton("downloadCheForest2b", "Download Study-Level Forest Plot (Full-Page)"),
+      plotOutput("cheforest2", width = 800, height = 600),
+      h4("Funnel Plot of Robust Effects"),
+      p("This funnel plot is based on the three-level meta-analysis with CHE RVE. Each comparison from the analysis is included."),
+      downloadButton("downloadCheFunnel", "Download Standard Funnel Plot (Half-Page)"), downloadButton("downloadCheFunnelb", "Download Standard Funnel Plot (Full-Page)"),
+      plotOutput("chefunnel", width = 800, height = 600),
+    )
+  }
+})
+
+
+observeEvent(input$run_cheplot, {
+  showModal(modalDialog(
+    title = "*Important Note*",
+    "The plots are rendered at 'half-page' height (800px by 600px) within the software. You may choose to download at this size (about half a standard page in height) or full-page size. If you need a taller image (most typical on the comparison-level forest plot) than the 'full-page' download size may be helpful.",
+    easyClose = FALSE,
+    footer = tagList(
+      modalButton("Ok")
+    )
+  ))
+})
+
+# Reactive data preparation
+uploaded_datacheplot <- reactive({
+  req(input$chefileplot)
+  read.csv(input$chefileplot$datapath)
+})
+
+# Reactive value for rhoCat
+rhocheplot <- reactive({
+  rho_value <- as.numeric(input$correlationplot)
+  if (is.na(rho_value)) {
+    showNotification("Invalid rho value", type = "error")
+    return(0)  # Default or error handling value
+  }
+  rho_value
+})
+
+# Reactive covariance matrix calculation
+Vcheplot <- reactive({
+  req(uploaded_datacheplot())
+  with(uploaded_datacheplot(), impute_covariance_matrix(vi = vi, cluster = Study, r = rhocheplot()))
+})
+
+# Compute CHE results
+CHEresultplot <- eventReactive(input$run_cheplot, {
+  withCallingHandlers({
+    rma.mv(yi, Vcheplot(),
+           random = ~ 1 | Study/ES_number,
+           method = "REML",
+           test = "t",
+           dfs = "contain",
+           data = uploaded_datacheplot(),
+           Sparse = TRUE)
+  }, error = function(e) {
+    showNotification(conditionMessage(e), type = "error")
+    NULL
+  })
+})
+
+# Compute robust results
+CHEresultrobustplot <- eventReactive(input$run_cheplot, {
+  withCallingHandlers({
+    resultrobust <- CHEresultplot()
+    robust(resultrobust, cluster = Study, clubSandwich = TRUE, digits = 3)
+  }, error = function(e) {
+    showNotification(conditionMessage(e), type = "error")
+    NULL
+  })
+})
+
+# Display the robust rma.mv results
+output$cheforest <- renderPlot({
+  resultrobust <- CHEresultrobustplot()
+  if (!is.null(resultrobust)) {
+    rho_value <- rhocheplot()
+    study_labels <- uploaded_datacheplot()$Study
+    forest(resultrobust, slab = study_labels, mlab = paste("RE CHE RVE Three-Level Model, rho =", rho_value), header = TRUE)
+  }
+})
+# Download handler
+output$downloadcheForest <- downloadHandler(
+  filename = function() {
+    paste("comparison_level_forest_plot", Sys.Date(), ".png", sep = "")
+  },
+  content = function(file) {
+    # Save the plot as a PNG file
+    png(file, width = 800, height = 600)
+    resultrobust <- CHEresultrobustplot()
+    if (!is.null(resultrobust)) {
+      rho_value <- rhocheplot()
+      study_labels <- uploaded_datacheplot()$Study
+      forest(resultrobust, slab = study_labels, mlab = paste("RE CHE RVE Three-Level Model, rho =", rho_value), header = TRUE)
+    }
+    dev.off()
+  }
+)
+
+# Download handler
+output$downloadcheForestb <- downloadHandler(
+  filename = function() {
+    paste("comparison_level_forest_plot_large", Sys.Date(), ".png", sep = "")
+  },
+  content = function(file) {
+    # Save the plot as a PNG file
+    png(file, width = 800, height = 1056)
+    resultrobust <- CHEresultrobustplot()
+    if (!is.null(resultrobust)) {
+      rho_value <- rhocheplot()
+      study_labels <- uploaded_datacheplot()$Study
+      forest(resultrobust, slab = study_labels, mlab = paste("RE CHE RVE Three-Level Model, rho =", rho_value), header = TRUE)
+    }
+    dev.off()
+  }
+)
+
+# Aggregated data by Study
+aggregated_datacheplot2 <- reactive({
+  req(uploaded_datacheplot())
+  dat <- uploaded_datacheplot()
+  rho <- rhocheplot()
+  
+  # Aggregate yi and vi by Study
+  aggregatedcheplot2 <- aggregate(cbind(yi, vi) ~ Study, data = dat, function(x) mean(x, na.rm = TRUE))
+  
+  # Compute new covariance matrix for aggregated data
+  V <- impute_covariance_matrix(vi = aggregatedcheplot2$vi, cluster = aggregatedcheplot2$Study, r = rho)
+  
+  list(data = aggregatedcheplot2, V = V)
+})
+
+# Compute CHE results
+CHEresultplot2 <- eventReactive(input$run_cheplot, {
+  agg <- aggregated_datacheplot2()
+  withCallingHandlers({
+    rma.mv(yi, agg$V,
+           random = ~ 1 | Study,
+           method = "REML",
+           test = "t",
+           dfs = "contain",
+           data = agg$data,
+           Sparse = TRUE)
+  }, error = function(e) {
+    showNotification(conditionMessage(e), type = "error")
+    NULL
+  })
+})
+
+# Compute robust results
+CHEresultrobustplotcheplot2 <- eventReactive(input$run_cheplot, {
+  withCallingHandlers({
+    resultrobust <- CHEresultplot2()
+    robust(resultrobust, cluster = resultrobust$data$Study, clubSandwich = TRUE, digits = 3)
+  }, error = function(e) {
+    showNotification(conditionMessage(e), type = "error")
+    NULL
+  })
+})
+
+# Display the robust rma.mv results
+output$cheforest2 <- renderPlot({
+  resultrobustcheplot2 <- CHEresultrobustplotcheplot2()
+  if (!is.null(resultrobustcheplot2)) {
+    rho_value <- rhocheplot()
+    study_labels <- aggregated_datacheplot2()$data$Study
+    forest(resultrobustcheplot2, slab = study_labels, header = TRUE, 
+           annotate = TRUE, addfit = FALSE, mlab = "")
+    # Add custom label below the plot
+    title(sub = paste("RE CHE RVE Three-Level Model, rho =", rho_value), line = 2.5, adj = 0)
+    title(sub = "Note that the means above are not weighted within studies.", line = 2.5, adj = 1)
+    
+  }
+})
+
+
+# Download handler for the forest plot
+output$downloadCheForest2 <- downloadHandler(
+  filename = function() {
+    paste("study_level_forest_plot", Sys.Date(), ".png", sep = "")
+  },
+  content = function(file) {
+    png(file, width = 800, height = 600)
+    resultrobustcheplot2 <- CHEresultrobustplotcheplot2()
+    if (!is.null(resultrobustcheplot2)) {
+      rho_value <- rhocheplot()
+      study_labels <- aggregated_datacheplot2()$data$Study
+      forest(resultrobustcheplot2, slab = study_labels, header = TRUE, 
+             annotate = TRUE, addfit = FALSE, mlab = "")
+      title(sub = paste("RE CHE RVE Three-Level Model, rho =", rho_value), line = 2.5, adj = 0)
+      title(sub = "Note that the means above are not weighted within studies.", line = 2.5, adj = 1)
+      
+    }
+    dev.off()
+  }
+)
+
+# Download handler for the forest plot
+output$downloadCheForest2b <- downloadHandler(
+  filename = function() {
+    paste("study_level_forest_plot", Sys.Date(), ".png", sep = "")
+  },
+  content = function(file) {
+    png(file, width = 800, height = 1056)
+    resultrobustcheplot2 <- CHEresultrobustplotcheplot2()
+    if (!is.null(resultrobustcheplot2)) {
+      rho_value <- rhocheplot()
+      study_labels <- aggregated_datacheplot2()$data$Study
+      forest(resultrobustcheplot2, slab = study_labels, header = TRUE, 
+             annotate = TRUE, addfit = FALSE, mlab = "")
+      title(sub = paste("RE CHE RVE Three-Level Model, rho =", rho_value), line = 2.5, adj = 0)
+      title(sub = "Note that the means above are not weighted within studies.", line = 2.5, adj = 1)
+      
+    }
+    dev.off()
+  }
+)
+# Display the robust funnel results
+output$chefunnel <- renderPlot({
+  resultrobust <- CHEresultrobustplot()
+  if (!is.null(resultrobust)) {
+    rho_value <- rhocheplot()
+    funnel(resultrobust)
+  }
+})
+
+# Download handler for the funnel plot
+output$downloadCheFunnel <- downloadHandler(
+  filename = function() {
+    paste("funnel_plot", Sys.Date(), ".png", sep = "")
+  },
+  content = function(file) {
+    png(file, width = 800, height = 600)
+    resultrobust <- CHEresultrobustplot()
+    if (!is.null(resultrobust)) {
+      rho_value <- rhocheplot()
+      funnel(resultrobust)
+    }
+    dev.off()
+  }
+)
+  
+# Download handler for the funnel plot
+output$downloadCheFunnelb <- downloadHandler(
+  filename = function() {
+    paste("funnel_plot", Sys.Date(), ".png", sep = "")
+  },
+  content = function(file) {
+    png(file, width = 800, height = 1056)
+    resultrobust <- CHEresultrobustplot()
+    if (!is.null(resultrobust)) {
+      rho_value <- rhocheplot()
+      funnel(resultrobust)
+    }
+    dev.off()
+  }
+)
+
+  
+
+  
+
+
+
+
+
+    
+    
+    
+# end don't change below this line'   ----      
+    
+}
+# Run the application 
+shinyApp(ui = ui, server = server)
