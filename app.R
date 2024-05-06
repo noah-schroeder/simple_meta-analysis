@@ -5,9 +5,10 @@ library(shinydashboard)
 # Define UI ---- 
 ui <- dashboardPage(
   dashboardHeader(title = tags$span(
-    tags$img(src = "bird.png", style = "height:3em; vertical-align:middle; padding-right:5px;"),
-    "MetaCalc"
-  )),
+    tags$img(src = "bird.png", style = "height:3em; vertical-align:middle; padding-right:1px;"),
+    "Simple Meta-analysis"),
+    titleWidth = 300
+  ),
   dashboardSidebar(width = 300,
                    sidebarMenu(
                      menuItem("Welcome!", tabName = "tab1", icon = icon("dashboard"),
@@ -463,6 +464,24 @@ ui <- dashboardPage(
           actionButton("run_cheCat", "Run Analysis", icon = icon("play")),
           uiOutput("dynamicResults"),
   ),
+tabItem(tabName = "subtab56",
+        # Header and paragraph for data upload
+        h3("Upload Your Data"),
+        p("First you need to upload your data. This is the same data file you used for the overall meta-analysis and moderator analysis. Only .csv files are accepted."),
+        fileInput("chefileCont", "Upload Data", accept = ".csv"),
+        
+        
+        # Header and paragraph for correlation setting
+        h3("Correlation to be assumed"),
+        selectInput("correlationCont", "Set rhoCat value:", choices = seq(-1, 1, by = 0.01), selected = 0.60),
+        
+        #choose Moderator
+        h3("Choose the Categorical Moderator"),
+        selectInput("mod_RVECont", "Select Moderator Variable:", choices = NULL),
+        # Button to run analysis
+        actionButton("run_cheCont", "Run Analysis", icon = icon("play")),
+        uiOutput("dynamicResultsCont"),
+),
   tabItem(tabName = "subtab57",
           h3("Upload Your Data"),
           p("First you need to upload your data. This is the same data file you used for the overall meta-analysis and moderator analysis. Only .csv files are accepted."),
@@ -3292,7 +3311,7 @@ results_df_RVE <- reactive({
   
   # Set custom column names using colnames()
   colnames(df) <- c(
-    "Level",
+    input$mod_RVECat,
     "nexp",
     "nctrl",
     "kcomp",
@@ -3326,6 +3345,169 @@ output$downloadRVE_RVE <- downloadHandler(
   }
 )
 
+#####Cont Mod CHERVE ----
+
+# Initialize a reactive value for displaying results
+resultsVisibleRVECont <- reactiveVal(FALSE)
+
+observeEvent(input$run_cheCont, {
+  resultsVisibleRVECont(TRUE)
+  print("Run analysis clicked, setting resultsVisibleRVECat to TRUE.")
+})
+
+observeEvent(input$mod_RVECont, {
+  resultsVisibleRVECont(FALSE)
+})
+observeEvent(input$correlationCont, {
+  resultsVisibleRVECont(FALSE)
+})
+observeEvent(input$chefileCont, {
+  resultsVisibleRVECont(FALSE)
+})
+
+output$dynamicResultsCont <- renderUI({
+  if (resultsVisibleRVECont()) {
+    tagList(
+      h3("Model Result"),
+      downloadButton("downloadRVE_RVECont", "Download Results"),
+      div(class = "scrollable", tableOutput("custom_results_RVECont"))
+    )
+  }
+})
+
+# Make sure to correctly trigger and use results_df_RVE
+output$custom_results_RVECont <- renderTable({
+  req(results_df_RVECont())
+  results_df_RVECont()
+})
+
+
+# Reactive value for rhoCat
+rhoCont <- reactive({
+  rho_value <- as.numeric(input$correlationCont)
+  if (is.na(rho_value)) {
+    print("Invalid rho value")
+    return(0)  # Default or error handling value
+  }
+  print(paste("Rho updated:", rho_value))
+  rho_value
+})
+
+# Reactive data preparation
+uploaded_dataRVECont <- reactive({
+  req(input$chefileCont)
+  data <- read.csv(input$chefileCont$datapath)
+  print("Data loaded successfully.")  # Debug print
+  data
+})
+
+# Correct use of reactive expressions with parentheses
+V_RVE_Cont <- reactive({
+  req(uploaded_dataRVECont())  # Notice the parentheses
+  data_filtered <- uploaded_dataRVECont()  # Accessing the reactive result
+  tryCatch({
+    result <- with(data_filtered, impute_covariance_matrix(vi = vi, cluster = Study, r = rhoCont()))  # Correctly calling rhoCat()
+    print("Covariance matrix calculated.")  # Debug print
+    result
+  }, error = function(e) {
+    print(paste("Error in computing V_RVE:", e$message))  # More informative error message
+    NULL
+  })
+})
+
+# Update the select input once the file is uploaded
+observe({
+  req(input$chefileCont)
+  data <- read.csv(input$chefileCont$datapath)
+  updateSelectInput(session, "mod_RVECont", choices = names(data))
+})
+
+
+# Reactive for summarizing data after filtering
+summarized_dataCont <- reactive({
+  req(input$chefileCont)
+  data <- read.csv(input$chefileCont$datapath)
+  
+  # Summarize the data now that it's been filtered
+  data %>%
+    group_by(Moderator = get(input$mod_RVECont)) %>%
+    summarise(
+      nexp = sum(Exp_n, na.rm = TRUE),
+      nctrl = sum(Ctrl_n, na.rm = TRUE),
+      kcomp = n(),  # Number of comparisons
+      kstudies = n_distinct(Study),
+      .groups = 'drop'
+    )
+})
+
+
+# Compute CHE results including the moderator variable with intercept
+mod_summary <- reactive({
+  req(input$run_cheCont, input$mod_RVECont)
+  data <- read.csv(input$chefileCont$datapath)
+  # Create the formula for the moderator
+  mod_formula <- as.formula(paste("~", input$mod_RVECont))
+  
+  # Perform the analysis
+  resultRVECont <- rma.mv(
+    yi = yi, 
+    V = V_RVE_Cont(), 
+    mods = mod_formula,
+    random = ~ 1 | Study / ES_number,
+    method = "REML",
+    test = "t",
+    dfs = "contain",
+    data = data,
+    Sparse = TRUE
+  )
+  robust_modelRVEContInt <- robust(resultRVECont, cluster = data$Study, clubSandwich = TRUE, digits = 3)
+  
+  model_summary <- summary(robust_modelRVEContInt)
+  summary_table <- coef(model_summary)
+  
+  if (is.null(summary_table) || nrow(summary_table) == 0) {
+    stop("The summary table has no data.")
+  }
+  
+  # Extract statistics
+  QM <- round(robust_modelRVEContInt$QM, 3)
+  QMp <- round(robust_modelRVEContInt$QMp, 3)
+  df1 <- robust_modelRVEContInt$QMdf[1]
+  df2 <- robust_modelRVEContInt$QMdf[2]
+  
+  # Prepare the results table
+  result_table <- data.frame(
+    Term = c(rownames(summary_table), "Test of Moderator"),
+    Estimate = c(round(summary_table[, "estimate"], 3), NA),
+    StdError = c(round(summary_table[, "se"], 3), NA),
+    TValue = c(round(summary_table[, "tval"], 3), NA),
+    PValue = c(round(summary_table[, "pval"], 3), NA),
+    CI_Lower = c(round(summary_table[, "ci.lb"], 3), NA),
+    CI_Upper = c(round(summary_table[, "ci.ub"], 3), NA),
+    TestOfModerator = c(rep(NA, nrow(summary_table)), sprintf("F(%.2f, %.2f) = %.3f, p-val = %.3f", 
+                                                              df1, df2, QM, QMp))
+  )
+  
+  # Replace values less than 0.001 with "<0.001" in the "p-value" column
+  result_table$PValue[result_table$PValue < 0.001] <- "< 0.001"
+  result_table
+})
+
+output$custom_results_RVECont <- renderTable({
+  req(mod_summary())
+  mod_summary()
+}, na = '')  # Display NA as empty cells
+
+# Download handler for exporting the results as a CSV file
+output$downloadRVE_RVECont <- downloadHandler(
+  filename = function() {
+    paste("mod.", input$mod_RVECont, Sys.Date(), ".csv", sep = "")
+  },
+  content = function(file) {
+    req(mod_summary())
+    write.csv(mod_summary(), file, row.names = FALSE, na = "")  # Write empty strings instead of NA
+  }
+)
 
 
 
