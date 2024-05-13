@@ -78,7 +78,8 @@ ui <- dashboardPage(
                   p("This app was built to use standardized mean difference effect sizes, as they are quite common in many fields. Other effect sizes could work (other than the effect size calculator) because the metafor code for rma functions does not specify the type of effect size. However, only SMD has been validated in the app at the time of writing (May 12, 2024).")),
               h2("Please Cite This Software"),
               p("If you use this software, please be sure to cite the software:"),
-              p("Schroeder, N. L. (2024). Simple meta-analysis. Available from https://noahschroeder.shinyapps.io/SimpleMeta-Analysis/")
+              box(title = "Citation", width = 12, status = "primary",
+                  p("Schroeder, N. L. (2024). Simple meta-analysis. Available from https://noahschroeder.shinyapps.io/SimpleMeta-Analysis/")),
       ), 
       tabItem(tabName = "subtab11",
               h2("Need Help Learning Meta-Analysis?"),
@@ -91,7 +92,8 @@ ui <- dashboardPage(
       tabItem(tabName = "subtab61",
               h2("Please Cite This Software"),
               p("If you use this software, please be sure to cite the software:"),
-              p("Schroeder, N. L. (2024). Simple meta-analysis. Available from https://noahschroeder.shinyapps.io/SimpleMeta-Analysis/")
+              box(title = "Citation", width = 12, status = "primary",
+                  p("Schroeder, N. L. (2024). Simple meta-analysis. Available from https://noahschroeder.shinyapps.io/SimpleMeta-Analysis/")),
       ),
 
   ### Conventional MA sub-tabs----
@@ -265,7 +267,7 @@ ui <- dashboardPage(
           uiOutput("dynamicResults3lmaout"),
   ),
       tabItem(tabName = "subtab45",
-              h2("Check for Moderating Variables"),
+              h2("Categorical Moderating Variables"),
               p("This tool will help you check for", strong("categorical"), "moderating variables. Do not use this tool for continuous variables! The first step is to upload your data. This should be the same data you used to run the meta-analysis."),
               fileInput("modfile", "Upload Moderator Analysis Data", accept = ".csv"),
               p("Once your file is uploaded, you can choose which column in your spreadsheet you want to examine as a moderator variable. Again,", strong("this is for categorical moderators only."), "After you choose your variable from the dropdown menu, click run and your results will be shown."),
@@ -298,7 +300,7 @@ ui <- dashboardPage(
               box(title = "Data Formatting Requirements", width = 12, status = "primary", 
                   p("To run a three-level meta-analysis with CHE and RVE with this app, you need to have your data file organized in a certain fashion. Specifically, you need to have the following columns:"),
                   p("Each row should be a comparison."),
-                  p("Comparisons do not necessarily need to be independent (if they they are not independent, three-level meta-analysis with CHE and RVE may be more appropriate)."),
+                  p("Comparisons do not necessarily need to be independent."),
                   p("You should have a column labeled", strong("ES_number"), "which sequentially numbers every row."),
                   p("You should have a column labeled", strong("Study"), "which is the name of each study."),
                   p("The effect size column must be labeled", strong("yi")),
@@ -324,7 +326,7 @@ ui <- dashboardPage(
           # Dropdown for selecting the correlation
           h4("Correlation to be assumed"),
           selectInput("correlation", label = NULL, choices = seq(-1, 1, by = 0.01), selected = 0.60),
-          actionButton("run_che", "Run CHE RVE Meta-Analysis"),
+          actionButton("run_che", "Run Three-level CHE RVE Meta-Analysis"),
           uiOutput("dynamicResultsche"),
      ),
   tabItem(tabName = "subtab53",
@@ -366,6 +368,8 @@ ui <- dashboardPage(
   ),
   tabItem(tabName = "subtab55",
           # Header and paragraph for data upload
+          h2(" Categorical Moderating Variables"),
+          p("This tool will help you check for", strong("categorical"), "moderating variables. Do not use this tool for continuous variables! The first step is to upload your data. This should be the same data you used to run the meta-analysis."),
           h3("Upload Your Data"),
           p("First you need to upload your data. This is the same data file you used for the overall meta-analysis and moderator analysis. Only .csv files are accepted."),
           fileInput("chefileCat", "Upload Data", accept = ".csv"),
@@ -374,7 +378,7 @@ ui <- dashboardPage(
           # Header and paragraph for correlation setting
           h3("Correlation to be assumed"),
           p("You should assume the same correlation that you set for your overall meta-analysis."),
-          selectInput("correlationCat", "Set rhoCat value:", choices = seq(-1, 1, by = 0.01), selected = 0.60),
+          selectInput("correlationCat", "Set rho value:", choices = seq(-1, 1, by = 0.01), selected = 0.60),
           
           #choose Moderator
           h3("Choose the Categorical Moderator"),
@@ -385,6 +389,8 @@ ui <- dashboardPage(
   ),
 tabItem(tabName = "subtab56",
         # Header and paragraph for data upload
+        h2("Continuous Moderator Analysis"),
+        p("This tool will help you check for", strong("continuous"), "moderating variables (single variable meta-regression). Do not use this tool for categorical variables you wish to examine by category! The first step is to upload your data. This should be the same data you used to run the meta-analysis."),
         h3("Upload Your Data"),
         p("First you need to upload your data. This is the same data file you used for the overall meta-analysis and moderator analysis. Only .csv files are accepted."),
         fileInput("chefileCont", "Upload Data", accept = ".csv"),
@@ -393,10 +399,10 @@ tabItem(tabName = "subtab56",
         # Header and paragraph for correlation setting
         h3("Correlation to be assumed"),
         p("You should assume the same correlation that you set for your overall meta-analysis."),
-        selectInput("correlationCont", "Set rhoCat value:", choices = seq(-1, 1, by = 0.01), selected = 0.60),
+        selectInput("correlationCont", "Set rho value:", choices = seq(-1, 1, by = 0.01), selected = 0.60),
         
         #choose Moderator
-        h3("Choose the Categorical Moderator"),
+        h3("Choose the Continuous Moderator"),
         selectInput("mod_RVECont", "Select Moderator Variable:", choices = NULL),
         # Button to run analysis
         actionButton("run_cheCont", "Run Analysis", icon = icon("play")),
@@ -2610,7 +2616,7 @@ server <- function(input, output, session) {
         check.names = FALSE
       )
       # Replace values less than 0.001 with "<0.001" in the "p-value" column
-      result_tablea$PValue[result_tablea$PValue < 0.001] <- "< 0.001"
+      result_tablea$pvalue[result_tablea$PValue < 0.001] <- "< 0.001"
       return(result_tablea)
     })
     
@@ -2656,8 +2662,7 @@ server <- function(input, output, session) {
               box( title = "*Important Note*", width = 12, status = "primary",
                    p("The plots are rendered at 'half-page' height (800px by 600px) within the software. You may choose to download at this size (about half a standard page in height) or full-page size. If you need a taller image (most typical on the comparison-level forest plot) than the 'full-page' download size may be helpful.",
                    )),
-              p("This is a forest plot for dependent data, based on code by Fernández-Castilla et al. (2020). the black boxes represent the average effect size from the comparisons within each study, and the black lines are the study precision. The grey lines are the median precision of one effect size from each study. The size of the effect size box is representative of its weight in the analysis. J represents how many comparisons were analyzed from each study."),
-              p("Note that within the app, the plot scales based on your window size. If you download the image it will be properly scaled."),
+              p("This is a forest plot for dependent data, based on code by Fernández-Castilla et al. (2020). The black boxes represent the average effect size from the comparisons within each study, and the black lines are the study precision. The grey lines are the median precision of one effect size from each study. The size of the effect size box is representative of its weight in the analysis. J represents how many comparisons were analyzed from each study."),
               downloadButton("download_forest", "Download Forest Plot (half-page)"), downloadButton("download_forestf", "Download Forest Plot (full-page)"),
               plotOutput("forest_plot", width = 800, height = 600),
               h3("Funnel Plots"),
