@@ -1,0 +1,25 @@
+ES_number,Study,control_c,Setting,cont_fakedata,Exp_mean,Exp_sd,Exp_n,Ctrl_mean,Ctrl_sd,Ctrl_n,yi,vi
+1,Van der Meij et al. (2015),Software program,Laboratory,3,5.68,1.96,10,4.71,1.92,10,0.478797771,0.205731183
+2,Van der Meij et al. (2015),Software program,Laboratory,8,4.9,1.82,11,5.46,1.64,10,-0.309458928,0.193189206
+3,Van der Meij et al. (2015),Software program,Laboratory,6,5.7,2.26,10,4.95,1.95,10,0.340282931,0.202894812
+4,Van der Meij et al. (2015),Software program,Laboratory,4,4.7,1.95,11,5.88,1.67,10,-0.621424604,0.20010358
+5,Van der Meij et al. (2015),Software program,Laboratory,9,5.61,1.96,10,4.73,1.72,10,0.457033891,0.205221999
+6,Van der Meij et al. (2015),Software program,Laboratory,1,4.8,1.83,11,5.24,1.68,10,-0.23990382,0.19227942
+7,Dinçer and Doganay (2017),Software program,Classroom,5,34.08,4.99,86,32.2,6.1,88,0.335498648,0.02331499
+8,Dinçer and Doganay (2017),Traditional Training,Classroom,4,33.67,5.42,92,30.59,7.37,81,0.478642359,0.023877379
+9,Park (2005) ,Software program,Classroom,2,3.93,0.63,15,3.66,0.35,16,0.520742848,0.133540427
+10,Park (2005) ,Software program,Classroom,2,3.82,0.76,16,3.28,0.52,17,0.813813095,0.131358253
+11,Park (2005) ,Traditional Training,Classroom,2,3.67,0.87,15,3.71,0.56,15,-0.053194189,0.133380494
+12,Park (2005) ,Software program,Classroom,3,3.53,0.54,16,3.13,0.6,17,0.682514241,0.128381494
+13,Guo et al. (2015),Software program,Laboratory,5,3.62,0.5,95,3.48,0.45,95,0.293153454,0.021278787
+14,Guo et al. (2015),Traditional Training,Laboratory,4,3.47,0.44,95,3.48,0.45,95,-0.02238071,0.02105395
+15,Guo et al. (2014),Software program,Laboratory,5,33.78,3.24,41,32.86,3.4,39,0.274523857,0.05050229
+16,Guo et al. (2014),Traditional Training,Laboratory,6,32.3,4.7,40,32.86,3.4,39,-0.134915755,0.05075623
+17,Guo & Goh (2016),Software program,Laboratory,4,3.53,0.53,53,3.36,0.59,54,0.300812461,0.037809285
+18,Guo & Goh (2016),Software program,Laboratory,8,3.28,0.62,52,3.36,0.59,54,-0.131297379,0.037830604
+19,Scholten et al. (2019),Traditional Training,On own time,9,3.6,0.6,58,3.8,0.6,59,-0.331153891,0.034659177
+20,Scholten et al. (2019),Software program,On own time,9,3.7,0.6,58,3.8,0.6,59,-0.165576946,0.034307693
+21,Scholten et al. (2019),Software program,On own time,9,3.5,0.8,57,3.8,0.6,59,-0.422504705,0.035262453
+22,Baylor (2002),Software program,Classroom,4,4.21,0.9,29,4.31,0.86,32,-0.11228546,0.065836103
+23,Baylor (2002),Software program,Classroom,5,4.29,0.98,28,4.31,0.86,32,-0.021507657,0.066968141
+24,Baylor (2002),Software program,Classroom,2,4,1.02,44,4.31,0.86,32,-0.320888726,0.054654704

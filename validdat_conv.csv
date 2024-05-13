@@ -1,0 +1,8 @@
+Study,control.condition,cont_fake,Exp_mean,Exp_sd,Exp_n,Ctrl_mean,Ctrl_sd,Ctrl_n,notes,se.exp,se.ctrl,yi,vi
+Van der Meij et al. (2015),voice only,5,4.8,1.83,11,5.24,1.68,10,"girls, task relevance, after",NA,NA,-0.23990382,0.19227942
+Dinçer and Doganay (2017),voice only,8,34.08,4.99,86,32.2,6.1,88,"Keller's IMMS, relevance",NA,NA,0.335498648,0.02331499
+Park (2005) ,text only,9,3.53,0.54,16,3.13,0.6,17,"instructor agent vs no seductive text, relevance",NA,NA,0.682514241,0.128381494
+Guo et al. (2015),text only,9,3.62,0.5,95,3.48,0.45,95,"Keller's ARCS scale, relevance",NA,NA,0.293153454,0.021278787
+Guo & Goh (2016),text only,9,3.53,0.53,53,3.36,0.59,54,"IMMS, relevance",NA,NA,0.300812461,0.037809285
+Scholten et al. (2019),text only,4,3.5,0.8,57,3.8,0.6,59,IMMS relevance,NA,NA,-0.422504705,0.035262453
+Baylor (2002),text only,2,4.21,0.9,29,4.31,0.86,32,perceived instrumentality,NA,NA,-0.11228546,0.065836103
