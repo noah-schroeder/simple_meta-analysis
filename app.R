@@ -24,8 +24,7 @@ ui <- dashboardPage(
                               menuSubItem("Step 2: Check for Outliers and Influence", tabName = "subtab33"),
                               menuSubItem("Step 3a: Categorical Moderator Analysis", tabName = "subtab34"),
                               menuSubItem("Step 3b: Continuous Moderator Analysis", tabName = "subtab341"),
-                              menuSubItem("Step 4: Publication Bias", tabName = "subtab35"),
-                              menuSubItem("R Code", tabName = "subtab36")
+                              menuSubItem("Step 4: Publication Bias", tabName = "subtab35")
                      ),
                      menuItem("Three-Level Meta-Analysis", tabName = "tab4", icon = icon("table"),
                               menuSubItem("Start Here: Data Formatting", tabName = "subtab401"),
@@ -34,8 +33,7 @@ ui <- dashboardPage(
                               menuSubItem("Step 3: Check for Outliers and Influence", tabName = "subtab44"),
                               menuSubItem("Step 4a: Categorical Moderator Analysis", tabName = "subtab45"),
                               menuSubItem("Step 4b: Continuous Moderator Analysis", tabName = "subtab451"),
-                              menuSubItem("Step 5: Publication Bias and Plots", tabName = "subtab46"),
-                              menuSubItem("R Code", tabName = "subtab45")
+                              menuSubItem("Step 5: Publication Bias and Plots", tabName = "subtab46")
                      ),
                      menuItem("Three-Level Meta-Analysis with CHE RVE", tabName = "tab5", icon = icon("table"),
                               menuSubItem("Start Here: Data Formatting", tabName = "subtab51"),
@@ -462,7 +460,7 @@ tabItem(tabName = "subtab83",
         h3("R Code"),
         p("The R code to repeat the analyses in the video is located", a("at github", href = "https://github.com/noah-schroeder/simple_meta-analysis", target = "_blank")),
         h3("Video Walk-Through"),
-        p("You can find a video walkthrough at this link:", a("Video Walk-Through", href = "https://youtu.be/LQVLtBIHut0", target = "_blank")),
+        p("You can find a video walkthrough at this link:", a("Video Walk-Through", href = "https://youtu.be/8XN2_-E4hpg", target = "_blank")),
         
 ),
 
