@@ -7,7 +7,7 @@ library(ggplot2)
 #name data file and read in .csv. Change the \ to /
 df360 <- read.csv("validdat_3lma.csv")
 
-#calculate overall ES, in this case standardized mean dif hedges g, and variance. intmean in this case is column headings
+#calculate overall ES, in this case standardized mean dif hedges g, and variance.
 dat1 <- escalc(measure="SMD", m1i=Exp_mean, sd1i=Exp_sd, n1i=Exp_n,
                m2i=Ctrl_mean, sd2i=Ctrl_sd, n2i=Ctrl_n, data=df360)
 #display dataset with ES and variance
@@ -30,9 +30,6 @@ i2 <- var.comp(m_multi)
 summary(i2)
 i2
 
-#########################################
-#outlier check#
-#########################################
 ###########################
 #Check for outliers#
 ###########################
@@ -65,16 +62,17 @@ ggplot(data = dat1, aes(x = yi, colour = outlier, fill = outlier)) +
 cooks <- cooks.distance(m_multi)
 plot(cooks, type="o", pch=19, xlab="Observed Outcome", ylab="Cook's Distance")
 
+#dfbeta
 dfbetas <-dfbetas(m_multi)
 dfbetas
-
+#hatvalue
 hatvalues <- hatvalues(m_multi)
 hatvalues
 
 #########################################
 #moderator analyses#
 #########################################
-#calcualte qb
+#calcualte qb categorical moderator
 mod.ctrlq <- rma.mv(yi,
                   vi,
                   data = dat1,
@@ -84,7 +82,7 @@ mod.ctrlq <- rma.mv(yi,
                   mods = ~ factor(control_c))
 summary(mod.ctrlq)
 
-#calcualte ES
+#calcualte ES categorical moderator
 mod.ctrl <- rma.mv(yi,
                     vi,
                     data = dat1,

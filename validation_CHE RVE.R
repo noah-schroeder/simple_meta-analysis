@@ -26,10 +26,10 @@ m_multi <- rma.mv(yi,
                   dfs = "contain",
                   data = dat1) 
 m_multi
-
+#robust model
 robrob <- robust(m_multi, cluster = Study, clubSandwich = TRUE)
 robrob
-#calculate i2 for each level-copy paste function from https://raw.githubusercontent.com/MathiasHarrer/dmetar/master/R/mlm.variance.distribution.R into console and hit enter
+#calculate i2 for each level- this is for CHE model not CHERVE model as it won't work with robust model - copy paste function from https://raw.githubusercontent.com/MathiasHarrer/dmetar/master/R/mlm.variance.distribution.R into console and hit enter
 i2 <- var.comp(m_multi)
 summary(i2)
 i2
@@ -66,10 +66,11 @@ ggplot(data = dat1, aes(x = yi, colour = outlier, fill = outlier)) +
 cooks <- cooks.distance(robrob)
 plot(cooks, type="o", pch=19, xlab="Observed Outcome", ylab="Cook's Distance")
 
-#note dfbetas doesn't work with robust results so we use the 3 level model
+#note dfbetas doesn't work with robust results so we use the 3 level model CHE model
 dfbetas <-dfbetas(m_multi)
 dfbetas
 
+#hatvalues
 hatvalues <- hatvalues(robrob)
 hatvalues
 
@@ -77,7 +78,7 @@ hatvalues
 #Moderator Analyses#########
 ################################################
 ####Control Condition
-#calculate qb
+#calculate qb for categorical moderator
 mod.ctrlq <- rma.mv(yi,
                                 V,
                                 data = dat1,
@@ -89,7 +90,7 @@ mod.ctrlq <- rma.mv(yi,
 robust_q <- robust(mod.ctrlq, cluster = Study, clubSandwich = TRUE, digits = 3)
 summary(robust_q)
 
-#calculate levels
+#calculate levels for categorical moderator
 mod.ctrl <- rma.mv(yi,
                     V,
                     data = dat1,
@@ -101,7 +102,7 @@ mod.ctrl <- rma.mv(yi,
 robust <- robust(mod.ctrl, cluster = Study, clubSandwich = TRUE, digits = 3)
 summary(robust)
 
-#run continuous
+#run continuous moderator
 mod.cont <- rma.mv(yi,
                     V,
                     data = dat1,
