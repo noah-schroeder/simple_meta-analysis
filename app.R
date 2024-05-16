@@ -4259,7 +4259,8 @@ output$downloadCheForest2 <- downloadHandler(
       forest(resultrobustcheplot2, slab = study_labels, header = TRUE, 
              annotate = TRUE, addfit = FALSE, mlab = "")
       title(sub = paste("RE CHE RVE Three-Level Model, rho =", rho_value), line = 2.5, adj = 0)
-      title(sub = "Note that the means above are not weighted within studies.", line = 2.5, adj = 1)
+      title(sub = "Note that the means above are ", line = 2.5, adj = 1)
+      title(sub = "not weighted within studies.", line = 3.25, adj = 1)
       
     }
     dev.off()
@@ -4280,7 +4281,8 @@ output$downloadCheForest2b <- downloadHandler(
       forest(resultrobustcheplot2, slab = study_labels, header = TRUE, 
              annotate = TRUE, addfit = FALSE, mlab = "")
       title(sub = paste("RE CHE RVE Three-Level Model, rho =", rho_value), line = 2.5, adj = 0)
-      title(sub = "Note that the means above are not weighted within studies.", line = 2.5, adj = 1)
+      title(sub = "Note that the means above are ", line = 2.5, adj = 1)
+      title(sub = "not weighted within studies.", line = 3.25, adj = 1)
       
     }
     dev.off()
