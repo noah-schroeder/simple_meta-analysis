@@ -5,8 +5,8 @@ library(shinydashboard)
 # Define UI ---- 
 ui <- dashboardPage(
   dashboardHeader(
-    title = div(
-      img(src = "bird.png", style = "height:3em; vertical-align:middle; padding-right:1px;"),
+    title = tags$div(
+      tags$img(src = "bird.png", style = "height:3em; vertical-align:middle; padding-right:1px;"),
       "Simple Meta-Analysis"
     ),
     titleWidth = "300px"  # Adjust the width as needed
