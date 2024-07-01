@@ -1106,7 +1106,6 @@ server <- function(input, output, session) {
   library(metafor)
   library(ggplot2)
   library(dplyr)
-  library(tidyverse)
   library(data.table)
   ##ES calc ----  
   resultsVisiblees <- reactiveVal(FALSE)
