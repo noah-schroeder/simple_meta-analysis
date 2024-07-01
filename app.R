@@ -4,10 +4,12 @@ library(shinydashboard)
 
 # Define UI ---- 
 ui <- dashboardPage(
-  dashboardHeader(title = tags$span(
-    tags$img(src = "bird.png", style = "height:3em; vertical-align:middle; padding-right:1px;"),
-    "Simple Meta-Analysis"),
-    titleWidth = 300
+  dashboardHeader(
+    title = div(
+      img(src = "bird.png", style = "height:3em; vertical-align:middle; padding-right:1px;"),
+      "Simple Meta-Analysis"
+    ),
+    titleWidth = "300px"  # Adjust the width as needed
   ),
   dashboardSidebar(width = 300,
                    sidebarMenu(
@@ -64,6 +66,25 @@ ui <- dashboardPage(
   dashboardBody(
     tags$head(
       tags$style(HTML(".scrollable {overflow-x: auto; }")),
+      tags$style(HTML("
+      .btn-primary {
+        color: #fff;
+        background-color: #007BFF;
+        border-color: #007BFF;
+        padding: 10px 20px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 4px 2px;
+        cursor: pointer;
+        border-radius: 8px;
+      }
+      .btn-primary:hover {
+        background-color: #0056b3;
+        border-color: #0056b3;
+      }
+    ")),
       ),
     # Main content area
     tabItems(
@@ -73,7 +94,10 @@ ui <- dashboardPage(
               p("Welcome to Simple Meta-Analysis, a software program designed to enable the non-R-coding meta-analyst to use meta-analytical techniques that do not (at the time of writing) exist in any GUI-based software. This software can help you calculate standardized mean difference effect sizes, run random effects conventional meta-analysis, random effects three-level meta-analysis, and random effects three-level meta-analysis with correlated and hierarchical robust variance estimation."),
               p("This app is primarily built upon the metafor package for R, as well as the clubSandwich package. The goal was to help make these packages accessible to the non-coding meta-analyst. Please note that the packages are capable of much more than only the functionality built into this app, however I have tried to focus the app on the techniques that most meta-analysts I know are using (or should be using)."),
               box(title = "Please Note", width = 12, status = "primary",
-                  p("This app was built to use standardized mean difference effect sizes, as they are quite common in many fields. Other effect sizes could work (other than the effect size calculator) because the metafor code for rma functions does not specify the type of effect size. However, only SMD has been validated in the app at the time of writing (May 12, 2024).")),
+                  p("This app was built to use standardized mean difference effect sizes, as they are quite common in many fields. Other effect sizes could work (other than the effect size calculator) because the metafor code for rma functions does not specify the type of effect size. However, only SMD has been validated in the app.")),
+              h2("Please Consider Supporting This Software"),
+              p("If you found this software helpful, please consider donating to keep the software going."),
+              tags$a(href = "https://www.paypal.com/donate/?hosted_button_id=WPLT2F5FLZ6B6", target = "_blank", class = "btn-primary", "Donate and Support This Software"),
               h2("Please Cite This Software"),
               p("If you use this software, please be sure to cite the software:"),
               box(title = "Citation", width = 12, status = "primary",
