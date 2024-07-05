@@ -98,6 +98,7 @@ ui <- dashboardPage(
               h2("Please Consider Supporting This Software"),
               p("If you found this software helpful, please consider donating to keep the software going."),
               tags$a(href = "https://www.paypal.com/donate/?hosted_button_id=WPLT2F5FLZ6B6", target = "_blank", class = "btn-primary", "Donate and Support This Software"),
+              p("If you are running the software locally instead of using the web version, the link to donate is: https://www.paypal.com/donate/?hosted_button_id=WPLT2F5FLZ6B6"),
               h2("Please Cite This Software"),
               p("If you use this software, please be sure to cite the software:"),
               box(title = "Citation", width = 12, status = "primary",
