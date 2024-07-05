@@ -101,7 +101,7 @@ ui <- dashboardPage(
               h2("Please Cite This Software"),
               p("If you use this software, please be sure to cite the software:"),
               box(title = "Citation", width = 12, status = "primary",
-                  p("Schroeder, N. L. (2024). Simple meta-analysis. Available from https://noahschroeder.shinyapps.io/SimpleMeta-Analysis/")),
+                  p("Schroeder, N. L. (2024). Simple meta-analysis. Available from https://github.com/noah-schroeder/simple_meta-analysis/")),
       ), 
       tabItem(tabName = "subtab11",
               h2("Need Help Learning Meta-Analysis?"),
@@ -115,7 +115,7 @@ ui <- dashboardPage(
               h2("Please Cite This Software"),
               p("If you use this software, please be sure to cite the software:"),
               box(title = "Citation", width = 12, status = "primary",
-                  p("Schroeder, N. L. (2024). Simple meta-analysis. Available from https://noahschroeder.shinyapps.io/SimpleMeta-Analysis/")),
+                  p("Schroeder, N. L. (2024). Simple meta-analysis. Available from https://github.com/noah-schroeder/simple_meta-analysis/")),
       ),
 
   ### Conventional MA sub-tabs----
@@ -184,7 +184,7 @@ ui <- dashboardPage(
           p("Once your file is uploaded, you can choose which column in your spreadsheet you want to examine as a moderator variable. Again,", strong("this is for categorical moderators only."), "After you choose your variable from the dropdown menu, click run and your results will be shown."),
           selectInput("dropdownc", "Choose Column for Moderator Analysis", choices = NULL),
           actionButton("run_analysisCcat", "Run Moderator Analysis"),
-          uiOutput("dynamicResultsCcat")
+          uiOutput("dynamicResultsCcat"),
   ),
   tabItem(tabName = "subtab341",
           h2("Continuous Moderator Analysis"),
@@ -466,25 +466,31 @@ tabItem(tabName = "subtab56",
 tabItem(tabName = "subtab81",
         h2("Conventional Meta-Analysis"),
         h3("R Code"),
-        p("The R code to repeat the analyses in the video is located", a("at github", href = "https://github.com/noah-schroeder/simple_meta-analysis", target = "_blank")),
+        p("Below is R code that will provide the same results as the analyses on the respective pages for conventional meta-analysis models."),
+        htmlOutput("ccode"),
         h3("Video Walk-Through"),
         p("You can find a video walkthrough at this link:", a("Video Walk-Through", href = "https://www.youtube.com/watch?v=w2xFzp21nks", target = "_blank")),
-       
+        p("The R code file to repeat the analyses in the video is located", a("at github", href = "https://github.com/noah-schroeder/simple_meta-analysis", target = "_blank")),
+        
 ),
 tabItem(tabName = "subtab82",
         h2("Three-level Meta-Analysis"),
         h3("R Code"),
-        p("The R code to repeat the analyses in the video is located", a("at github", href = "https://github.com/noah-schroeder/simple_meta-analysis", target = "_blank")),
+        p("Below is R code that will provide the same results as the analyses on the respective pages for conventional meta-analysis models."),
+        htmlOutput("threecode"),
         h3("Video Walk-Through"),
         p("You can find a video walkthrough at this link:", a("Video Walk-Through", href = "https://youtu.be/LQVLtBIHut0", target = "_blank")),
+        p("The R code to repeat the analyses in the video is located", a("at github", href = "https://github.com/noah-schroeder/simple_meta-analysis", target = "_blank")),
         
 ),
 tabItem(tabName = "subtab83",
         h2("Three-level Meta-Analysis with CHE and RVE"),
         h3("R Code"),
-        p("The R code to repeat the analyses in the video is located", a("at github", href = "https://github.com/noah-schroeder/simple_meta-analysis", target = "_blank")),
+        p("Below is R code that will provide the same results as the analyses on the respective pages for conventional meta-analysis models."),
+        htmlOutput("chervecode"),
         h3("Video Walk-Through"),
         p("You can find a video walkthrough at this link:", a("Video Walk-Through", href = "https://youtu.be/8XN2_-E4hpg", target = "_blank")),
+        p("The R code to repeat the analyses in the video is located", a("at github", href = "https://github.com/noah-schroeder/simple_meta-analysis", target = "_blank")),
         
 ),
 
@@ -1423,6 +1429,11 @@ server <- function(input, output, session) {
         p("Below is our table that shows the effect sizes and accompanying statistics for each level of the moderator. Remember, your Qbetween tells you if there are significant differences between levels."),
         downloadButton("download_resultsc", "Download Results"),
         tableOutput("modtable_outputc"),
+        h3("Basic Interpretation Tips"),
+        p("First you should look at the", strong("Qbetween"), "column. If this is significant, it means there are significant differences between levels of your moderator."),
+        p("Note the following columns I have created to aid in interpretation:"),
+        p(strong("nexp"),"is the sample size of the intervention group, and", strong("nctrl"), "is the sample size of the control group."),
+        p(strong("kcomp"),"is the number of comparisons examined. The total number of kcomp in the table should correspond to the number of rows in your dataset."),
         h3("Need Help Understanding The Results?"),
         p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#moderator-analysis'>my open book</a>"),
         ),
@@ -4354,11 +4365,299 @@ output$downloadCheFunnelb <- downloadHandler(
 
   
 
-  
 
 
 
+##code for validation----
+###conventional MA
+output$ccode <- renderUI({
+  HTML("<pre><code>
+##########preparation
+#load metafor
+library(metafor)
+#name data file and read in .csv
+dat1 <- read.csv(&quot;yourdata.csv&quot;)
+#calculate overall ES, in this case standardized mean dif hedges g, and variance. 
+dat1 <- escalc(measure=&quot;SMD&quot;, m1i=Exp_mean, sd1i=Exp_sd, n1i=Exp_n,
+               m2i=Ctrl_mean, sd2i=Ctrl_sd, n2i=Ctrl_n, data=dat1)
+#display dataset with ES and variance
+dat1
 
+
+
+##########analyses
+
+#run overall random effects meta-analysis
+overallresult <- rma(yi, vi, data=dat1)
+#display overall result
+overallresult
+#moderator test to calculate qbetween value for categorical moderator
+mod.ctrlq <- rma(yi, vi, mods = ~ factor(control.condition), data=dat1)
+mod.ctrlq
+#moderator test to get mean effect size for each group categorical moderator
+mod.ctrl <- rma(yi, vi, mods = ~ factor(control.condition)-1, data=dat1)
+#Display moderator result
+mod.ctrl
+#continuous moderator test
+mod.cont <- rma(yi, vi, mods = ~ cont_fake, data=dat1)
+mod.cont
+
+#forest plot
+forest.rma(overallresult, slab = dat1$Study)
+
+
+#########publication bias analyses
+
+#standard funnel plot
+funnel(overallresult)
+# carry out trim-and-fill analysis
+trimandfill <- trimfill(overallresult)
+trimandfill
+#Eggers regression
+regtest(overallresult)
+#Rosenthal, Orwin, & Rosenberg Fail Safe N test 
+fsn(yi, vi, data=dat1)
+fsn(yi, vi, data=dat1, type=&quot;Orwin&quot;)
+fsn(yi, vi, data=dat1, type=&quot;Rosenberg&quot;)
+
+#influence analysis
+influence(overallresult)
+    </code></pre>")
+})
+
+###conventional MA
+output$threecode <- renderUI({
+  HTML("<pre><code>
+##########preparation
+
+#load metafor
+library(metafor)
+library(ggplot2)
+
+#name data file and read in .csv. Change the \ to /
+df360 <- read.csv(&quot;yourdata.csv&quot;)
+
+#calculate overall ES, in this case standardized mean dif hedges g, and variance.
+dat1 <- escalc(measure=&quot;SMD&quot;, m1i=Exp_mean, sd1i=Exp_sd, n1i=Exp_n,
+               m2i=Ctrl_mean, sd2i=Ctrl_sd, n2i=Ctrl_n, data=df360)
+#display dataset with ES and variance
+dat1
+
+
+###########################
+#fitting model#
+###########################
+#multilevel model
+m_multi <- rma.mv(yi,
+                  vi,
+                  random = ~ 1 | Study/ES_number,
+                  test = &quot;t&quot;, 
+                  data = dat1) 
+m_multi
+
+#calculate i2 for each level-copy paste function from https://raw.githubusercontent.com/MathiasHarrer/dmetar/master/R/mlm.variance.distribution.R into console and hit enter
+i2 <- var.comp(m_multi)
+summary(i2)
+i2
+
+###########################
+#Check for outliers#
+###########################
+
+#adapting CI calculation and plotting from https://cjvanlissa.github.io/Doing-Meta-Analysis-in-R/detecting-outliers-influential-cases.html
+# Calculate CI for all observed effect sizes
+dat1$upperci <- dat1$yi + 1.96 * sqrt(dat1$vi)
+dat1$lowerci <- dat1$yi - 1.96 * sqrt(dat1$vi)
+# Create filter variable
+dat1$outlier <- dat1$upperci < m_multi$ci.lb | dat1$lowerci > m_multi$ci.ub
+# Count number of outliers:
+sum(dat1$outlier)
+dat1
+# Make a basic plot, based on the data in df, and specify that the x-variable is
+# the effect size, 'd', the colour and fill of the histogram bars are based on
+# the value of 'outlier':
+ggplot(data = dat1, aes(x = yi, colour = outlier, fill = outlier)) +
+  # Add a histogram with transparent bars (alpha = .2)
+  geom_histogram(alpha = .2) +
+  # Add a vertical line at the pooled effect value (m_re$b[1])
+  geom_vline(xintercept = m_multi$b[1]) +
+  # Apply a black and white theme
+  theme_bw()
+
+
+##########################################
+#influence check
+#adapting method from https://wviechtb.github.io/metafor/reference/influence.rma.mv.html to calculate influence 
+#cook's distance
+cooks <- cooks.distance(m_multi)
+plot(cooks, type=&quot;o&quot;, pch=19, xlab=&quot;Observed Outcome&quot;, ylab=&quot;Cook's Distance&quot;)
+
+#dfbeta
+dfbetas <-dfbetas(m_multi)
+dfbetas
+#hatvalue
+hatvalues <- hatvalues(m_multi)
+hatvalues
+
+#########################################
+#moderator analyses#
+#########################################
+#calcualte qb categorical moderator
+mod.ctrlq <- rma.mv(yi,
+                  vi,
+                  data = dat1,
+                  random = ~ 1 | Study/ES_number, 
+                  test = &quot;t&quot;,
+                  method = &quot;REML&quot;,
+                  mods = ~ factor(control_c))
+summary(mod.ctrlq)
+
+#calcualte ES categorical moderator
+mod.ctrl <- rma.mv(yi,
+                    vi,
+                    data = dat1,
+                    random = ~ 1 | Study/ES_number, 
+                    test = &quot;t&quot;,
+                    method = &quot;REML&quot;,
+                    mods = ~ factor(control_c)-1)
+summary(mod.ctrl)
+
+#continuous mod
+mod.cont_fake <- rma.mv(yi,
+                     vi,
+                     data = dat1,
+                     random = ~ 1 | Study/ES_number, 
+                     test = &quot;t&quot;,
+                     method = &quot;REML&quot;,
+                     mods = ~ cont_fakedata)
+summary(mod.cont_fake)
+    </code></pre>")
+})
+
+###conventional MA
+output$chervecode <- renderUI({
+  HTML("<pre><code>
+###########################
+#Preparation#
+###########################
+
+#load metafor
+library(metafor)
+library(ggplot2)
+library(dplyr)
+library(clubSandwich)
+
+
+#name data file and read in .csv. 
+dat1 <- read.csv(&quot;yourdata.csv&quot;)
+
+#set Rho
+rho <- .60
+
+V <- with(dat1, impute_covariance_matrix(vi = vi, cluster = Study, r = rho))
+
+#multilevel model
+m_multi <- rma.mv(yi,
+                  V,
+                  random = ~ 1 | Study/ES_number,
+                  method = &quot;REML&quot;,
+                  test = &quot;t&quot;,
+                  dfs = &quot;contain&quot;,
+                  data = dat1) 
+m_multi
+#robust model
+robrob <- robust(m_multi, cluster = Study, clubSandwich = TRUE)
+robrob
+#calculate i2 for each level- this is for CHE model not CHERVE model as it won't work with robust model - copy paste function from https://raw.githubusercontent.com/MathiasHarrer/dmetar/master/R/mlm.variance.distribution.R into console and hit enter
+i2 <- var.comp(m_multi)
+summary(i2)
+i2
+
+###########################
+#Check for outliers#
+###########################
+
+#adapting CI calculation and plotting from https://cjvanlissa.github.io/Doing-Meta-Analysis-in-R/detecting-outliers-influential-cases.html
+# Calculate CI for all observed effect sizes
+dat1$upperci <- dat1$yi + 1.96 * sqrt(dat1$vi)
+dat1$lowerci <- dat1$yi - 1.96 * sqrt(dat1$vi)
+# Create filter variable
+dat1$outlier <- dat1$upperci < m_multi$ci.lb | dat1$lowerci > m_multi$ci.ub
+# Count number of outliers:
+sum(dat1$outlier)
+dat1
+# Make a basic plot, based on the data in df, and specify that the x-variable is
+# the effect size, 'd', the colour and fill of the histogram bars are based on
+# the value of 'outlier':
+ggplot(data = dat1, aes(x = yi, colour = outlier, fill = outlier)) +
+  # Add a histogram with transparent bars (alpha = .2)
+  geom_histogram(alpha = .2) +
+  # Add a vertical line at the pooled effect value (m_re$b[1])
+  geom_vline(xintercept = m_multi$b[1]) +
+  # Apply a black and white theme
+  theme_bw()
+
+
+##########################################
+#influence check
+#adapting method from https://wviechtb.github.io/metafor/reference/influence.rma.mv.html to calculate influence 
+#cook's distance
+cooks <- cooks.distance(robrob)
+plot(cooks, type=&quot;o&quot;, pch=19, xlab=&quot;Observed Outcome&quot;, ylab=&quot;Cook's Distance&quot;)
+
+#note dfbetas doesn't work with robust results so we use the 3 level model CHE model
+       dfbetas <-dfbetas(m_multi)
+       dfbetas
+       
+       #hatvalues
+       hatvalues <- hatvalues(robrob)
+       hatvalues
+       
+       #################################################
+       #Moderator Analyses#########
+       ################################################
+       ####Control Condition
+       #calculate qb for categorical moderator
+       mod.ctrlq <- rma.mv(yi,
+                           V,
+                           data = dat1,
+                           random = ~ 1 | Study/ES_number, 
+                           method = &quot;REML&quot;,
+                           test = &quot;t&quot;,
+                           dfs = &quot;contain&quot;,
+                           mods = ~ factor(control_c))
+       robust_q <- robust(mod.ctrlq, cluster = Study, clubSandwich = TRUE, digits = 3)
+       summary(robust_q)
+       
+       #calculate levels for categorical moderator
+       mod.ctrl <- rma.mv(yi,
+                          V,
+                          data = dat1,
+                          random = ~ 1 | Study/ES_number, 
+                          method = &quot;REML&quot;,
+                          test = &quot;t&quot;,
+                          dfs = &quot;contain&quot;,
+                          mods = ~ -1 + factor(control_c))
+       robust <- robust(mod.ctrl, cluster = Study, clubSandwich = TRUE, digits = 3)
+       summary(robust)
+       
+       #run continuous moderator
+       mod.cont <- rma.mv(yi,
+                          V,
+                          data = dat1,
+                          random = ~ 1 | Study/ES_number, 
+                          method = &quot;REML&quot;,
+                          test = &quot;t&quot;,
+                          dfs = &quot;contain&quot;,
+                          mods = ~ cont_fakedata)
+       robust_cont <- robust(mod.cont, cluster = Study, clubSandwich = TRUE, digits = 3)
+       summary(robust_cont)
+       
+       ################################################
+       #forest plot
+       forest(robrob, slab = dat1$Study)
+    </code></pre>")
+})
 
     
     
