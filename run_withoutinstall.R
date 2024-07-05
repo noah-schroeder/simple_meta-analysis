@@ -4,7 +4,10 @@
 ###This will pull reference files from GitHub and launch the program locally.
 ###Please be patient, it may take a minute or two. 
 
-install.packages(c("shiny", "shinydashboard", "plyr", "clubSandwich","metaSEM",))
+install.prereqs()
+runapp() 
+
+install.packages(c("shiny", "shinydashboard", "plyr", "clubSandwich","metaSEM"))
 install.packages(c("ggrepel","metafor","ggplot2","dplyr","data.table"))
 library(shiny); library(shinydashboard); library(plyr); library(grid); library(clubSandwich); library(metaSEM); library(ggrepel); library(metafor)
 library(ggplot2); library(dplyr); library(data.table)
