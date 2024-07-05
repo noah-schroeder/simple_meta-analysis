@@ -4553,7 +4553,7 @@ library(clubSandwich)
 dat1 <- read.csv(&quot;yourdata.csv&quot;)
 
 #set Rho
-rho <- .60
+rho <- #user sets value 
 
 V <- with(dat1, impute_covariance_matrix(vi = vi, cluster = Study, r = rho))
 
