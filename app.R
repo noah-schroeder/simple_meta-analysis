@@ -156,7 +156,7 @@ ui <- dashboardPage(
               ),
       tabItem(tabName = "subtab32",
               h2("Run the Meta-Analysis"),
-              p("Now you are ready to run your conventional meta-analysis. This app will help you run a random effects meta-analyis."),
+              p("Now you are ready to run your conventional meta-analysis. This app will help you run a random effects meta-analysis."),
               h3("Upload Your Dataset"),
               box(title = "Data File Requirements", width = 12, status = "primary",            
                   p("If you used the effect size calculator in this app, simply upload the file the calculator generated for you."),
