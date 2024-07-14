@@ -1431,8 +1431,8 @@ server <- function(input, output, session) {
         downloadButton("download_resultsc", "Download Results"),
         tableOutput("modtable_outputc"),
         h3("Basic Interpretation Tips"),
-        p("First you should look at the", strong("Qbetween"), "column. If this is significant, it means there are significant differences between levels of your moderator."),
-        p("Next you should look at the", strong("Qwithin"), "column. If this is significant (this is residual heterogeneity), it means there are significant amounts of hetereogenity not explained by the moderator."),
+        p("First you should look at the", strong("Test_of_Moderator"), "column (commonly called Qbetween). If this is significant, it means there are significant differences between levels of your moderator."),
+        p("Next you should look at the", strong("Residual_Heterogeneity"), "column (commonly called Qwithin). If this is significant, it means there is significant hetereogenity that the moderator does", strong("not"), "explain."),
         p("Note the following columns I have created to aid in interpretation:"),
         p(strong("nexp"),"is the sample size of the intervention group, and", strong("nctrl"), "is the sample size of the control group."),
         p(strong("kcomp"),"is the number of comparisons examined. The total number of kcomp in the table should correspond to the number of rows in your dataset."),
@@ -1511,10 +1511,10 @@ server <- function(input, output, session) {
     data.frame(
       Qbetween = paste("Qb(", mod_result_with_intercept1r_convc$QMdf[1], ") =", QM_convc, ", p-val =", QMp_convc),
       Qbetween <- ifelse(QMp_convc < 0.001, 
-                        paste("Qb(", mod_result_with_intercept1r_convc$QMdf[1], ") <", QM_convc, ", p-val < .001"),
+                        paste("Qb(", mod_result_with_intercept1r_convc$QMdf[1], ") =", QM_convc, ", p-val < .001"),
                         paste("Qb(", mod_result_with_intercept1r_convc$QMdf[1], ") =", QM_convc, ", p-val =", QMp_convc)),
       Qwithin <- ifelse(QE_convcp < 0.001, 
-                        paste("Qw(", QEdf_convc, ") <", QE_convc, ", p-val < .001"),
+                        paste("Qw(", QEdf_convc, ") =", QE_convc, ", p-val < .001"),
                         paste("Qw(", QEdf_convc, ") =", QE_convc, ", p-val =", QE_convcp))
     )
   })
@@ -1534,8 +1534,8 @@ server <- function(input, output, session) {
       
       # Create a new data frame for the "Test of Moderators" and "Test of Residual Heterogeneity" information
       test_of_moderators_and_residual_df_convc <- data.frame(
-        Qbetween = mod_summary_data_convc$Qbetween,
-        Qwithin = mod_summary_data_convc$Qwithin
+        Test_of_Moderator = mod_summary_data_convc$Qbetween,
+        Residual_Heterogeneity = mod_summary_data_convc$Qwithin
       )
       
       # Combine the result table and the new row
@@ -1567,8 +1567,8 @@ server <- function(input, output, session) {
       
       # Create a new data frame for the "Test of Moderators" row
       test_of_moderators_and_residual_df_convc <- data.frame(
-        Qbetween = mod_summary_data_convc$Qbetween,
-        Qwithin = mod_summary_data_convc$Qwithin
+        Test_of_Moderator = mod_summary_data_convc$Qbetween,
+        Residual_Heterogeneity = mod_summary_data_convc$Qwithin
       )      
       # Combine the result table and the "Test of Moderators" row
       final_table_convc <- bind_rows(result_table_data_convc, test_of_moderators_and_residual_df_convc)
@@ -1607,6 +1607,9 @@ server <- function(input, output, session) {
         p("Below is our table that shows the relevant statistics for your single-variable meta-regression. Remember, your Test of Moderators above tells you if the moderator is significant."),
         downloadButton("download_resultscc", "Download Results"),
         tableOutput("modtable_outputcc"),
+        h3("Basic Interpretation Tips"),
+        p("First you should look at the", strong("Test_of_Moderator"), "column (commonly called Qbetween). If this is significant, it means the variable examined is a significant moderator."),
+        p("Next you should look at the", strong("Residual_Heterogeneity"), "column (commonly called Qwithin). If this is significant, it means there is significant hetereogenity that the moderator does", strong("not"), "explain."),
         h3("Need Help Understanding The Results?"),
         verbatimTextOutput("modelSummary"),
         p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#moderator-analysis'>my open book</a>"),
@@ -1630,14 +1633,15 @@ server <- function(input, output, session) {
     updateSelectInput(session, "dropdowncc", choices = colnames(uploaded_datacc()))
   })
   
-  # This reactive generates the complete table including the test of moderators
+  # This reactive generates the complete table including the test of moderators and residual heterogeneity
   complete_table <- reactive({
     req(input$run_analysiscc, input$dropdowncc)
-    mod_formular <- as.formula(paste("~", input$dropdowncc))
-    mod_resultr <- rma(yi, vi, mods = mod_formular, data = uploaded_datacc())
-    model_summary <- summary(mod_resultr)
+    mod_formula <- as.formula(paste("~", input$dropdowncc))
+    mod_result <- rma(yi, vi, mods = mod_formula, data = uploaded_datacc())
+    model_summary <- summary(mod_result)
     summary_table <- coef(model_summary)
     
+    # Initialize result table with the number of columns needed
     result_table <- data.frame(
       Term = rownames(summary_table),
       Estimate = round(summary_table[, "estimate"], 3),
@@ -1646,29 +1650,81 @@ server <- function(input, output, session) {
       PValue = round(summary_table[, "pval"], 3),
       CI_Lower = round(summary_table[, "ci.lb"], 3),
       CI_Upper = round(summary_table[, "ci.ub"], 3),
-      Test_of_Moderator = rep("", nrow(summary_table))  # Initialize with empty strings
+      Test_of_Moderator = "",  # Initialize with empty strings
+      Residual_Heterogeneity = ""  # Initialize Qwithin column
     )
     
-    # Append the test of moderators as the last row
-    test_mod_info <- paste("Qb(", model_summary$QMdf[1], ") =", round(model_summary$QM, 3), ", p-val =", round(model_summary$QMp, 3))
-    test_mod_row <- data.frame(
-      Term = "Test of Moderator",
-      Estimate = "",
-      StdError = "",
-      ZValue = "",
-      PValue = "",
-      CI_Lower = "",
-      CI_Upper = "",
-      Test_of_Moderator = test_mod_info
-    )
+    # Calculate Test of Moderator and Qwithin
+    if (!is.null(mod_result$QE)) {
+      q_within_val <- round(mod_result$QE, 3)
+      
+      if (mod_result$QEp < 0.001) {
+        q_within_pval <- paste("p-val < .001")
+      } else {
+        q_within_pval <- paste("p-val =", round(mod_result$QEp, 3))
+      }
+      
+      if (!is.null(model_summary$QMp)) {
+        modelsumqmp <- round(model_summary$QMp, 3)
+        
+        if (modelsumqmp < 0.001) {
+          q_betweencc_pval <- paste("p-val < .001")
+        } else {
+          q_betweencc_pval <- paste("p-val =", round(model_summary$QMp, 3))
+        }
+      }
+      
+      # Combine Test of Moderator and Residual Heterogeneity into one row
+      combined_row <- data.frame(
+        Term = "",
+        Estimate = "",
+        StdError = "",
+        ZValue = "",
+        PValue = "",
+        CI_Lower = "",
+        CI_Upper = "",
+        Test_of_Moderator = paste("Qb(", model_summary$QMdf[1], ") =", round(model_summary$QM, 3), q_betweencc_pval),
+        Residual_Heterogeneity = paste("Qw(", mod_result$k - mod_result$p, ") =", q_within_val, q_within_pval)  # Include both q_within_val and q_within_pval
+      )
+      
+      # Bind the combined row to the result table
+      final_table <- rbind(result_table, combined_row)
+    } else {
+      # If QE is NULL, only include Test of Moderator row
+      test_mod_info <- paste("Qb(", model_summary$QMdf[1], ") =", round(model_summary$QM, 3), ", p-val =", round(model_summary$QMp, 3))
+      final_table <- data.frame(
+        Term = "Test of Moderator",
+        Estimate = "",
+        StdError = "",
+        ZValue = "",
+        PValue = "",
+        CI_Lower = "",
+        CI_Upper = "",
+        Test_of_Moderator = test_mod_info,
+        Residual_Heterogeneity = ""
+      )
+    }
     
-    rbind(result_table, test_mod_row)  # Combine the result table with the test of moderators row
+    # Replace NA values with empty strings in the final table
+    final_table <- final_table %>%
+      mutate_all(~ ifelse(is.na(.), "", .))
+    
+    # Return the final table
+    final_table
   })
+  
+  
+  
+  
+  
+  
+  
   
   output$modtable_outputcc <- renderTable({
     complete_table()  # Display the complete table
   })
   
+  #download handler
   output$download_resultscc <- downloadHandler(
     filename = function() {
       paste("mod.", input$dropdowncc, Sys.Date(), ".csv", sep = "")
