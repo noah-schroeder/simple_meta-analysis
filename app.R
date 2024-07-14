@@ -1432,6 +1432,7 @@ server <- function(input, output, session) {
         tableOutput("modtable_outputc"),
         h3("Basic Interpretation Tips"),
         p("First you should look at the", strong("Qbetween"), "column. If this is significant, it means there are significant differences between levels of your moderator."),
+        p("Next you should look at the", strong("Qwithin"), "column. If this is significant (this is residual heterogeneity), it means there are significant amounts of hetereogenity not explained by the moderator."),
         p("Note the following columns I have created to aid in interpretation:"),
         p(strong("nexp"),"is the sample size of the intervention group, and", strong("nctrl"), "is the sample size of the control group."),
         p(strong("kcomp"),"is the number of comparisons examined. The total number of kcomp in the table should correspond to the number of rows in your dataset."),
@@ -1501,8 +1502,21 @@ server <- function(input, output, session) {
     QM_convc <- round(mod_result_with_intercept1r_convc$QM, 3)
     QMp_convc <- round(mod_result_with_intercept1r_convc$QMp, 3)
     
-    # Create a data frame with the "Test of Moderators" information
-    data.frame(Test_of_Moderators = paste("Qb(", mod_result_with_intercept1r_convc$QMdf[1], ") =", QM_convc, ", p-val =", QMp_convc))
+    # Extract the QE statistic and degrees of freedom for the residual heterogeneity
+    QE_convc <- round(mod_result_with_intercept1r_convc$QE, 3)
+    QEdf_convc <- df.residual(mod_result_with_intercept1r_convc)
+    QE_convcp <- round(mod_result_with_intercept1r_convc$QEp, 3)
+    
+    # Create a data frame with both the "Test of Moderators" and "Test of Residual Heterogeneity" information
+    data.frame(
+      Qbetween = paste("Qb(", mod_result_with_intercept1r_convc$QMdf[1], ") =", QM_convc, ", p-val =", QMp_convc),
+      Qbetween <- ifelse(QMp_convc < 0.001, 
+                        paste("Qb(", mod_result_with_intercept1r_convc$QMdf[1], ") <", QM_convc, ", p-val < .001"),
+                        paste("Qb(", mod_result_with_intercept1r_convc$QMdf[1], ") =", QM_convc, ", p-val =", QMp_convc)),
+      Qwithin <- ifelse(QE_convcp < 0.001, 
+                        paste("Qw(", QEdf_convc, ") <", QE_convc, ", p-val < .001"),
+                        paste("Qw(", QEdf_convc, ") =", QE_convc, ", p-val =", QE_convcp))
+    )
   })
   
   # Display results of the moderator analysis in a table
@@ -1518,20 +1532,28 @@ server <- function(input, output, session) {
       # Convert the result to a data frame
       result_table_df_convc <- as.data.frame(result_table_data_convc)
       
-      # Create a new data frame for the "Test of Moderators" row
-      test_of_moderators_df_convc <- data.frame(Qbetween = mod_summary_data_convc$Test_of_Moderators)
+      # Create a new data frame for the "Test of Moderators" and "Test of Residual Heterogeneity" information
+      test_of_moderators_and_residual_df_convc <- data.frame(
+        Qbetween = mod_summary_data_convc$Qbetween,
+        Qwithin = mod_summary_data_convc$Qwithin
+      )
       
-      # Combine the result table and the "Test of Moderators" row
-      final_table_convc <- bind_rows(result_table_df_convc, test_of_moderators_df_convc)
+      # Combine the result table and the new row
+      final_table_convc <- bind_rows(result_table_df_convc, test_of_moderators_and_residual_df_convc)
       
       # Replace NA values with empty strings in the final table
       final_table_convc <- final_table_convc %>%
         mutate_all(~ ifelse(is.na(.), "", .))
+       # Replace NA values with empty strings in the final table
+    final_table_convc <- final_table_convc %>%
+      mutate_all(~ ifelse(is.na(.), "", .))
       
       # Return the final table
       final_table_convc
     }
   })
+  
+  
   
   # Download handler for the results
   output$download_resultsc <- downloadHandler(
@@ -1544,10 +1566,12 @@ server <- function(input, output, session) {
       mod_summary_data_convc <- mod_summary1_convc()
       
       # Create a new data frame for the "Test of Moderators" row
-      test_of_moderators_df_convc <- data.frame(Qbetween = mod_summary_data_convc$Test_of_Moderators)
-      
+      test_of_moderators_and_residual_df_convc <- data.frame(
+        Qbetween = mod_summary_data_convc$Qbetween,
+        Qwithin = mod_summary_data_convc$Qwithin
+      )      
       # Combine the result table and the "Test of Moderators" row
-      final_table_convc <- bind_rows(result_table_data_convc, test_of_moderators_df_convc)
+      final_table_convc <- bind_rows(result_table_data_convc, test_of_moderators_and_residual_df_convc)
       
       # Replace NA values with empty strings in the final table
       final_table_convc <- final_table_convc %>%
