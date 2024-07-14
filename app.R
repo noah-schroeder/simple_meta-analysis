@@ -60,6 +60,9 @@ ui <- dashboardPage(
                      ),
                      menuItem("Acknowledgements", tabName = "tab9", icon = icon("table"),
                               menuSubItem("Acknowledgements", tabName = "subtab91")
+                     ),
+                     menuItem("Change Log", tabName = "tab10", icon = icon("table"),
+                              menuSubItem("Change Log", tabName = "subtab101")
                      )
                    )
   ),
@@ -463,7 +466,7 @@ tabItem(tabName = "subtab56",
               p("Wickham, H., François, R., Henry, L., & Müller, K. (2021). dplyr: A grammar of data manipulation. R package version 1.0.8. https://CRAN.R-project.org/package=dplyr")
               
       ),
-#Validation ----
+##Validation ----
 tabItem(tabName = "subtab81",
         h2("Conventional Meta-Analysis"),
         h3("R Code"),
@@ -499,8 +502,13 @@ tabItem(tabName = "subtab83",
    tabItem(tabName = "subtab91",
           h2("Acknowledgements"),
           p("I was not famililar with Shiny when I began building this app, so a lot of the code was created with the assistance of ChatGPT 3.5 and Claude."),
-             
-      )
+      ),
+################# Define content for Change log 
+##Change Log---- 
+tabItem(tabName = "subtab101",
+        h2("Change Log"),
+        p("7.14.24 - Added residual heterogeneity to conventional meta-analysis for categorical and continuous moderator analyses. Updated those tables for consistent headings with other analyses. Updated p value display for those analyses so that instead of p = .001, it will display p < .001 if its less."),
+)
     )
   )
 )
