@@ -1636,8 +1636,10 @@ server <- function(input, output, session) {
         h3("Basic Interpretation Tips"),
         p("First you should look at the", strong("Test_of_Moderator"), "column (commonly called Qbetween). If this is significant, it means the variable examined is a significant moderator."),
         p("Next you should look at the", strong("Residual_Heterogeneity"), "column (commonly called Qwithin). If this is significant, it means there is significant hetereogenity that the moderator does", strong("not"), "explain."),
+        h2("R Script"),
+        downloadButton("download_scriptcc", "Download R Script"),
+        verbatimTextOutput("generated_scriptcc"),
         h3("Need Help Understanding The Results?"),
-        verbatimTextOutput("modelSummary"),
         p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#moderator-analysis'>my open book</a>"),
         ),
       )
@@ -1759,6 +1761,59 @@ server <- function(input, output, session) {
       write.csv(complete_table(), file, row.names = FALSE)  # Use the complete table for download
     }
   )
+  
+  
+  # Define a reactive expression for generating R script
+  generated_scriptcc <- reactive({
+    req(input$run_analysiscc, input$dropdowncc)
+    
+    script_content <- capture.output({
+      cat("# Meta-Analysis Script\n\n")
+      
+      # Data loading step (replace "datafile" with your actual file path or variable)
+      cat("uploaded_datacc <- read.csv(\"", "datafile", "\")\n\n", sep = "")
+      
+      # Generate moderator formula
+      mod_formula <- as.formula(paste("~", input$dropdowncc))
+      cat("mod_formula <- as.formula(paste(\"~\", \"", input$dropdowncc, "\"))\n\n", sep = "")
+      
+      # Perform meta-analysis
+      cat("mod_result <- rma(yi, vi, mods = mod_formula, data = uploaded_datacc)\n\n")
+      
+      # Summary of results
+      cat("summary(mod_result)\n")
+    })
+    
+    # Remove empty lines and return the script content
+    script_content_clean <- script_content[script_content != ""]
+    paste(script_content_clean, collapse = "\n")
+  })
+  
+  
+  # Output to display the generated R script
+  output$generated_scriptcc <- renderText({
+    if (!is.null(input$run_analysiscc) && !is.null(input$dropdowncc)) {
+      generated_scriptcc()
+    }
+  })
+  
+  # Define a download handler for downloading generated R script as .txt file
+  output$download_scriptcc <- downloadHandler(
+    filename = function() {
+      # Extract the variable name selected by the user
+      selected_variable <- input$dropdowncc
+      
+      # Generate the filename with the format "mod.[variable]_YYYY-MM-DD.txt"
+      paste("script.mod.", selected_variable, "_", Sys.Date(), ".txt", sep = "")
+    },
+    content = function(file) {
+      # Write generated script content to a file
+      script_content <- generated_scriptcc()
+      cat(script_content, file = file)
+    }
+  )
+  
+  
   
   
 ## Multiple Meta-Regression ---- 
