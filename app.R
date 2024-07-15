@@ -203,14 +203,16 @@ ui <- dashboardPage(
   ######Meta-regression----
   tabItem(tabName = "subtab342",
           h2("Multiple Meta-Regression"),
+          p("This analysis will help you run a random effects multiple meta-regression using any combination of continuous and categorical variables. The first step is to upload your data. Please use the same file you used to run your meta-analysis."),
           # File upload
           fileInput("mregc", "Upload CSV File", accept = ".csv"),
           # Continuous variables selection
+          p("Next, specify how many continuous and categorical variables you would like to include in your model. You can select 0-20 of each type of variable if your dataset supports it."),
           numericInput("num_continuous", "How many continuous variables?",
-                       min = 0, max = 10, value = 0),
+                       min = 0, max = 20, value = 0),
           # Categorical variables selection
           numericInput("num_categorical", "How many categorical variables?",
-                       min = 0, max = 10, value = 0),
+                       min = 0, max = 20, value = 0),
           # Render variables button
           actionButton("render_variables", "Select My Variables"),
           uiOutput("dynamicResultsCmregVar"),
@@ -1251,6 +1253,9 @@ server <- function(input, output, session) {
           downloadButton("forestplotdownload_buttonc", label = "Download Forest Plot (half-page)"), downloadButton("forestplotdownload_buttoncf", label = "Download Forest Plot (full-page)"),
           # Render the forest plot
           plotOutput("forest_plotc", width = 800, height = 600),
+          h3("R Script"),
+          verbatimTextOutput("generated_script_cma"),
+          downloadButton("download_script_cma", "Download R Script"),
           h3("Need Help Understanding The Results?"),
           p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#interpreting-the-results'>my open book</a>"),
           ),
@@ -1354,6 +1359,57 @@ server <- function(input, output, session) {
     }
   )
 
+  
+  # Define a reactive expression for generating R script
+  generated_script_cma <- reactive({
+    req(input$run_cmac, input$cmafilec)  # Ensure file and button are active
+    
+    script_content <- capture.output({
+      cat("# Conventional Random Effects Meta-Analysis Script\n\n")
+      
+      # Data loading step
+      cat("df <- read.csv(\"", "datafile", "\")\n\n", sep = "")
+      
+      # Run random effects MA
+      cat("# Run random effects meta-analysis\n")
+      cat("result <- rma(yi, vi, data = df)\n\n")
+      
+      # Return result
+      cat("# Display result\n")
+      cat("result\n")
+      
+      cat("# Create and display forest plot\n")
+      cat("forest(result, slab = data$Study, main = \"Forest Plot of Observed Effects\", header=\"Author(s) and Year\")\n\n")
+    })
+    
+    # Remove empty lines and return the script content
+    script_content_clean <- script_content[script_content != ""]
+    paste(script_content_clean, collapse = "\n")
+  })
+  
+  # Output to display the generated R script
+  output$generated_script_cma <- renderText({
+    if (!is.null(input$run_cmac) && !is.null(input$cmafilec)) {
+      generated_script_cma()
+    }
+  })
+  
+  
+  # Download handler for downloading generated R script as .txt file
+  output$download_script_cma <- downloadHandler(
+    filename = function() {
+      "script.cma.txt"
+    },
+    content = function(file) {
+      # Write generated script content to a file
+      script_content <- generated_script_cma()
+      cat(script_content, file = file)
+    }
+  )
+  
+  
+  
+  
   ###Outlier and Influence Analysis----
   resultsVisiblecinf <- reactiveVal(FALSE)
   
@@ -1373,6 +1429,9 @@ server <- function(input, output, session) {
           p("Check the 'inf' column. If you see an asterisk (*), it means at least one criteria exceeded a critical value and the study should be examined."),
           downloadButton("infdownload_buttonc", label = "Download Infuence Analysis Results"),
           verbatimTextOutput("resultforinf_outputc"),
+          h3("R Script"),
+          downloadButton("download_script_inf", "Download R Script"),
+          verbatimTextOutput("generated_script_inf"),
           h3("Need Help Understanding The Results?"),
           p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#checking-for-outliers-and-influence'>my open book</a>"),
           ),
@@ -1429,6 +1488,57 @@ server <- function(input, output, session) {
       write.csv(inf_table, file, row.names = FALSE)
     })
   
+  # Define a reactive expression for generating R script
+  generated_script_inf <- reactive({
+    req(input$run_infc, input$inffilec)  # Ensure file and button are active
+    
+    script_content <- capture.output({
+      cat("# Random Effects Meta-Analysis and Influence Analysis Script\n\n")
+      
+      # Data loading step
+      cat("df <- read.csv(\"", "datafile", "\")\n\n", sep = "")
+      
+      # Run random effects meta-analysis
+      cat("# Run random effects analysis\n\n")
+      cat("resultforinf <- rma(yi, vi, data = df)\n\n")
+      
+      # Perform influence analysis
+      cat("# Run influence analysis\n\n")
+      cat("infres <- influence(resultforinf)\n\n")
+      
+      # Display both meta-analysis and influence analysis results
+      cat("# Display results\n\n")
+      cat("print(infres)\n")
+    })
+    
+    # Remove empty lines and return the script content
+    script_content_clean <- script_content[script_content != ""]
+    paste(script_content_clean, collapse = "\n")
+  })
+  
+  # Output to display the generated R script
+  output$generated_script_inf <- renderText({
+    if (!is.null(input$run_infc) && !is.null(input$inffilec)) {
+      generated_script_inf()
+    }
+  })
+  
+  # Define a download handler for downloading generated R script as .txt file
+  output$download_script_inf <- downloadHandler(
+    filename = function() {
+      paste("script.inf_", Sys.Date(), ".txt", sep = "")
+    },
+    content = function(file) {
+      # Write generated script content to a file
+      script_content <- generated_script_inf()
+      cat(script_content, file = file)
+    }
+  )
+  
+  
+  
+  
+  
   ###Cat Mod Analysis----
   # Initialize a reactive value for displaying results
   resultsvisibleCcat <- reactiveVal(FALSE)
@@ -1462,6 +1572,9 @@ server <- function(input, output, session) {
         p("Note the following columns I have created to aid in interpretation:"),
         p(strong("nexp"),"is the sample size of the intervention group, and", strong("nctrl"), "is the sample size of the control group."),
         p(strong("kcomp"),"is the number of comparisons examined. The total number of kcomp in the table should correspond to the number of rows in your dataset."),
+        h3("R Script"),
+        downloadButton("download_scriptc", "Download R Script"),
+        verbatimTextOutput("generated_scriptc"),
         h3("Need Help Understanding The Results?"),
         p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#moderator-analysis'>my open book</a>"),
         ),
@@ -1609,6 +1722,68 @@ server <- function(input, output, session) {
   )
   
   
+  # Define a reactive expression for generating R script
+  generated_scriptc <- reactive({
+    req(input$run_analysisCcat, input$dropdownc)  # Ensure dropdown choice is available
+    
+    script_content <- capture.output({
+      cat("# Categorical Moderator Conventional Meta-Analysis Script\n\n")
+      
+      # Data loading step
+      cat("df <- read.csv(\"", "datafile", "\")\n\n", sep = "")
+      
+      # Generate moderator formula with intercept for test of moderator value
+      cat("#  Moderator formula with intercept for test of moderator value\n\n")
+      cat("mod_formulaq <- as.formula(paste(\"~ factor(\", \"", input$dropdownc, "\")\"))\n\n")
+      # Perform meta-analysis with intercept for table
+      cat("#  Perform meta-analysis with intercept for Test of Moderator Value\n\n")
+      cat("mod_resultq <- rma(yi, vi, mods = mod_formulaq, data = df)\n\n")
+      cat("mod_resultq\n\n")
+      
+      # Generate moderator formula without intercept
+      cat("#  Moderator formula without intercept for table\n\n")
+      cat("mod_formula_t <- as.formula(paste(\"~ -1 + factor(\", \"", input$dropdownc, "\")\"))\n\n")
+      
+      # Perform meta-analysis without intercept for table
+      cat("#  Perform meta-analysis without intercept for table\n\n")
+      cat("mod_result <- rma(yi, vi, mods = mod_formula_t, data = df)\n\n")
+      
+      # Summary of results
+      cat("summary(mod_result)\n")
+    })
+    
+    # Remove empty lines and return the script content
+    script_content_clean <- script_content[script_content != ""]
+    paste(script_content_clean, collapse = "\n")
+  })
+  
+  
+  # Output to display the generated R script
+  output$generated_scriptc <- renderText({
+    if (!is.null(input$run_analysisCcat) && !is.null(input$dropdownc)) {
+      generated_scriptc()
+    }
+  })
+  # Define a download handler for downloading generated R script as .txt file
+  output$download_scriptc <- downloadHandler(
+    filename = function() {
+      # Extract the variable name selected by the user
+      selected_variable <- input$dropdownc
+      
+      # Generate the filename with the format "mod.[variable]_YYYY-MM-DD.txt"
+      paste("script.mod.", selected_variable, "_", Sys.Date(), ".txt", sep = "")
+    },
+    content = function(file) {
+      # Write generated script content to a file
+      script_content <- generated_scriptc()
+      cat(script_content, file = file)
+    }
+  )
+  
+  
+  
+  
+  
   ### Cont Mod Analysis ----
   
   # Initialize a reactive value for displaying results
@@ -1636,7 +1811,7 @@ server <- function(input, output, session) {
         h3("Basic Interpretation Tips"),
         p("First you should look at the", strong("Test_of_Moderator"), "column (commonly called Qbetween). If this is significant, it means the variable examined is a significant moderator."),
         p("Next you should look at the", strong("Residual_Heterogeneity"), "column (commonly called Qwithin). If this is significant, it means there is significant hetereogenity that the moderator does", strong("not"), "explain."),
-        h2("R Script"),
+        h3("R Script"),
         downloadButton("download_scriptcc", "Download R Script"),
         verbatimTextOutput("generated_scriptcc"),
         h3("Need Help Understanding The Results?"),
@@ -1768,17 +1943,17 @@ server <- function(input, output, session) {
     req(input$run_analysiscc, input$dropdowncc)
     
     script_content <- capture.output({
-      cat("# Meta-Analysis Script\n\n")
+      cat("# Continuous Moderator Conventional Meta-Analysis Script\n\n")
       
       # Data loading step (replace "datafile" with your actual file path or variable)
-      cat("uploaded_datacc <- read.csv(\"", "datafile", "\")\n\n", sep = "")
+      cat("df <- read.csv(\"", "datafile", "\")\n\n", sep = "")
       
       # Generate moderator formula
       mod_formula <- as.formula(paste("~", input$dropdowncc))
       cat("mod_formula <- as.formula(paste(\"~\", \"", input$dropdowncc, "\"))\n\n", sep = "")
       
       # Perform meta-analysis
-      cat("mod_result <- rma(yi, vi, mods = mod_formula, data = uploaded_datacc)\n\n")
+      cat("mod_result <- rma(yi, vi, mods = mod_formula, data = df)\n\n")
       
       # Summary of results
       cat("summary(mod_result)\n")
@@ -1865,14 +2040,18 @@ server <- function(input, output, session) {
     output$dynamicResultsCmregRes <- renderUI({
       if (resultsvisiblecmregall()) {
         tagList(
-          h2("Results"),
+          h3("Results"),
         # Display meta-analysis results
+        box(title = "Important Note", width = 12, status = "primary",
+            p("Note that categorical moderators are treated as factors with distinct levels. The results below are from the model including an intercept."),
+        ),
         downloadButton("mregc_resdl", "Download Results"),
         verbatimTextOutput("meta_results"),
-        h2("R Script"),
+        h3("R Script"),
         actionButton("render_script", "View R Script"), downloadButton("download_code", "Download R Script"),
         # Display generated R script
         verbatimTextOutput("generated_script"),
+        h3("Need Help Understanding The Results?"),
         p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#moderator-analysis'>my open book</a>"),
         ),
       )
@@ -1972,10 +2151,10 @@ server <- function(input, output, session) {
   observeEvent(input$run_analysismregc, {
     # Generate R script content dynamically
     script_content <- capture.output({
-      cat("# R Script for Meta-Analysis\n\n")
+      cat("# Meta-Regression Script\n\n")
       
       # Data loading step
-      cat("uploaded_data <- read.csv(\"", "datafile", "\")\n\n", sep = "")
+      cat("df <- read.csv(\"", "datafile", "\")\n\n", sep = "")
       
       # Generate formulas for continuous and categorical variables
       if (input$num_continuous > 0) {
@@ -2010,7 +2189,7 @@ server <- function(input, output, session) {
       cat("\n\n")
       
       # Perform meta-analysis
-      cat("mod_result <- rma(formula, data = uploaded_data)\n\n")
+      cat("mod_result <- rma(formula, data = df)\n\n")
       
       # Print summary of results
       cat("summary(mod_result)\n")
