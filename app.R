@@ -1254,8 +1254,8 @@ server <- function(input, output, session) {
           # Render the forest plot
           plotOutput("forest_plotc", width = 800, height = 600),
           h3("R Script"),
-          verbatimTextOutput("generated_script_cma"),
           downloadButton("download_script_cma", "Download R Script"),
+          verbatimTextOutput("generated_script_cma"),
           h3("Need Help Understanding The Results?"),
           p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#interpreting-the-results'>my open book</a>"),
           ),
@@ -1366,9 +1366,11 @@ server <- function(input, output, session) {
     
     script_content <- capture.output({
       cat("# Conventional Random Effects Meta-Analysis Script\n\n")
-      
+      cat("# Load required package\n")
+      cat( "library(metafor)\n\n")
+      cat( "# Read data\n")
       # Data loading step
-      cat("df <- read.csv(\"", "datafile", "\")\n\n", sep = "")
+      cat("df <- read.csv(\"", gsub("[^a-zA-Z0-9._-]", "_", input$cmafilec$name), "\")\n\n", sep = "")
       
       # Run random effects MA
       cat("# Run random effects meta-analysis\n")
@@ -1495,8 +1497,11 @@ server <- function(input, output, session) {
     script_content <- capture.output({
       cat("# Random Effects Meta-Analysis and Influence Analysis Script\n\n")
       
+      cat("# Load required package\n")
+      cat( "library(metafor)\n\n")
+      cat( "# Read data\n")
       # Data loading step
-      cat("df <- read.csv(\"", "datafile", "\")\n\n", sep = "")
+      cat("df <- read.csv(\"", gsub("[^a-zA-Z0-9._-]", "_", input$inffilec$name), "\")\n\n", sep = "")
       
       # Run random effects meta-analysis
       cat("# Run random effects analysis\n\n")
@@ -1729,8 +1734,11 @@ server <- function(input, output, session) {
     script_content <- capture.output({
       cat("# Categorical Moderator Conventional Meta-Analysis Script\n\n")
       
+      cat("# Load required package\n")
+      cat( "library(metafor)\n\n")
+      cat( "# Read data\n")
       # Data loading step
-      cat("df <- read.csv(\"", "datafile", "\")\n\n", sep = "")
+      cat("df <- read.csv(\"", gsub("[^a-zA-Z0-9._-]", "_", input$modfilec$name), "\")\n\n", sep = "")
       
       # Generate moderator formula with intercept for test of moderator value
       cat("#  Moderator formula with intercept for test of moderator value\n\n")
@@ -1944,9 +1952,11 @@ server <- function(input, output, session) {
     
     script_content <- capture.output({
       cat("# Continuous Moderator Conventional Meta-Analysis Script\n\n")
-      
-      # Data loading step (replace "datafile" with your actual file path or variable)
-      cat("df <- read.csv(\"", "datafile", "\")\n\n", sep = "")
+      cat("# Load required package\n")
+      cat( "library(metafor)\n\n")
+      cat( "# Read data\n")
+      # Data loading step
+      cat("df <- read.csv(\"", gsub("[^a-zA-Z0-9._-]", "_", input$modfilecc$name), "\")\n\n", sep = "")
       
       # Generate moderator formula
       mod_formula <- as.formula(paste("~", input$dropdowncc))
@@ -2048,7 +2058,7 @@ server <- function(input, output, session) {
         downloadButton("mregc_resdl", "Download Results"),
         verbatimTextOutput("meta_results"),
         h3("R Script"),
-        actionButton("render_script", "View R Script"), downloadButton("download_code", "Download R Script"),
+        downloadButton("download_code", "Download R Script"),
         # Display generated R script
         verbatimTextOutput("generated_script"),
         h3("Need Help Understanding The Results?"),
@@ -2152,9 +2162,11 @@ server <- function(input, output, session) {
     # Generate R script content dynamically
     script_content <- capture.output({
       cat("# Meta-Regression Script\n\n")
-      
-      # Data loading step
-      cat("df <- read.csv(\"", "datafile", "\")\n\n", sep = "")
+      cat("# Load required package\n")
+      cat( "library(metafor)\n\n")
+       cat( "# Read data\n")
+       # Data loading step
+      cat("df <- read.csv(\"", gsub("[^a-zA-Z0-9._-]", "_", input$mregc$name), "\")\n\n", sep = "")
       
       # Generate formulas for continuous and categorical variables
       if (input$num_continuous > 0) {
@@ -2208,14 +2220,19 @@ server <- function(input, output, session) {
   # Download handler for downloading the generated R script
   output$download_code <- downloadHandler(
     filename = function() {
-      "meta_analysis_script.txt"
+      "script.metareg.txt"
     },
     content = function(file) {
       # Begin writing the script content
       script_content <- "# R Script for Meta-Analysis\n\n"
-      
+      script_content <- "# Load required package\n"
+      script_content <- "library(metafor)\n\n"
+      script_content <- "# Read data\n"
+         # Sanitize filename by replacing special characters
+        sanitized_filename <- gsub("[^a-zA-Z0-9._-]", "_", input$mregc$name)
+
       # Read uploaded CSV data
-      script_content <- paste0(script_content, "uploaded_data <- read.csv(\"", "datafile", "\")\n\n")
+      script_content <- paste0(script_content, "uploaded_data <- read.csv(\"", sanitized_filename, "\")\n\n")
       
       # Generate formulas for continuous and categorical variables
       if (input$num_continuous > 0) {
@@ -2300,6 +2317,9 @@ server <- function(input, output, session) {
           h3("Rosenberg's Fail Safe N"),
           downloadButton("download_rosenberg", "Download Rosenberg's Fail Safe N"),
           verbatimTextOutput("rosenberg_output"),
+          h3("R Script"),
+          downloadButton("download_codepubbias"),
+          verbatimTextOutput("generated_codepubbias"),
           h3("Need Help Understanding The Results?"),
           p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#publication-bias'>my open book</a>")),
         )
@@ -2358,6 +2378,25 @@ server <- function(input, output, session) {
       }, error = function(e) {
         NULL
       })
+      # Generate clean R code with line breaks
+      codepubbias <- paste(
+        "# Load required package\n",
+        "library(metafor)\n\n",
+        "# Read data\n",
+        paste("df <- read.csv(\"", gsub("[^a-zA-Z0-9._-]", "_", input$pubbiasfilec$name), "\")\n\n", sep = ""),
+        "# Run meta-analysis\n",
+        "res <- rma(yi, vi, data = df)\n\n",
+        "# Funnel plot\n",
+        "funnel(res)\n\n",
+        "# Egger's regression test\n",
+        "eggers <- regtest(res)\n\n",
+        "# Rosenthal's fail-safe N\n",
+        "rosenthal <- fsn(yi, vi, data = df)\n\n",
+        "# Orwin's fail-safe N\n",
+        "orwin <- fsn(yi, vi, data = df, type = \"Orwin\")\n\n",
+        "# Rosenberg's fail-safe N\n",
+        "rosenberg <- fsn(yi, vi, data = df, type = \"Rosenberg\")\n\n"
+      )
       
       # Return the results
       list(
@@ -2365,7 +2404,8 @@ server <- function(input, output, session) {
         eggers = eggers,
         rosenthal = rosenthal,
         orwin = orwin,
-        rosenberg = rosenberg
+        rosenberg = rosenberg,
+        codepubbias = codepubbias
       )
     } else {
       # Return NULL if meta-analysis fails
@@ -2531,6 +2571,30 @@ server <- function(input, output, session) {
       
     }
   )
+  
+  
+
+  
+  
+  output$generated_codepubbias <- renderText({
+    perform_meta_analysis()$codepubbias
+  })
+  
+  # Download handler for the R code
+  output$download_codepubbias <- downloadHandler(
+    filename = function() {
+      "script.pubbias.txt"
+    },
+    content = function(file) {
+      code <- perform_meta_analysis()$codepubbias
+      writeLines(code, file)
+    }
+  )
+  
+  
+  
+  
+  
   
 
   ## 3LMA code----
