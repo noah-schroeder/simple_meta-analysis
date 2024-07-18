@@ -2662,6 +2662,9 @@ server <- function(input, output, session) {
             verbatimTextOutput("cmaresult_output"),
             h4("Methods Notes"),
             p("This random effects three-level meta-analysis used Restricted Maximum Likelihood Estimation (REML) (the default in metafor package). We used a three-level structure with ES_number nested within Study. We also used a t distribution rather than a z distribution. You can read about t distributions here:", HTML("<a href='https://wviechtb.github.io/metafor/reference/rma.mv.html'>metafor documentation about rma.mv</a>")),
+            h3("R Script"),
+            downloadButton("rscript3lma"),
+            verbatimTextOutput("generated_code_3lma"),
             h3("Need Help Understanding The Results?"),
             p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#interpreting-the-results'>my open book</a>"),
             ),
@@ -2733,6 +2736,47 @@ server <- function(input, output, session) {
       }
     )
     
+    
+    # Reactive expression to generate R script content
+    tlmascript_content <- reactive({
+      paste(
+        "# Load required package\n",
+        "library(metafor)\n\n",
+        "# Read data\n",
+        paste("data <- read.csv(\"", gsub("[^a-zA-Z0-9._-]", "_", input$cmafile$name), "\")\n\n", sep = ""),
+        "# Run 3-level meta-analysis\n",
+        "result <- rma.mv(yi, vi,\n",
+        "                  random = ~ 1 | Study/ES_number,\n",
+        "                  method = \"REML\",\n",
+        "                  test = \"t\",\n",
+        "                  dfs = \"contain\",\n",
+        "                  data = data)\n\n",
+        "# Print the result\n",
+        "print(result)\n"
+      )
+    })
+    
+    # Render the R script content
+    output$generated_code_3lma <- renderText({
+      tlmascript_content()
+    })
+    
+    # Download handler for the R script
+    output$rscript3lma <- downloadHandler(
+      filename = function() {
+        "script.3lma.txt"  # Set the name of the downloaded file
+      },
+      content = function(file) {
+        # Write the R script content to the file
+        writeLines(tlmascript_content(), file)
+      }
+    )
+
+    
+
+
+    
+    
 ###Variance 3lma----
     
     resultsvisible3lmai2 <- reactiveVal(FALSE)
@@ -2753,6 +2797,9 @@ server <- function(input, output, session) {
             downloadButton("download_i2_results", label = "Download Results"),
             verbatimTextOutput("i2result_output"),
             verbatimTextOutput("totalI2_output"),
+            h3("R Script"),
+            downloadButton("rscript_i2tlma"),
+            verbatimTextOutput("generated_code_i2tlma"),
             h3("Need Help Understanding The Results?"),
             p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#interpreting-the-results'>my open book</a>"),
             ),
@@ -2820,7 +2867,52 @@ server <- function(input, output, session) {
       }
     )
 
+    
+    # Reactive expression to generate R script content
+    script_content_i2tlma <- reactive({
+      paste(
+        "# Load required package\n",
+        "library(metafor)\n\n",
+        "# Read data\n",
+        paste("data <- read.csv(\"", gsub("[^a-zA-Z0-9._-]", "_", input$i2file$name), "\")\n\n", sep = ""),
+        "# Run 3-level meta-analysis\n",
+        "m_multi <- rma.mv(yi, vi,\n",
+        "                  random = ~ 1 | Study/ES_number,\n",
+        "                  method = \"REML\",\n",
+        "                  test = \"t\",\n",
+        "                  dfs = \"contain\",\n",
+        "                  data = data)\n\n",
+        "# Teach R i-squared functions\n",
+        "# Please visit the following URL, copy the code, and paste it into your R console and hit enter before proceeding with your code:\n",
+        "# https://raw.githubusercontent.com/MathiasHarrer/dmetar/master/R/mlm.variance.distribution.R\n\n",
+        "# Calculate I-squared values and variance distribution\n",
+        "i2 <- mlm.variance.distribution(m_multi)\n\n",
+        "# Print results and total I2\n",
+        "i2\n"
+      )
+    })
+    
+    # Render the R script content
+    output$generated_code_i2tlma <- renderText({
+      script_content_i2tlma()
+    })
+    
+    # Download handler for the R script
+    output$rscript_i2tlma <- downloadHandler(
+      filename = function() {
+        "script.i2.3lma.txt"  # Set the name of the downloaded file
+      },
+      content = function(file) {
+        # Write the R script content to the file
+        writeLines(script_content_i2tlma(), file)
+      }
+    )
 
+    
+    
+    
+    
+    
 ###Outlier and Influence Analysis 3lma ----
 
     resultsvisible3lmaout <- reactiveVal(FALSE)
@@ -2846,8 +2938,11 @@ server <- function(input, output, session) {
             h3("Influence Results"),
             p("It is important to see if the outliers significantly influence our results. We'll examine three metrics: Cook's distance, DFBETAS, and hat values. You will see that there are columns with these names _flag. If that column says TRUE, that means that study had significant influence according to that metric."),
             downloadButton("download_influence", "Download .csv with Influence Results"),
-            h4("Influence Statistics"),
+            h3("Influence Statistics"),
             tableOutput("influence_table"),
+            h3("R Script"),
+            downloadButton("download_r_script_inftlma"),
+            verbatimTextOutput("script_display_inftlma"),
             h3("Need Help Understanding The Results?"),
             p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#checking-for-outliers-and-influence'>my open book</a>"),
             ),
@@ -2995,6 +3090,84 @@ server <- function(input, output, session) {
     
     
     
+    script_content_inftlma <- reactive({
+      paste(
+        "# Load required packages\n",
+        "library(metafor)\n",
+        "library(ggplot2)\n\n",
+        "# Read uploaded CSV file\n",
+        paste("data_inftlma <- read.csv(\"", gsub("[^a-zA-Z0-9._-]", "_", input$inffile$name), "\")\n\n", sep = ""),
+        "# Run the meta-analysis\n",
+        "m_multi_inftlma <- rma.mv(yi, vi,\n",
+        "                          random = ~ 1 | Study/ES_number,\n",
+        "                          method = \"REML\",\n",
+        "                          test = \"t\",\n",
+        "                          dfs = \"contain\",\n",
+        "                          data = data_inftlma)\n\n",
+        "# Perform outlier and influence analysis\n",
+        "data_inftlma$upperci <- data_inftlma$yi + 1.96 * sqrt(data_inftlma$vi)\n",
+        "data_inftlma$lowerci <- data_inftlma$yi - 1.96 * sqrt(data_inftlma$vi)\n",
+        "data_inftlma$outlier <- data_inftlma$upperci < m_multi_inftlma$ci.lb | data_inftlma$lowerci > m_multi_inftlma$ci.ub\n\n",
+        "# Calculate Cook's distance\n",
+        "cooks_inftlma <- cooks.distance(m_multi_inftlma)\n\n",
+        "# Calculate dfbetas\n",
+        "dfbetas_inftlma <- dfbetas(m_multi_inftlma)\n\n",
+        "# Calculate hat values\n",
+        "hatvalues_inftlma <- hatvalues(m_multi_inftlma)\n\n",
+        "# Calculate p/k\n",
+        "p_inftlma <- length(coef(m_multi_inftlma))\n",
+        "k_inftlma <- nrow(data_inftlma)\n",
+        "if (length(coef(m_multi_inftlma)) > 1) {\n",
+        "  p_inftlma <- p_inftlma - 1\n",
+        "}\n",
+        "p_over_k_inftlma <- 3 * (p_inftlma / k_inftlma)\n\n",
+        "# Calculate hat_flag\n",
+        "hat_flag_inftlma <- ifelse(hatvalues_inftlma > p_over_k_inftlma, \"TRUE\", \"\")\n\n",
+        "# Combine influence metrics with correct column names\n",
+        "influence_inftlma <- data.frame(Study = data_inftlma$Study,\n",
+        "                                effect_size = data_inftlma$yi,\n",
+        "                                outlier = ifelse(data_inftlma$outlier == FALSE, \"\", \"TRUE\"),\n",
+        "                                cooks = cooks_inftlma,\n",
+        "                                cooks_flag = ifelse(cooks_inftlma > 0.5, \"TRUE\", \"\"),\n",
+        "                                dfbetas = dfbetas_inftlma,\n",
+        "                                dfbetas_flag = ifelse(abs(dfbetas_inftlma) > 1, \"TRUE\", \"\"),\n",
+        "                                hatvalues = hatvalues_inftlma,\n",
+        "                                hat_flag = hat_flag_inftlma)\n\n",
+        "# Rename the columns with proper names\n",
+        "colnames(influence_inftlma)[which(colnames(influence_inftlma) == \"intrcpt\")] <- \"dfbetas\"\n",
+        "colnames(influence_inftlma)[which(colnames(influence_inftlma) == \"intrcpt.1\")] <- \"dfbetas_flag\"\n\n",
+        "# Print the results and plots\n",
+        "print(influence_inftlma)\n",
+        "ggplot(data = influence_inftlma, aes(x = effect_size, colour = outlier, fill = outlier)) +\n",
+        "  geom_histogram(alpha = 0.2) +\n",
+        "  geom_vline(xintercept = m_multi_inftlma$b[1]) +\n",
+        "  theme_bw()\n"
+      )
+    })
+    
+    # Display the R script on the UI
+    output$script_display_inftlma <- renderText({
+      script_content_inftlma()
+    })
+    
+    # Download R script as a file
+    output$download_r_script_inftlma <- downloadHandler(
+      filename = function() {
+        "script.inftlma.txt"
+      },
+      content = function(file) {
+        writeLines(script_content_inftlma(), file)
+      }
+    )
+    
+    
+    
+    
+    
+    
+    
+    
+    
 ### Cat Mod Analysis 3lma----
     # Initialize a reactive value for displaying results
     resultsvisible3lCcat <- reactiveVal(FALSE)
@@ -3025,6 +3198,9 @@ server <- function(input, output, session) {
           p(strong("nexp"),"is the sample size of the intervention group, and", strong("nctrl"), "is the sample size of the control group. Note that this is not calculating the actual number of unique participants, because this code is simply conditionally summing the sample size columns in our data set. For example, if a study had one experimental group (n = 10) and one control group (n = 10), and had three outcomes that were included in the analysis (meaning, each appears as its own row in the data set), this code will say there were 30 participants in each group rather than 10. While this is expected in dependent data such as this, it is something to be aware of so you do not make a claim such as, “our analysis of 60 participants” when in reality, your analysis is only 20 unique participants. So, please be careful of your wording when you describe the participant numbers to ensure strict accuracy."),
           p(strong("kcomp"),"is the number of comparisons examined. The total number of kcomp in the table should correspond to the number of rows in your dataset."),
           p(strong("kstudies"),"is the number of studies providing comparisons in the analysis. Note that it is possible for this not to sum to the same number as appears in your data set. For example, if Study A provided 4 comparisons and 1 or more were at different levels of this moderator variable, kstudies will not equal the total number of unique studies in the dataset because it is being counted in multiple moderator levels."),
+          h3("R Script"),
+          downloadButton("download_script_catmodtlma"),
+          verbatimTextOutput("script_display_catmodtlma"),
           h3("Need Help Understanding The Results?"),
           p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#moderator-analysis'>my open book</a>"),
           ),
@@ -3245,6 +3421,97 @@ server <- function(input, output, session) {
       }
     )
     
+    
+    
+    
+    # Generate R script
+    r_scripttlma <- renderText({
+      req(input$run_analysis)
+      
+     paste0(
+        "# Load necessary libraries\n",
+        "library(metafor)\n",
+        "library(dplyr)\n\n",
+        "# Function to perform the meta-analysis and generate results\n",
+        "run_meta_analysis <- function() {\n",
+        "  # Read the data\n",
+        "  data <- read.csv('", input$modfile$name, "')\n\n",
+        "  # Model with intercept (for testing moderators)\n",
+        "  mod_with_intercept <- rma.mv(yi, vi, \n",
+        "                               random = ~ 1 | Study/ES_number, \n",
+        "                               mods = ~ factor(", input$dropdown, "), \n",
+        "                               test = \"t\", dfs = \"contain\", \n",
+        "                               data = data)\n\n",
+        "  # Summary of model with intercept\n",
+        "  summary_with_intercept <- summary(mod_with_intercept)\n\n",
+        "  # Model without intercept (for building table)\n",
+        "  mod_without_intercept <- rma.mv(yi, vi, \n",
+        "                                  random = ~ 1 | Study/ES_number, \n",
+        "                                  mods = ~ -1 + factor(", input$dropdown, "), \n",
+        "                                  test = \"t\", dfs = \"contain\", \n",
+        "                                  data = data)\n\n",
+        "  # Summary of model without intercept\n",
+        "  summary_without_intercept <- summary(mod_without_intercept)\n",
+        "  summary_table_without_intercept <- coef(summary_without_intercept)\n\n",
+        "  # Summarize participants\n",
+        "  participants_summary <- data %>%\n",
+        "    group_by(", input$dropdown, ") %>%\n",
+        "    summarise(\n",
+        "      nexp = sum(Exp_n, na.rm = TRUE),\n",
+        "      ctrl = sum(Ctrl_n, na.rm = TRUE),\n",
+        "      kcomp = n(),\n",
+        "      kstudies = n_distinct(Study),\n",
+        "      .groups = 'drop'\n",
+        "    )\n\n",
+        "  # Add participant summary to the table\n",
+        "  summary_table_without_intercept$nexp <- participants_summary$nexp\n",
+        "  summary_table_without_intercept$ctrl <- participants_summary$ctrl\n",
+        "  summary_table_without_intercept$kcomp <- participants_summary$kcomp\n",
+        "  summary_table_without_intercept$kstudies <- participants_summary$kstudies\n\n",
+        "  # Rename and reorder columns\n",
+        "  summary_table_without_intercept$Term <- rownames(summary_table_without_intercept)\n",
+        "  summary_table_without_intercept <- summary_table_without_intercept %>%\n",
+        "    select(Term, nexp, ctrl, kcomp, kstudies, everything())\n\n",
+        "  # Create results list\n",
+        "  results <- list(\n",
+        "    model_with_intercept = list(\n",
+        "      summary = summary_with_intercept,\n",
+        "      TestOfModerators = ifelse(!is.null(mod_with_intercept$QM), \n",
+        "                                sprintf(\"F(%d, %d) = %.3f, p-val = %.3f\", \n",
+        "                                        mod_with_intercept$QMdf[1], \n",
+        "                                        mod_with_intercept$QMdf[2], \n",
+        "                                        mod_with_intercept$QM, \n",
+        "                                        mod_with_intercept$QMp), \n",
+        "                                NA)\n",
+        "    ),\n",
+        "    model_without_intercept = summary_table_without_intercept\n",
+        "  )\n\n",
+        "  return(results)\n",
+        "}\n\n",
+        "# Run and see results\n",
+        "run_meta_analysis()\n"
+      )
+      
+
+    })
+    
+    # Render the script content as text in the UI
+    output$script_display_catmodtlma <- renderText({
+      r_scripttlma()
+    })
+    
+    # Define the server logic for the download handler
+    output$download_script_catmodtlma <- downloadHandler(
+      filename = function() {
+        paste("script.mod.", input$dropdown, ".txt", sep = "")
+      },
+      content = function(file) {
+        writeLines(r_scripttlma(), file)
+      }
+    )
+
+    
+    
 ###Cont Mod Analysis 3lma ----
     
     # Initialize a reactive value for displaying results
@@ -3270,6 +3537,9 @@ server <- function(input, output, session) {
           p("In metafor there are two different tests of the moderator. The table below presents the omnibus test of moderators from the model with an intercept. This is the same statistic as you may be used to seeing as Qbetween in conventional meta-analysis. The effect sizes etc. provided in the moderator table below are from the model without an intercept. In a conventional meta-analysis, this is a presentation consistent with what you may expect to see from other software packages such as Comprehensive Meta-Analysis.")),
           downloadButton("download_resultsa", "Download Results"),
           tableOutput("modtable_outputa"),
+          h3("R Script"),
+          downloadButton("download_script_contmodtlma"),
+          verbatimTextOutput("script_display_contmodtlma"),
           h3("Need Help Understanding The Results?"),
           p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#moderator-analysis'>my open book</a>"),
           ),
@@ -3343,6 +3613,53 @@ server <- function(input, output, session) {
       }
     )
 
+    
+    # Generate R script as a reactive expression
+    script_content_contmodtlma <- reactive({
+      req(input$modfilea, input$dropdowna)
+      # Debugging: Print inputs to console
+  
+      paste(
+        "# Load necessary libraries\n",
+        "library(metafor)\n",
+        "# Read the data\n",
+        paste("data <- read.csv('", input$modfilea$name, "')\n\n", sep = ""),
+        "# Model with intercept\n",
+        paste(
+          "mod_with_intercept <- rma.mv(yi, vi, \n",
+          "                               random = ~ 1 | Study/ES_number, \n",
+          "                               mods = ~ ", input$dropdowna, ", \n",
+          "                               test = \"t\", dfs = \"contain\", \n",
+          "                               data = data)\n\n",
+          sep = ""
+        ),
+        "# Results\n",
+        "mod_with_intercept\n",
+        sep = ""
+      )
+    })
+    
+    # Render the script content as text in the UI
+    output$script_display_contmodtlma <- renderText({
+      script_content_contmodtlma()
+    })
+    
+    # Define the server logic for the download handler
+    output$download_script_contmodtlma <- downloadHandler(
+      filename = function() {
+        paste("script.mod.", input$dropdowna, ".txt", sep = "")
+      },
+      content = function(file) {
+        writeLines(script_content_contmodtlma(), file)
+      }
+    )
+
+ 
+    
+    
+    
+    
+    
 ### Publication bias 3lma ---- 
 
     # Initialize a reactive value for displaying results
@@ -3381,6 +3698,8 @@ server <- function(input, output, session) {
               p("This is a funnel plot of every study that contributed comparisons to the analysis."),
               downloadButton("download_studyfunnel", "Download Study-Level Funnel Plot (half-page)"), downloadButton("download_studyfunnelf", "Download Study-Level Funnel Plot (full-page)"),
               plotOutput("three_level_study_funnel", width = 800, height = 600),
+              h3("R Script"),
+              p("The script for these plots is very long. You will need to compute some statistics that you do not have in your dataset by default. You can download a template for the plots (but not calculating the statistics)", HTML("<a href='https://github.com/noah-schroeder/simple_meta-analysis/blob/main/3lmaplots.r'>on github</a>"),"."),
               h3("Need Help Understanding The Results?"),
               p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#publication-bias'>my open book</a>")),
             ),
@@ -3625,6 +3944,20 @@ output$download_studyfunnelf <- downloadHandler(
     dev.off()  # Turn off the PNG device
   }
 )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ##3LMA CHE RVE----
