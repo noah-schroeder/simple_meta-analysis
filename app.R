@@ -4235,7 +4235,6 @@ generateRScriptcherve3lma <- function(datafile, correlation) {
     "CHEresultrobust <- robust(CHEresult, cluster = Study, clubSandwich = TRUE, digits = 3)\n\n",
     "CHEresultrobust",
     
-    "#sensitivity analyses",
     "# Define rho value - 0.2\n",
     "rho_lower <- ", correlation - 0.2, "\n\n",
     "# Calculate covariance matrix for rho - 0.2\n",
@@ -4265,9 +4264,9 @@ generateRScriptcherve3lma <- function(datafile, correlation) {
     "                         data = data,\n",
     "                         Sparse = TRUE)\n\n",
     "# Compute robust CHE results for rho + 0.2\n",
-    "CHEresultrobust_upper <- robust(CHEresult_upper, cluster = Study, clubSandwich = TRUE, digits = 3)\n"
-    "CHEresultrobust_upper",
-     )
+    "CHEresultrobust_upper <- robust(CHEresult_upper, cluster = Study, clubSandwich = TRUE, digits = 3)\n",
+    "CHEresultrobust_upper"
+  )
   return(script)
 }
 
@@ -4332,6 +4331,9 @@ output$dynamicResultschevar <- renderUI({
       downloadButton("download_i2_resultsRVE", label = "Download Results"),
       verbatimTextOutput("i2result_outputRVE"),
       verbatimTextOutput("totalI2_outputRVE"),
+      h3("R Script"),
+      downloadButton("downloadRScripti2RVE"),
+      verbatimTextOutput("viewRScripti2RVE"),
       h3("Need Help Understanding The Results?"),
       p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#interpreting-the-results'>my open book</a>"),
       ),
@@ -4437,6 +4439,82 @@ output$download_i2_resultsRVE <- downloadHandler(
     writeLines(combined_text, file)
   }
 )
+
+
+# Function to generate the R script as a string
+generateRScripti2RVE <- function(datafile, correlation) {
+  correlation <- as.numeric(input$correlationi2)
+  script <- paste0(
+    "# Load necessary libraries\n",
+    "library(metafor)\n",
+    "library(clubSandwich)\n\n",
+    
+    "# Read uploaded data\n",
+    "data <- read.csv('", gsub("[^a-zA-Z0-9._-]", "_", datafile), "')\n\n",
+    
+    "# Define rho value\n",
+    "rho <- ", correlation, "\n\n",
+    
+    "# Calculate covariance matrix\n",
+    "V <- with(data, impute_covariance_matrix(vi = vi, cluster = Study, r = rho))\n\n",
+    
+    "# Run 3-level meta-analysis\n",
+    "m_multi <- rma.mv(yi, V,\n",
+    "                  random = ~ 1 | Study/ES_number,\n",
+    "                  method = 'REML',\n",
+    "                  test = 't',\n",
+    "                  dfs = 'contain',\n",
+    "                  data = data,\n",
+    "                  Sparse = TRUE)\n\n",
+    
+    "# Teach R i-squared functions\n",
+    "# Please visit the following URL, copy the code, and paste it into your R console and hit enter before proceeding with your code:\n",
+    "# https://raw.githubusercontent.com/MathiasHarrer/dmetar/master/R/mlm.variance.distribution.R\n\n",
+    
+    "# Calculate I-squared values and variance distribution\n",
+    "i2 <- mlm.variance.distribution(m_multi)\n\n",
+    
+    "# Print results and total I2\n",
+    "i2\n"
+  )
+  return(script)
+}
+
+# Reactive expression to generate the R script
+script_content_i2tlmarve <- reactive({
+  req(input$i2fileRVE)
+  datafile <- input$i2fileRVE$name
+  correlation <- input$correlationRVE
+  generateRScripti2RVE(datafile, correlation)
+})
+
+# Output to view the R script in the UI
+output$viewRScripti2RVE <- renderText({
+  script_content_i2tlmarve()
+})
+
+# Download handler for the R script
+output$downloadRScripti2RVE <- downloadHandler(
+  filename = function() {
+    paste("script.I2_CHE", Sys.Date(), ".txt", sep = "")
+  },
+  content = function(file) {
+    rscript <- script_content_i2tlmarve()
+    writeLines(rscript, con = file)
+  }
+)
+
+
+
+
+
+
+
+
+
+
+
+
 ###Outlier and Influence Analysis CHERVE----
 
 
@@ -4467,6 +4545,9 @@ output$dynamicResultsinf <- renderUI({
       downloadButton("download_influencerve", "Download .csv with Influence Results"),
       h4("Influence Statistics"),
       tableOutput("influence_tablerve"),
+      h3("R Script"),
+      downloadButton("downloadRScriptoutlierinfRVE"),
+      verbatimTextOutput("viewRScriptoutlierinfRVE"),
       h3("Need Help Understanding The Results?"),
       p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#checking-for-outliers-and-influence'>my open book</a>"),
       ),
@@ -4683,6 +4764,122 @@ output$download_outliersrve <- downloadHandler(
     dev.off()  # Turn off the PNG device
   }
 )
+
+
+
+# Function to generate the R script as a string
+generateRScriptRVE <- function(datafile, correlation) {
+  script <- paste0(
+    "# Load necessary libraries\n",
+    "library(metafor)\n",
+    "library(clubSandwich)\n\n",
+    
+    "# Read uploaded data\n",
+    "data <- read.csv('", gsub("[^a-zA-Z0-9._-]", "_", datafile), "')\n\n",
+    
+    "# Define rho value\n",
+    "rho <- ", correlation, "\n\n",
+    
+    "# Calculate covariance matrix\n",
+    "V <- with(data, impute_covariance_matrix(vi = vi, cluster = Study, r = rho))\n\n",
+    
+    "# Run the meta-analysis\n",
+    "m_multi <- rma.mv(yi, V,\n",
+    "                  random = ~ 1 | Study/ES_number,\n",
+    "                  method = 'REML',\n",
+    "                  test = 't',\n",
+    "                  dfs = 'contain',\n",
+    "                  data = data)\n\n",
+    
+    "# Compute robust CHE results\n",
+    "robrveinf <- robust(m_multi, cluster = data$Study, clubSandwich = TRUE, digits = 3)\n\n",
+    
+    "# Perform outlier analysis\n",
+    "data$upperci <- data$yi + 1.96 * sqrt(data$vi)\n",
+    "data$lowerci <- data$yi - 1.96 * sqrt(data$vi)\n",
+    "data$outlier <- data$upperci < robrveinf$ci.lb | data$lowerci > robrveinf$ci.ub\n\n",
+    
+    "# Calculate Cook's Distance\n",
+    "cooks <- cooks.distance(robrveinf)\n\n",
+    
+    "# Calculate DFBETAS\n",
+    "hatvalues <- hatvalues(robrveinf)\n",
+    "dfbetas <- dfbetas(m_multi)\n\n",
+    
+    "# Calculate p/k\n",
+    "p <- length(coef(robrveinf))\n",
+    "k <- nrow(data)\n",
+    "if (length(coef(robrveinf)) > 1) { p <- p - 1 }\n",
+    "p_over_k <- 3 * (p / k)\n",
+    "hat_flag <- ifelse(hatvalues > p_over_k, 'TRUE', '')\n\n",
+    
+    "# Combine influence metrics\n",
+    "influence <- data.frame(Study = data$Study,\n",
+    "                        effect_size = data$yi,\n",
+    "                        outlier = ifelse(data$outlier == FALSE, '', 'TRUE'),\n",
+    "                        cooks = cooks,\n",
+    "                        cooks_flag = ifelse(cooks > 0.5, 'TRUE', ''),\n",
+    "                        dfbetas = dfbetas,\n",
+    "                        dfbetas_flag = ifelse(abs(dfbetas) > 1, 'TRUE', ''),\n",
+    "                        hatvalues = hatvalues,\n",
+    "                        hat_flag = hat_flag)\n\n",
+    
+    "# Adjust column names\n",
+    "colnames(influence)[which(colnames(influence) == 'intrcpt')] <- 'dfbetas*'\n",
+    "colnames(influence)[which(colnames(influence) == 'intrcpt.1')] <- 'dfbetas_flag'\n\n",
+    
+    "# Add explanatory row\n",
+    "new_row <- data.frame(\n",
+    "  Study = '*Note that DFBETAS is based on the three-level CHE model and not the three-level CHE RVE model as the other metrics are.',\n",
+    "  effect_size = NA,\n",
+    "  outlier = NA,\n",
+    "  cooks = NA,\n",
+    "  cooks_flag = NA,\n",
+    "  dfbetas = NA,\n",
+    "  dfbetas_flag = NA,\n",
+    "  hatvalues = NA,\n",
+    "  hat_flag = NA\n",
+    ")\n",
+    "colnames(new_row) <- colnames(influence)\n",
+    "influence <- rbind(influence, new_row)\n",
+    "influence\n"
+  )
+  return(script)
+}
+
+# Reactive expression to generate the R script
+script_content_infrve <- reactive({
+  req(input$inffilerve)
+  datafile <- input$inffilerve$name
+  correlation <- input$correlationrve
+  generateRScriptRVE(datafile, correlation)
+})
+
+# Output to view the R script in the UI
+output$viewRScriptoutlierinfRVE <- renderText({
+  script_content_infrve()
+})
+
+# Download handler for the R script
+output$downloadRScriptoutlierinfRVE <- downloadHandler(
+  filename = function() {
+    paste("script.outlierinfCHERVE", Sys.Date(), ".txt", sep = "")
+  },
+  content = function(file) {
+    rscript <- script_content_infrve()
+    writeLines(rscript, con = file)
+  }
+)
+
+
+
+
+
+
+
+
+
+
 #####Cat Mod CHERVE ----
 
 # Initialize a reactive value for displaying results
@@ -4690,7 +4887,6 @@ resultsVisibleRVECat <- reactiveVal(FALSE)
 
 observeEvent(input$run_cheCat, {
   resultsVisibleRVECat(TRUE)
-  print("Run analysis clicked, setting resultsVisibleRVECat to TRUE.")
 })
 
 observeEvent(input$mod_RVECat, {
@@ -4719,6 +4915,9 @@ output$dynamicResults <- renderUI({
       p(strong("nexp"),"is the sample size of the intervention group, and", strong("nctrl"), "is the sample size of the control group. Note that this is not calculating the actual number of unique participants, because this code is simply conditionally summing the sample size columns in our data set. For example, if a study had one experimental group (n = 10) and one control group (n = 10), and had three outcomes that were included in the analysis (meaning, each appears as its own row in the data set), this code will say there were 30 participants in each group rather than 10. While this is expected in dependent data such as this, it is something to be aware of so you do not make a claim such as, “our analysis of 60 participants” when in reality, your analysis is only 20 unique participants. So, please be careful of your wording when you describe the participant numbers to ensure strict accuracy."),
       p(strong("kcomp"),"is the number of comparisons examined. The total number of kcomp in the table should correspond to the number of rows in your dataset."),
       p(strong("kstudies"),"is the number of studies providing comparisons in the analysis. Note that it is possible for this not to sum to the same number as appears in your data set. For example, if Study A provided 4 comparisons and 1 or more were at different levels of this moderator variable, kstudies will not equal the total number of unique studies in the dataset because it is being counted in multiple moderator levels."),
+      h3("R Script"),
+      downloadButton("download_scriptcatmodRVE"),
+      verbatimTextOutput("replicate_scriptcatmodRVE"),
       h3("Need Help Understanding The Results?"),
       p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#moderator-analysis'>my open book</a>"),
       ),
@@ -4740,7 +4939,6 @@ rhoCat <- reactive({
     print("Invalid rho value")
     return(0)  # Default or error handling value
   }
-  print(paste("Rho updated:", rho_value))
   rho_value
 })
 
@@ -4910,7 +5108,6 @@ CHEresult_RVECatInt <- eventReactive(input$run_cheCat, {
       Sparse = TRUE
     )
     robust_modelRVECatInt <- robust(resultRVECat, cluster = data$Study, clubSandwich = TRUE, digits = 3)
-    print("CHE analysis with moderator and intercept completed successfully.")
     robust_modelRVECatInt
   }, error = function(e) {
     message <- paste("Error in CHE analysis with moderator and intercept:", e$message)
@@ -5027,6 +5224,64 @@ output$downloadRVE_RVE <- downloadHandler(
   }
 )
 
+
+
+# Function to generate the R script text
+generate_script_catmodrve <- reactive({
+  script <- paste(
+    "library(metafor)",
+    "library(clubSandwich)",
+    "library(dplyr)",
+    "",
+    "# Load data",
+    sprintf("data <- read.csv('%s')", input$chefileCat$name),"",
+    "# Filter data based on moderator",
+    sprintf("excluded_levels <- data %%>%% group_by(Moderator = get('%s')) %%>%% summarise(Count = n(), .groups = 'drop') %%>%% filter(Count == 1) %%>%% pull(Moderator)", input$mod_RVECat),
+    "",
+    sprintf("filtered_data <- data %%>%% filter(!(get('%s') %%in%% excluded_levels))", input$mod_RVECat),
+    "",
+    "# Impute covariance matrix",
+    sprintf("rho <- %.2f", rhoCat()),
+    "V_RVE <- impute_covariance_matrix(vi = filtered_data$vi, cluster = filtered_data$Study, r = rho)",
+    "",
+    "# Run meta-analysis with intercept for Test of mod",
+    sprintf("result_tom <- rma.mv(yi = filtered_data$yi, V = V_RVE, mods = ~ factor(filtered_data[['%s']]), random = ~ 1 | Study/ES_number, method = 'REML', test = 't', data = filtered_data)", input$mod_RVECat),
+    "robust_result_tom <- robust(result_tom, cluster = filtered_data$Study, clubSandwich = TRUE, digits = 3)",
+    "",
+    "# Print results for test of moderator",
+    "print(robust_result_tom)",
+    "",
+    "# Run meta-analysis  without intercept for table",
+    sprintf("result <- rma.mv(yi = filtered_data$yi, V = V_RVE, mods = ~ -1 + factor(filtered_data[['%s']]), random = ~ 1 | Study/ES_number, method = 'REML', test = 't', data = filtered_data)", input$mod_RVECat),
+    "robust_result <- robust(result, cluster = filtered_data$Study, clubSandwich = TRUE, digits = 3)",
+    "",
+    "# Print results for table",
+    "print(robust_result)",
+    sep = "\n"
+  )
+  script
+})
+
+# Render the script text in the UI
+output$replicate_scriptcatmodRVE <- renderText({
+  generate_script_catmodrve()
+})
+
+# Download handler for the script
+output$download_scriptcatmodRVE <- downloadHandler(
+  filename = function() {
+    paste0("script.mod.", input$mod_RVECat, ".txt")
+  },
+  content = function(file) {
+    writeLines(generate_script_catmodrve(), file)
+  }
+)
+
+
+
+
+
+
 #####Cont Mod CHERVE ----
 
 # Initialize a reactive value for displaying results
@@ -5034,7 +5289,6 @@ resultsVisibleRVECont <- reactiveVal(FALSE)
 
 observeEvent(input$run_cheCont, {
   resultsVisibleRVECont(TRUE)
-  print("Run analysis clicked, setting resultsVisibleRVECat to TRUE.")
 })
 
 observeEvent(input$mod_RVECont, {
@@ -5052,7 +5306,10 @@ output$dynamicResultsCont <- renderUI({
     tagList(
       h3("Model Result"),
       downloadButton("downloadRVE_RVECont", "Download Results"),
-      div(class = "scrollable", tableOutput("custom_results_RVECont"))
+      div(class = "scrollable", tableOutput("custom_results_RVECont")),
+      h3("R Script"),
+      downloadButton("download_scriptcontmodRVE"),
+      verbatimTextOutput("replicate_scriptcontmodRVE"),
     )
   }
 })
@@ -5064,14 +5321,13 @@ output$custom_results_RVECont <- renderTable({
 })
 
 
-# Reactive value for rhoCat
+# Reactive value for rhoCont
 rhoCont <- reactive({
   rho_value <- as.numeric(input$correlationCont)
   if (is.na(rho_value)) {
     print("Invalid rho value")
     return(0)  # Default or error handling value
   }
-  print(paste("Rho updated:", rho_value))
   rho_value
 })
 
@@ -5079,7 +5335,6 @@ rhoCont <- reactive({
 uploaded_dataRVECont <- reactive({
   req(input$chefileCont)
   data <- read.csv(input$chefileCont$datapath)
-  print("Data loaded successfully.")  # Debug print
   data
 })
 
@@ -5089,7 +5344,6 @@ V_RVE_Cont <- reactive({
   data_filtered <- uploaded_dataRVECont()  # Accessing the reactive result
   tryCatch({
     result <- with(data_filtered, impute_covariance_matrix(vi = vi, cluster = Study, r = rhoCont()))  # Correctly calling rhoCat()
-    print("Covariance matrix calculated.")  # Debug print
     result
   }, error = function(e) {
     print(paste("Error in computing V_RVE:", e$message))  # More informative error message
@@ -5196,6 +5450,53 @@ output$downloadRVE_RVECont <- downloadHandler(
 
 
 
+
+# Function to generate the R script text
+generate_script_contmodrve <- reactive({
+  rho_value <- as.numeric(input$correlationCont)
+   script <- paste(
+    "library(metafor)",
+    "library(clubSandwich)",
+    "library(dplyr)",
+    "",
+    "# Load data",
+    sprintf("data <- read.csv('%s')", input$chefileCont$datapath),
+    "",
+    "# Impute covariance matrix",
+    sprintf("rho <- %.2f", rho_value),
+    "V_RVE <- impute_covariance_matrix(vi = data$vi, cluster = data$Study, r = rho)",
+    "",
+    "# Run meta-analysis with intercept",
+    sprintf("result <- rma.mv(yi = data$yi, V = V_RVE, mods = ~ %s, random = ~ 1 | Study / ES_number, method = 'REML', test = 't', data = data)",
+            input$mod_RVECont),
+    "robust_result <- robust(result, cluster = data$Study, clubSandwich = TRUE, digits = 3)",
+    "",
+    "# Print results for table",
+    "print(robust_result)",
+    sep = "\n"
+  )
+  script
+})
+
+# Render the script text in the UI
+output$replicate_scriptcontmodRVE <- renderText({
+  generate_script_contmodrve()
+})
+
+# Download handler for the script
+output$download_scriptcontmodRVE <- downloadHandler(
+  filename = function() {
+    paste0("script.mod.", input$mod_RVECat, ".txt")
+  },
+  content = function(file) {
+    writeLines(generate_script_contmodrve(), file)
+  }
+)
+
+
+
+
+
 ### Publication Bias CHERVE---- 
 # Initialize a reactive value for displaying results
 resultsVisibleRVEplots <- reactiveVal(FALSE)
@@ -5230,6 +5531,9 @@ output$dynamicResultcheplot <- renderUI({
       p("This funnel plot is based on the three-level meta-analysis with CHE RVE. Each comparison from the analysis is included."),
       downloadButton("downloadCheFunnel", "Download Standard Funnel Plot (Half-Page)"), downloadButton("downloadCheFunnelb", "Download Standard Funnel Plot (Full-Page)"),
       plotOutput("chefunnel", width = 800, height = 600),
+      h3("R Script"),
+      downloadButton("downloadScript_cheplots"),
+      verbatimTextOutput("rScript_cheplots"),
     )
   }
 })
@@ -5473,6 +5777,79 @@ output$downloadCheFunnelb <- downloadHandler(
 )
 
   
+# Generate the R script for analysis
+generate_script_contmodrve <- reactive({
+  script <- paste(
+    "library(metafor)",
+    "library(clubSandwich)",
+    "library(dplyr)",
+    "",
+    "# Load data",
+    sprintf("data <- read.csv('%s')", input$chefileplot$name),
+    "",
+    "# Impute covariance matrix",
+    sprintf("rho <- %.2f", rhocheplot()),
+    "V_RVE <- impute_covariance_matrix(vi = data$vi, cluster = data$Study, r = rho)",
+    "",
+    "# Run meta-analysis with intercept",
+    "result <- rma.mv(yi = data$yi, V = V_RVE, random = ~ 1 | Study / ES_number, method = 'REML', test = 't', data = data)",
+    "robust_result <- robust(result, cluster = data$Study, clubSandwich = TRUE, digits = 3)",
+    "",
+    "# Print results",
+    "print(robust_result)",
+    "",
+    "# Generate and save forest plot",
+    sprintf("png('comparison_level_forest_plot.png', width = 800, height = 600)"),
+    "forest(robust_result, slab = data$Study, mlab = paste('RE CHE RVE Three-Level Model, rho =', rho), header = TRUE)",
+    "dev.off()",
+    "",
+    "# Generate and save large forest plot",
+    sprintf("png('comparison_level_forest_plot_large.png', width = 800, height = 1056)"),
+    "forest(robust_result, slab = data$Study, mlab = paste('RE CHE RVE Three-Level Model, rho =', rho), header = TRUE)",
+    "dev.off()",
+    "",
+    "# Aggregated data by Study",
+    "aggregated_data <- aggregate(cbind(yi, vi) ~ Study, data = data, function(x) mean(x, na.rm = TRUE))",
+    "",
+    "# Impute covariance matrix for aggregated data",
+    "V_aggregated <- impute_covariance_matrix(vi = aggregated_data$vi, cluster = aggregated_data$Study, r = rho)",
+    "",
+    "# Run meta-analysis for aggregated data",
+    "result_aggregated <- rma.mv(yi = aggregated_data$yi, V = V_aggregated, random = ~ 1 | Study, method = 'REML', test = 't', data = aggregated_data)",
+    "robust_result_aggregated <- robust(result_aggregated, cluster = aggregated_data$Study, clubSandwich = TRUE, digits = 3)",
+    "",
+    "# Print results for table",
+    "print(robust_result_aggregated)",
+    "",
+    "# Generate and save forest plot for aggregated data",
+    sprintf("png('comparison_level_forest_plot_aggregated.png', width = 800, height = 600)"),
+    "forest(robust_result_aggregated, slab = aggregated_data$Study, header = TRUE, annotate = TRUE, addfit = FALSE, mlab = '')",
+    "title(sub = paste('RE CHE RVE Three-Level Model, rho =', rho), line = 2.5, adj = 0)",
+    "title(sub = 'Note that the means above are', line = 2.5, adj = 1)",
+    "title(sub = 'not weighted within studies.', line = 3.25, adj = 1)",
+    "dev.off()",
+    sep = "\n"
+  )
+  script
+})
+
+# Display the R script in the app
+output$rScript_cheplots <- renderText({
+  generate_script_contmodrve()
+})
+
+# Download handler for the R script
+output$downloadScript_cheplots <- downloadHandler(
+  filename = function() {
+    paste("script.CHERVEplots", Sys.Date(), ".txt", sep = "")
+  },
+  content = function(file) {
+    writeLines(generate_script_contmodrve(), file)
+  }
+)
+
+
+
 
 
 
