@@ -3988,7 +3988,10 @@ output$dynamicResultsche <- renderUI({
       tableOutput("custom_results"),
       h4("Methods Notes"),
       p("This random effects three-level meta-analysis used correlated and hierarchical effects (CHE) and robust variance estimation. It used the correlation you chose as the correlation for CHE. Robust variance estimation was done using the clubSandwich package and metafor (the code is robust(...clubSandwich = TRUE)). You can read more about metafor and cluster-robust tests and confidence intervals here:", HTML("<a href='https://wviechtb.github.io/metafor/reference/robust.html'>metafor robust() documentation</a>"), "Otherwise, the analysis used Restricted Maximum Likelihood Estimation (REML) (the default in metafor package) and we used a three-level structure with ES_number nested within Study. We also used a t distribution rather than a z distribution. You can read about t distributions here:", HTML("<a href='https://wviechtb.github.io/metafor/reference/rma.mv.html'>metafor documentation about rma.mv</a>")),
-    )
+      h3("R Script"),
+      downloadButton("downloadRScriptche"),
+      verbatimTextOutput("viewRScriptche"),
+      )
   }
 })
 
@@ -4204,6 +4207,104 @@ output$downloadRVE <- downloadHandler(
     write.csv(results_df(), file, row.names = FALSE)
   }
 )
+
+
+# Function to generate the combined R script as a string
+generateRScriptcherve3lma <- function(datafile, correlation) {
+  correlation <- as.numeric(correlation)
+  script <- paste0(
+    "# Load necessary libraries\n",
+    "library(metafor)\n",
+    "library(clubSandwich)\n\n",
+    "# Read uploaded data\n",
+    "data <- read.csv('", datafile, "')\n\n",
+    
+    "# Define rho value\n",
+    "rho <- ", correlation, "\n\n",
+    "# Calculate covariance matrix for rho\n",
+    "V <- with(data, impute_covariance_matrix(vi = vi, cluster = Study, r = rho))\n\n",
+    "# Compute CHE results for rho\n",
+    "CHEresult <- rma.mv(yi, V,\n",
+    "                   random = ~ 1 | Study/ES_number,\n",
+    "                   method = 'REML',\n",
+    "                   test = 't',\n",
+    "                   dfs = 'contain',\n",
+    "                   data = data,\n",
+    "                   Sparse = TRUE)\n\n",
+    "# Compute robust CHE results for rho\n",
+    "CHEresultrobust <- robust(CHEresult, cluster = Study, clubSandwich = TRUE, digits = 3)\n\n",
+    "CHEresultrobust",
+    
+    "#sensitivity analyses",
+    "# Define rho value - 0.2\n",
+    "rho_lower <- ", correlation - 0.2, "\n\n",
+    "# Calculate covariance matrix for rho - 0.2\n",
+    "V_lower <- with(data, impute_covariance_matrix(vi = vi, cluster = Study, r = rho_lower))\n\n",
+    "# Compute CHE results for rho - 0.2\n",
+    "CHEresult_lower <- rma.mv(yi, V_lower,\n",
+    "                         random = ~ 1 | Study/ES_number,\n",
+    "                         method = 'REML',\n",
+    "                         test = 't',\n",
+    "                         dfs = 'contain',\n",
+    "                         data = data,\n",
+    "                         Sparse = TRUE)\n\n",
+    "# Compute robust CHE results for rho - 0.2\n",
+    "CHEresultrobust_lower <- robust(CHEresult_lower, cluster = Study, clubSandwich = TRUE, digits = 3)\n\n",
+    "CHEresultrobust_lower",
+    
+    "# Define rho value + 0.2\n",
+    "rho_upper <- ", correlation + 0.2, "\n\n",
+    "# Calculate covariance matrix for rho + 0.2\n",
+    "V_upper <- with(data, impute_covariance_matrix(vi = vi, cluster = Study, r = rho_upper))\n\n",
+    "# Compute CHE results for rho + 0.2\n",
+    "CHEresult_upper <- rma.mv(yi, V_upper,\n",
+    "                         random = ~ 1 | Study/ES_number,\n",
+    "                         method = 'REML',\n",
+    "                         test = 't',\n",
+    "                         dfs = 'contain',\n",
+    "                         data = data,\n",
+    "                         Sparse = TRUE)\n\n",
+    "# Compute robust CHE results for rho + 0.2\n",
+    "CHEresultrobust_upper <- robust(CHEresult_upper, cluster = Study, clubSandwich = TRUE, digits = 3)\n"
+    "CHEresultrobust_upper",
+     )
+  return(script)
+}
+
+# Reactive expression to generate the combined R script
+generatedRScriptche <- reactive({
+  req(input$chefile)
+  datafile <- input$chefile$name
+  correlation <- as.numeric(input$correlation)
+  generateRScriptcherve3lma(datafile, correlation)
+})
+
+# Output to view the combined R script in the UI
+output$viewRScriptche <- renderText({
+  generatedRScriptche()
+})
+
+# Download handler for the combined R script
+output$downloadRScriptche <- downloadHandler(
+  filename = function() {
+    paste("script.3lmacherve", Sys.Date(), ".txt", sep = "")
+  },
+  content = function(file) {
+    rscript <- generatedRScriptche()
+    writeLines(rscript, con = file)
+  }
+)
+
+
+
+
+
+
+
+
+
+
+
 ###Variance CHERVE----
 
 
