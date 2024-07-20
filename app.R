@@ -4229,8 +4229,8 @@ generateRScriptcherve3lma <- function(datafile, correlation) {
     "                   data = data,\n",
     "                   Sparse = TRUE)\n\n",
     "# Compute robust CHE results for rho\n",
-    "CHEresultrobust <- robust(CHEresult, cluster = Study, clubSandwich = TRUE, digits = 3)\n\n",
-    "CHEresultrobust",
+    "CHEresultrobust <- robust(CHEresult, cluster = Study, clubSandwich = TRUE, digits = 3)\n",
+    "CHEresultrobust\n\n",
     
     "# Define rho value - 0.2\n",
     "rho_lower <- ", correlation - 0.2, "\n\n",
@@ -4245,8 +4245,8 @@ generateRScriptcherve3lma <- function(datafile, correlation) {
     "                         data = data,\n",
     "                         Sparse = TRUE)\n\n",
     "# Compute robust CHE results for rho - 0.2\n",
-    "CHEresultrobust_lower <- robust(CHEresult_lower, cluster = Study, clubSandwich = TRUE, digits = 3)\n\n",
-    "CHEresultrobust_lower",
+    "CHEresultrobust_lower <- robust(CHEresult_lower, cluster = Study, clubSandwich = TRUE, digits = 3)\n",
+    "CHEresultrobust_lower\n\n",
     
     "# Define rho value + 0.2\n",
     "rho_upper <- ", correlation + 0.2, "\n\n",
@@ -5306,7 +5306,7 @@ output$dynamicResultsCont <- renderUI({
       div(class = "scrollable", tableOutput("custom_results_RVECont")),
       h3("R Script"),
       downloadButton("download_scriptcontmodRVE"),
-      verbatimTextOutput("replicate_scriptcontmodRVE"),
+      verbatimTextOutput("replicate_scriptcontmodRVEa"),
     )
   }
 })
@@ -5454,11 +5454,10 @@ generate_script_contmodrve <- reactive({
    script <- paste(
     "library(metafor)",
     "library(clubSandwich)",
-    "library(dplyr)",
     "",
     "# Load data",
-    sprintf("data <- read.csv('%s')", input$chefileCont$datapath),
-    "",
+    sprintf("data <- read.csv('%s')", input$chefileCont$name),
+     "",
     "# Impute covariance matrix",
     sprintf("rho <- %.2f", rho_value),
     "V_RVE <- impute_covariance_matrix(vi = data$vi, cluster = data$Study, r = rho)",
@@ -5476,7 +5475,7 @@ generate_script_contmodrve <- reactive({
 })
 
 # Render the script text in the UI
-output$replicate_scriptcontmodRVE <- renderText({
+output$replicate_scriptcontmodRVEa <- renderText({
   generate_script_contmodrve()
 })
 
@@ -5775,7 +5774,7 @@ output$downloadCheFunnelb <- downloadHandler(
 
   
 # Generate the R script for analysis
-generate_script_contmodrve <- reactive({
+generate_script_cheplots <- reactive({
   script <- paste(
     "library(metafor)",
     "library(clubSandwich)",
@@ -5792,19 +5791,10 @@ generate_script_contmodrve <- reactive({
     "result <- rma.mv(yi = data$yi, V = V_RVE, random = ~ 1 | Study / ES_number, method = 'REML', test = 't', data = data)",
     "robust_result <- robust(result, cluster = data$Study, clubSandwich = TRUE, digits = 3)",
     "",
-    "# Print results",
-    "print(robust_result)",
-    "",
-    "# Generate and save forest plot",
-    sprintf("png('comparison_level_forest_plot.png', width = 800, height = 600)"),
     "forest(robust_result, slab = data$Study, mlab = paste('RE CHE RVE Three-Level Model, rho =', rho), header = TRUE)",
-    "dev.off()",
     "",
-    "# Generate and save large forest plot",
-    sprintf("png('comparison_level_forest_plot_large.png', width = 800, height = 1056)"),
-    "forest(robust_result, slab = data$Study, mlab = paste('RE CHE RVE Three-Level Model, rho =', rho), header = TRUE)",
-    "dev.off()",
-    "",
+    "# Create comparison-level funnel plot",
+    "funnel(robust_result, slab = data$Study, mlab = paste('RE CHE RVE Three-Level Model, rho =', rho), header = TRUE)",
     "# Aggregated data by Study",
     "aggregated_data <- aggregate(cbind(yi, vi) ~ Study, data = data, function(x) mean(x, na.rm = TRUE))",
     "",
@@ -5815,16 +5805,8 @@ generate_script_contmodrve <- reactive({
     "result_aggregated <- rma.mv(yi = aggregated_data$yi, V = V_aggregated, random = ~ 1 | Study, method = 'REML', test = 't', data = aggregated_data)",
     "robust_result_aggregated <- robust(result_aggregated, cluster = aggregated_data$Study, clubSandwich = TRUE, digits = 3)",
     "",
-    "# Print results for table",
-    "print(robust_result_aggregated)",
-    "",
     "# Generate and save forest plot for aggregated data",
-    sprintf("png('comparison_level_forest_plot_aggregated.png', width = 800, height = 600)"),
     "forest(robust_result_aggregated, slab = aggregated_data$Study, header = TRUE, annotate = TRUE, addfit = FALSE, mlab = '')",
-    "title(sub = paste('RE CHE RVE Three-Level Model, rho =', rho), line = 2.5, adj = 0)",
-    "title(sub = 'Note that the means above are', line = 2.5, adj = 1)",
-    "title(sub = 'not weighted within studies.', line = 3.25, adj = 1)",
-    "dev.off()",
     sep = "\n"
   )
   script
@@ -5832,7 +5814,7 @@ generate_script_contmodrve <- reactive({
 
 # Display the R script in the app
 output$rScript_cheplots <- renderText({
-  generate_script_contmodrve()
+  generate_script_cheplots()
 })
 
 # Download handler for the R script
