@@ -26,7 +26,7 @@ ui <- dashboardPage(
                               menuSubItem("Step 2: Check for Outliers and Influence", tabName = "subtab33"),
                               menuSubItem("Step 3a: Categorical Moderator Analysis", tabName = "subtab34"),
                               menuSubItem("Step 3b: Continuous Moderator Analysis", tabName = "subtab341"),
-                              menuSubItem("Option: Multiple Meta-Regression", tabName = "subtab342"),
+                              menuSubItem("Step 3c: Multiple Meta-Regression", tabName = "subtab342"),
                               menuSubItem("Step 4: Publication Bias", tabName = "subtab35")
                      ),
                      menuItem("Three-Level Meta-Analysis", tabName = "tab4", icon = icon("table"),
@@ -36,6 +36,7 @@ ui <- dashboardPage(
                               menuSubItem("Step 3: Check for Outliers and Influence", tabName = "subtab44"),
                               menuSubItem("Step 4a: Categorical Moderator Analysis", tabName = "subtab45"),
                               menuSubItem("Step 4b: Continuous Moderator Analysis", tabName = "subtab451"),
+                              menuSubItem("Step 4c: Multiple Meta-Regression", tabName = "subtab452"),
                               menuSubItem("Step 5: Publication Bias and Plots", tabName = "subtab46")
                      ),
                      menuItem("Three-Level Meta-Analysis with CHE RVE", tabName = "tab5", icon = icon("table"),
@@ -329,6 +330,25 @@ ui <- dashboardPage(
           selectInput("dropdowna", "Choose Column for Moderator Analysis", choices = NULL),
           actionButton("run_analysisa", "Run Moderator Analysis"),
           uiOutput("dynamicResults3lCcont")
+  ),
+  ######Meta-regression----
+  tabItem(tabName = "subtab452",
+          h2("Multiple Meta-Regression"),
+          p("This analysis will help you run a random effects multiple meta-regression with your three-level meta-analysis model using any combination of continuous and categorical variables. The first step is to upload your data. Please use the same file you used to run your meta-analysis."),
+          # File upload
+          fileInput("mregc3lma", "Upload CSV File", accept = ".csv"),
+          # Continuous variables selection
+          p("Next, specify how many continuous and categorical variables you would like to include in your model. You can select 0-20 of each type of variable if your dataset supports it."),
+          numericInput("num_continuous3lma", "How many continuous variables?",
+                       min = 0, max = 20, value = 0),
+          # Categorical variables selection
+          numericInput("num_categorical3lma", "How many categorical variables?",
+                       min = 0, max = 20, value = 0),
+          # Render variables button
+          actionButton("render_variables3lma", "Select My Variables"),
+          uiOutput("dynamicResultsCmregVar3lma"),
+          uiOutput("dynamicResultsCmregRes3lma"),
+          
   ),
       tabItem(tabName = "subtab46",
               h2("Publication Bias"),
@@ -2162,16 +2182,7 @@ server <- function(input, output, session) {
       sanitized_filename <- gsub("[^a-zA-Z0-9._-]", "_", input$mregc$name)
       cat("df <- read.csv(\"", sanitized_filename, "\")\n\n", sep = "")
       
-      # Ensure categorical variables are converted to factors
-      if (input$num_categorical > 0) {
-        cat("# Convert categorical variables to factors\n")
-        for (i in seq_len(input$num_categorical)) {
-          cat(paste("df$", input[[paste0("categorical_var_", i)]], " <- as.factor(df$", input[[paste0("categorical_var_", i)]], ")\n", sep = ""))
-        }
-        cat("\n")
-      }
-      
-      # Generate and assign continuous variables
+           # Generate and assign continuous variables
       cat("# Continuous Variables\n")
       continuous_vars <- sapply(seq_len(input$num_continuous), function(i) {
         var_name <- input[[paste0("continuous_var_", i)]]
@@ -2184,8 +2195,9 @@ server <- function(input, output, session) {
       # Generate and assign categorical variables
       cat("# Categorical Variables\n")
       categorical_vars <- sapply(seq_len(input$num_categorical), function(i) {
-        var_name <- paste0("factor(df$", input[[paste0("categorical_var_", i)]], ")")
-        return(var_name)
+        var_name <- input[[paste0("categorical_var_", i)]]
+        cat(paste0(var_name, " <- df$", var_name, "\n"))
+        return(paste0("factor(", var_name, ")"))
       })
       
       cat("\n")
@@ -2194,7 +2206,7 @@ server <- function(input, output, session) {
       formula_parts <- c(continuous_vars, categorical_vars)
       formula_str <- paste(formula_parts, collapse = " + ")
       
-      cat("# Meta-Analysis Model\n")
+      cat("# Meta-Regression Model\n")
       cat("formula <- ~ ", formula_str, "\n\n")
       
       # Perform meta-analysis
@@ -2213,57 +2225,52 @@ server <- function(input, output, session) {
   # Download handler for downloading the generated R script
   output$download_code <- downloadHandler(
     filename = function() {
-      "script.metareg.R"
+      "script.metareg.txt"
     },
     content = function(file) {
       # Generate script content for download
-      script_content <- "# Meta-Regression Script\n\n"
-      script_content <- paste0(script_content, "# Load required package\n")
-      script_content <- paste0(script_content, "library(metafor)\n\n")
-      script_content <- paste0(script_content, "# Read data\n")
-      
-      sanitized_filename <- gsub("[^a-zA-Z0-9._-]", "_", input$mregc$name)
-      script_content <- paste0(script_content, "df <- read.csv(\"", sanitized_filename, "\")\n\n")
-      
-      # Ensure categorical variables are converted to factors
-      if (input$num_categorical > 0) {
-        script_content <- paste0(script_content, "# Convert categorical variables to factors\n")
-        for (i in seq_len(input$num_categorical)) {
-          script_content <- paste0(script_content, "df$", input[[paste0("categorical_var_", i)]], " <- as.factor(df$", input[[paste0("categorical_var_", i)]], ")\n")
-        }
-        script_content <- paste0(script_content, "\n")
-      }
-      
-      # Generate and assign continuous variables
-      script_content <- paste0(script_content, "# Continuous Variables\n")
-      continuous_vars <- sapply(seq_len(input$num_continuous), function(i) {
-        var_name <- input[[paste0("continuous_var_", i)]]
-        return(paste0(var_name, " <- df$", var_name))
+      script_content <- capture.output({
+        cat("# Meta-Regression Script\n\n")
+        cat("# Load required package\n")
+        cat("library(metafor)\n\n")
+        cat("# Read data\n")
+        
+        sanitized_filename <- gsub("[^a-zA-Z0-9._-]", "_", input$mregc$name)
+        cat("df <- read.csv(\"", sanitized_filename, "\")\n\n")
+        
+        # Generate and assign continuous variables
+        cat("# Continuous Variables\n")
+        continuous_vars <- sapply(seq_len(input$num_continuous), function(i) {
+          var_name <- input[[paste0("continuous_var_", i)]]
+          cat(paste0(var_name, " <- df$", var_name, "\n"))
+          return(var_name)
+        })
+        
+        cat("\n")
+        
+        # Generate and assign categorical variables
+        cat("# Categorical Variables\n")
+        categorical_vars <- sapply(seq_len(input$num_categorical), function(i) {
+          var_name <- input[[paste0("categorical_var_", i)]]
+          cat(paste0(var_name, " <- df$", var_name, "\n"))
+          return(paste0("factor(", var_name, ")"))
+        })
+        
+        cat("\n")
+        
+        # Generate the formula
+        formula_parts <- c(continuous_vars, categorical_vars)
+        formula_str <- paste(formula_parts, collapse = " + ")
+        
+        cat("# Meta-Regression Model\n")
+        cat("formula <- ~ ", formula_str, "\n\n")
+        
+        # Perform meta-analysis
+        cat("mod_result <- rma(yi, vi, mods = formula, data = df)\n\n")
+        
+        # Print summary of results
+        cat("summary(mod_result)\n")
       })
-      
-      script_content <- paste0(script_content, paste(continuous_vars, collapse = "\n"), "\n\n")
-      
-      # Generate and assign categorical variables
-      script_content <- paste0(script_content, "# Categorical Variables\n")
-      categorical_vars <- sapply(seq_len(input$num_categorical), function(i) {
-        var_name <- paste0("factor(df$", input[[paste0("categorical_var_", i)]], ")")
-        return(var_name)
-      })
-      
-      script_content <- paste0(script_content, paste(categorical_vars, collapse = "\n"), "\n\n")
-      
-      # Generate the formula
-      formula_parts <- c(continuous_vars, categorical_vars)
-      formula_str <- paste(formula_parts, collapse = " + ")
-      
-      script_content <- paste0(script_content, "# Meta-Analysis Model\n")
-      script_content <- paste0(script_content, "formula <- ~ ", formula_str, "\n\n")
-      
-      # Perform meta-analysis
-      script_content <- paste0(script_content, "mod_result <- rma(yi, vi, mods = formula, data = df)\n\n")
-      
-      # Print summary of results
-      script_content <- paste0(script_content, "summary(mod_result)\n")
       
       # Write the script content to the file
       writeLines(script_content, file)
@@ -3652,6 +3659,280 @@ server <- function(input, output, session) {
     )
 
  
+    
+
+    ## Multiple Meta-Regression ---- 
+    
+    # Initialize a reactive value for displaying results
+    resultsvisibleCmreg3lma <- reactiveVal(FALSE)
+    resultsvisiblecmregall3lma <- reactiveVal(FALSE)
+    
+    observeEvent(input$render_variables3lma, {
+      resultsvisibleCmreg3lma(TRUE)
+    })
+    
+    observeEvent(input$run_analysismregc3lma, {
+      resultsvisiblecmregall3lma(TRUE)
+    })
+    
+    observeEvent(input$num_continuous3lma, {
+      resultsvisibleCmreg3lma(FALSE)
+      resultsvisiblecmregall3lma(FALSE)
+    })
+    observeEvent(input$num_categorical3lma, {
+      resultsvisibleCmreg3lma(FALSE)
+      resultsvisiblecmregall3lma(FALSE)
+    })
+    
+    # Observe changes in individual variable selections to reset results visibility
+    observe({
+      lapply(seq_len(input$num_continuous3lma), function(i) {
+        input[[paste0("continuous_var_3lma_", i)]]
+      })
+      lapply(seq_len(input$num_categorical3lma), function(i) {
+        input[[paste0("categorical_var_3lma_", i)]]
+      })
+      resultsvisiblecmregall3lma(FALSE)
+    })
+    
+    output$dynamicResultsCmregVar3lma <- renderUI({
+      if (resultsvisibleCmreg3lma()) {
+        tagList(
+          # Display the results
+          # Display variable selection
+          uiOutput("variable_selection3lma"),
+          # Run analysis button
+          actionButton("run_analysismregc3lma", "Run Analysis"),
+        )
+      }
+    })
+    
+    output$dynamicResultsCmregRes3lma <- renderUI({
+      if (resultsvisiblecmregall3lma()) {
+        tagList(
+          h3("Results"),
+          # Display meta-analysis results
+          box(title = "Important Note", width = 12, status = "primary",
+              p("Note that categorical moderators are treated as factors with distinct levels. The results below are from the model including an intercept."),
+          ),
+          downloadButton("mregc_resdl3lma", "Download Results"),
+          verbatimTextOutput("meta_results3lma"),
+          h3("R Script"),
+          downloadButton("download_code3lma", "Download R Script"),
+          # Display generated R script
+          verbatimTextOutput("generated_script3lma"),
+          h3("Need Help Understanding The Results?"),
+          p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#moderator-analysis'>my open book</a>"),
+          ),
+        )
+      }
+    })
+    
+    # Reactive function to read uploaded CSV data
+    uploaded_datamreg3lma <- reactive({
+      req(input$mregc3lma)
+      read.csv(input$mregc3lma$datapath)
+    })
+    
+    # Reactive expression to construct the meta-analysis model formula
+    meta_formula3lma <- reactive({
+      continuous_mods <- paste(sapply(seq_len(input$num_continuous3lma), function(i) {
+        input[[paste0("continuous_var_3lma_", i)]]
+      }), collapse = " + ")
+      
+      categorical_mods <- paste(sapply(seq_len(input$num_categorical3lma), function(i) {
+        paste0("factor(", input[[paste0("categorical_var_3lma_", i)]], ")")
+      }), collapse = " + ")
+      
+      # Construct the formula based on user inputs
+      if (input$num_continuous3lma > 0 && input$num_categorical3lma > 0) {
+        formula <- as.formula(paste("yi ~", continuous_mods, "+", categorical_mods))
+      } else if (input$num_continuous3lma > 0) {
+        formula <- as.formula(paste("yi ~", continuous_mods))
+      } else if (input$num_categorical3lma > 0) {
+        formula <- as.formula(paste("yi ~", categorical_mods))
+      } else {
+        formula <- as.formula("yi ~ 1")  # Default formula if no variables are selected
+      }
+      
+      formula
+    })
+    
+    
+       # Event observer for rendering variable selection
+    observeEvent(input$render_variables3lma, {
+      # Render UI for variable selection
+      output$variable_selection3lma <- renderUI({
+        req(uploaded_datamreg3lma())  # Ensure uploaded data is available
+        
+        continuous_inputs <- lapply(seq_len(input$num_continuous3lma), function(i) {
+          selectInput(paste0("continuous_var_3lma_", i), 
+                      label = paste("Continuous Variable", i),
+                      choices = colnames(uploaded_datamreg3lma()))
+        })
+        
+        categorical_inputs <- lapply(seq_len(input$num_categorical3lma), function(i) {
+          selectInput(paste0("categorical_var_3lma_", i), 
+                      label = paste("Categorical Variable", i),
+                      choices = colnames(uploaded_datamreg3lma()))
+        })
+        
+        fluidRow(
+          column(6, tagList(continuous_inputs)),
+          column(6, tagList(categorical_inputs))
+        )
+      })
+    })
+    
+    # Reactive expression for running the meta-analysis
+    run_analysismregc3lma <- eventReactive(input$run_analysismregc3lma, {
+      req(uploaded_datamreg3lma(), meta_formula3lma())
+      
+      # Perform meta-analysis
+      mod_result <- rma.mv(yi, vi, random = ~ 1 | Study/ES_number, mods = meta_formula3lma(), method = "REML", test = "t", dfs = "contain", data = uploaded_datamreg3lma())
+      mod_result
+    })
+
+        # Output for displaying results
+    output$meta_results3lma <- renderPrint({
+      req(run_analysismregc3lma())
+      summary(run_analysismregc3lma())
+    })
+    
+    # Download handler for analysis results
+    output$mregc_resdl3lma <- downloadHandler(
+      filename = function() {
+        paste("meta_analysis_results", Sys.Date(), ".txt", sep = "")
+      },
+      content = function(file) {
+        req(run_analysismregc3lma())
+        result_summary <- capture.output(summary(run_analysismregc3lma()))
+        writeLines(result_summary, con = file)
+      }
+    )
+    
+    # Event observer for generating R script
+    observeEvent(input$run_analysismregc3lma, {
+      # Generate R script content dynamically
+      script_content <- capture.output({
+        cat("# Meta-Regression Script\n\n")
+        cat("# Load required package\n")
+        cat("library(metafor)\n\n")
+        cat("# Read data\n")
+        
+        # Data loading step
+        sanitized_filename <- gsub("[^a-zA-Z0-9._-]", "_", input$mregc3lma$name)
+        cat("df <- read.csv(\"", sanitized_filename, "\")\n\n", sep = "")
+        
+         # Generate and assign continuous variables
+        cat("# Continuous Variables\n")
+        continuous_vars <- sapply(seq_len(input$num_continuous3lma), function(i) {
+          var_name <- input[[paste0("continuous_var_3lma_", i)]]
+          cat(paste0(var_name, " <- df$", var_name, "\n"))
+          return(var_name)
+        })
+        
+        cat("\n")
+        
+        # Generate and assign categorical variables (with factor() in the formula)
+        cat("# Categorical Variables\n")
+        categorical_vars <- sapply(seq_len(input$num_categorical3lma), function(i) {
+          var_name <- input[[paste0("categorical_var_3lma_", i)]]
+          cat(paste0(var_name, " <- df$", var_name, "\n"))
+          return(paste0("factor(", var_name, ")"))
+        })
+        
+        cat("\n")
+        
+        # Generate the formula
+        formula_parts <- c(continuous_vars, categorical_vars)
+        formula_str <- paste(formula_parts, collapse = " + ")
+        
+        cat("# Meta-Regression Model\n")
+        cat("formula <- ~ ", formula_str, "\n\n")
+        
+        # Perform meta-analysis
+        cat("mod_result <- rma.mv(yi, vi, random = ~ 1 | Study/ES_number, mods = formula, method = \"REML\", test = \"t\", dfs = \"contain\", data = df)\n\n")
+
+        # Print summary of results
+        cat("summary(mod_result)\n")
+      })
+      
+      # Store the cleaned script content in a reactive value
+      output$generated_script3lma <- renderPrint({
+        cat(script_content, sep = "\n")
+      })
+    })
+    
+    # Download handler for downloading the generated R script
+    output$download_code3lma <- downloadHandler(
+      filename = function() {
+        "script.metareg3lma.txt"
+      },
+      content = function(file) {
+        # Initialize script content
+        script_content <- "# Meta-Regression Script\n\n"
+        script_content <- paste0(script_content, "# Load required package\n")
+        script_content <- paste0(script_content, "library(metafor)\n\n")
+        script_content <- paste0(script_content, "# Read data\n")
+        
+        # Data loading step
+        sanitized_filename <- gsub("[^a-zA-Z0-9._-]", "_", input$mregc3lma$name)
+        script_content <- paste0(script_content, "df <- read.csv(\"", sanitized_filename, "\")\n\n")
+        
+        # Generate and assign continuous variables
+        if (input$num_continuous3lma > 0) {
+          script_content <- paste0(script_content, "# Continuous Variables\n")
+          continuous_vars <- sapply(seq_len(input$num_continuous3lma), function(i) {
+            var_name <- input[[paste0("continuous_var_3lma_", i)]]
+            script_content <<- paste0(script_content, var_name, " <- df$", var_name, "\n")
+            return(var_name)
+          })
+          script_content <- paste0(script_content, "\n")
+        }
+        
+        # Generate and assign categorical variables
+        if (input$num_categorical3lma > 0) {
+          script_content <- paste0(script_content, "# Categorical Variables\n")
+          categorical_vars <- sapply(seq_len(input$num_categorical3lma), function(i) {
+            var_name <- input[[paste0("categorical_var_3lma_", i)]]
+            script_content <<- paste0(script_content, var_name, " <- df$", var_name, "\n")
+            return(paste0("factor(", var_name, ")"))
+          })
+          script_content <- paste0(script_content, "\n")
+        }
+        
+        # Generate the formula
+        formula_parts <- c(continuous_vars, categorical_vars)
+        formula_str <- paste( formula_parts, collapse = " + ")
+        
+        script_content <- paste0(script_content, "# Meta-Regression Model\n")
+        script_content <- paste0(script_content, "formula <- ~ ", formula_str, "\n\n")
+        
+        # Perform meta-analysis
+        script_content <- paste0(script_content, "mod_result <- rma.mv(yi, vi, random = ~ 1 | Study/ES_number, mods = formula, method = \"REML\", test = \"t\", dfs = \"contain\", data = df)\n\n")
+        
+        # Print summary of results
+        script_content <- paste0(script_content, "summary(mod_result)\n")
+        
+        # Write content to file
+        writeLines(script_content, con = file)
+      }
+    )
+    
+    
+    
+    
+    
+        
+    
+    
+    
+
+    
+    
+    
+    
     
     
     
