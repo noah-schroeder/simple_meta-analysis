@@ -1381,7 +1381,7 @@ server <- function(input, output, session) {
       cat("result\n")
       
       cat("# Create and display forest plot\n")
-      cat("forest(result, slab = data$Study, main = \"Forest Plot of Observed Effects\", header=\"Author(s) and Year\")\n\n")
+      cat("forest(result, slab = df$Study, main = \"Forest Plot of Observed Effects\", header=\"Author(s) and Year\")\n\n")
     })
     
     # Remove empty lines and return the script content
@@ -1740,21 +1740,14 @@ server <- function(input, output, session) {
       # Data loading step
       cat("df <- read.csv(\"", gsub("[^a-zA-Z0-9._-]", "_", input$modfilec$name), "\")\n\n", sep = "")
       
-      # Generate moderator formula with intercept for test of moderator value
-      cat("#  Moderator formula with intercept for test of moderator value\n\n")
-      cat("mod_formulaq <- as.formula(paste(\"~ factor(\", \"", input$dropdownc, "\")\"))\n\n")
       # Perform meta-analysis with intercept for table
       cat("#  Perform meta-analysis with intercept for Test of Moderator Value\n\n")
-      cat("mod_resultq <- rma(yi, vi, mods = mod_formulaq, data = df)\n\n")
+      cat("mod_resultq <- rma(yi, vi, mods = ~ factor(df$",input$dropdownc,"), data = df)\n\n", sep = "")
       cat("mod_resultq\n\n")
       
-      # Generate moderator formula without intercept
-      cat("#  Moderator formula without intercept for table\n\n")
-      cat("mod_formula_t <- as.formula(paste(\"~ -1 + factor(\", \"", input$dropdownc, "\")\"))\n\n")
-      
-      # Perform meta-analysis without intercept for table
+        # Perform meta-analysis without intercept for table
       cat("#  Perform meta-analysis without intercept for table\n\n")
-      cat("mod_result <- rma(yi, vi, mods = mod_formula_t, data = df)\n\n")
+      cat("mod_result <- rma(yi, vi, mods = ~ -1 + factor(df$",input$dropdownc,"), data = df)\n\n")
       
       # Summary of results
       cat("summary(mod_result)\n")
@@ -1958,14 +1951,12 @@ server <- function(input, output, session) {
       # Data loading step
       cat("df <- read.csv(\"", gsub("[^a-zA-Z0-9._-]", "_", input$modfilecc$name), "\")\n\n", sep = "")
       
-      # Generate moderator formula
-      mod_formula <- as.formula(paste("~", input$dropdowncc))
-      cat("mod_formula <- as.formula(paste(\"~\", \"", input$dropdowncc, "\"))\n\n", sep = "")
-      
       # Perform meta-analysis
-      cat("mod_result <- rma(yi, vi, mods = mod_formula, data = df)\n\n")
+      cat("# Perform moderator analysis\n")
+      cat("mod_result <- rma(yi, vi, mods = ~ df$",input$dropdowncc,",  data = df)\n\n")
       
       # Summary of results
+      cat("# Print result\n")
       cat("summary(mod_result)\n")
     })
     
@@ -2157,117 +2148,119 @@ server <- function(input, output, session) {
   )
   
   
+ 
   # Event observer for generating R script
   observeEvent(input$run_analysismregc, {
     # Generate R script content dynamically
     script_content <- capture.output({
       cat("# Meta-Regression Script\n\n")
       cat("# Load required package\n")
-      cat( "library(metafor)\n\n")
-       cat( "# Read data\n")
-       # Data loading step
-      cat("df <- read.csv(\"", gsub("[^a-zA-Z0-9._-]", "_", input$mregc$name), "\")\n\n", sep = "")
+      cat("library(metafor)\n\n")
+      cat("# Read data\n")
       
-      # Generate formulas for continuous and categorical variables
-      if (input$num_continuous > 0) {
-        cat("# Continuous Variables\n")
-        for (i in seq_len(input$num_continuous)) {
-          cat(paste("continuous_var_", i, " <- \"", input[[paste0("continuous_var_", i)]], "\"\n", sep = ""))
-        }
-        cat("\n")
-      }
+      # Data loading step
+      sanitized_filename <- gsub("[^a-zA-Z0-9._-]", "_", input$mregc$name)
+      cat("df <- read.csv(\"", sanitized_filename, "\")\n\n", sep = "")
       
+      # Ensure categorical variables are converted to factors
       if (input$num_categorical > 0) {
-        cat("# Categorical Variables\n")
+        cat("# Convert categorical variables to factors\n")
         for (i in seq_len(input$num_categorical)) {
-          cat(paste("categorical_var_", i, " <- \"", input[[paste0("categorical_var_", i)]], "\"\n", sep = ""))
+          cat(paste("df$", input[[paste0("categorical_var_", i)]], " <- as.factor(df$", input[[paste0("categorical_var_", i)]], ")\n", sep = ""))
         }
         cat("\n")
       }
       
-      # Meta-analysis modeling step
-      cat("# Meta-Analysis Model\n")
-      if (input$num_continuous > 0 && input$num_categorical > 0) {
-        cat("formula <- yi, vi, mods = ~ ", paste(paste0("continuous_var_", seq_len(input$num_continuous)), collapse = " + "), 
-            " + ", paste(paste0("factor(categorical_var_", seq_len(input$num_categorical), ")", collapse = " + ")))
-      } else if (input$num_continuous > 0) {
-        cat("formula <- yi, vi, mods = ~ ", paste(paste0("continuous_var_", seq_len(input$num_continuous)), collapse = " + "))
-      } else if (input$num_categorical > 0) {
-        cat("formula <- yi, vi, mods = ~ ", paste(paste0("factor(categorical_var_", seq_len(input$num_categorical), ")", collapse = " + ")))
-      } else {
-        cat("formula <- yi, vi")  # Default formula if no variables are selected
-      }
+      # Generate and assign continuous variables
+      cat("# Continuous Variables\n")
+      continuous_vars <- sapply(seq_len(input$num_continuous), function(i) {
+        var_name <- input[[paste0("continuous_var_", i)]]
+        cat(paste0(var_name, " <- df$", var_name, "\n"))
+        return(var_name)
+      })
       
-      cat("\n\n")
+      cat("\n")
+      
+      # Generate and assign categorical variables
+      cat("# Categorical Variables\n")
+      categorical_vars <- sapply(seq_len(input$num_categorical), function(i) {
+        var_name <- paste0("factor(df$", input[[paste0("categorical_var_", i)]], ")")
+        return(var_name)
+      })
+      
+      cat("\n")
+      
+      # Generate the formula
+      formula_parts <- c(continuous_vars, categorical_vars)
+      formula_str <- paste(formula_parts, collapse = " + ")
+      
+      cat("# Meta-Analysis Model\n")
+      cat("formula <- ~ ", formula_str, "\n\n")
       
       # Perform meta-analysis
-      cat("mod_result <- rma(formula, data = df)\n\n")
+      cat("mod_result <- rma(yi, vi, mods = formula, data = df)\n\n")
       
       # Print summary of results
       cat("summary(mod_result)\n")
     })
     
-    
-    # Remove empty lines
-    script_content_clean <- script_content[script_content != ""]  # Filter out empty lines
-    
     # Store the cleaned script content in a reactive value
-  output$generated_script <- renderPrint({
-    cat(script_content_clean, sep = "\n")
+    output$generated_script <- renderPrint({
+      cat(script_content, sep = "\n")
+    })
   })
-})
   
   # Download handler for downloading the generated R script
   output$download_code <- downloadHandler(
     filename = function() {
-      "script.metareg.txt"
+      "script.metareg.R"
     },
     content = function(file) {
-      # Begin writing the script content
-      script_content <- "# R Script for Meta-Analysis\n\n"
-      script_content <- "# Load required package\n"
-      script_content <- "library(metafor)\n\n"
-      script_content <- "# Read data\n"
-         # Sanitize filename by replacing special characters
-        sanitized_filename <- gsub("[^a-zA-Z0-9._-]", "_", input$mregc$name)
-
-      # Read uploaded CSV data
-      script_content <- paste0(script_content, "uploaded_data <- read.csv(\"", sanitized_filename, "\")\n\n")
+      # Generate script content for download
+      script_content <- "# Meta-Regression Script\n\n"
+      script_content <- paste0(script_content, "# Load required package\n")
+      script_content <- paste0(script_content, "library(metafor)\n\n")
+      script_content <- paste0(script_content, "# Read data\n")
       
-      # Generate formulas for continuous and categorical variables
-      if (input$num_continuous > 0) {
-        script_content <- paste0(script_content, "# Continuous Variables\n")
-        for (i in seq_len(input$num_continuous)) {
-          script_content <- paste0(script_content, paste("continuous_var_", i, " <- \"", input[[paste0("continuous_var_", i)]], "\"\n"))
-        }
-        script_content <- paste0(script_content, "\n")
-      }
+      sanitized_filename <- gsub("[^a-zA-Z0-9._-]", "_", input$mregc$name)
+      script_content <- paste0(script_content, "df <- read.csv(\"", sanitized_filename, "\")\n\n")
       
+      # Ensure categorical variables are converted to factors
       if (input$num_categorical > 0) {
-        script_content <- paste0(script_content, "# Categorical Variables\n")
+        script_content <- paste0(script_content, "# Convert categorical variables to factors\n")
         for (i in seq_len(input$num_categorical)) {
-          script_content <- paste0(script_content, paste("categorical_var_", i, " <- \"", input[[paste0("categorical_var_", i)]], "\"\n"))
+          script_content <- paste0(script_content, "df$", input[[paste0("categorical_var_", i)]], " <- as.factor(df$", input[[paste0("categorical_var_", i)]], ")\n")
         }
         script_content <- paste0(script_content, "\n")
       }
       
-      # Meta-analysis modeling step
-      script_content <- paste0(script_content, "# Meta-Analysis Model\n")
-      if (input$num_continuous > 0 && input$num_categorical > 0) {
-        script_content <- paste0(script_content, "formula <- yi, vi, mods = ~ ", paste(paste0("continuous_var_", seq_len(input$num_continuous)), collapse = " + "), 
-                                 " + ", paste(paste0("factor(categorical_var_", seq_len(input$num_categorical), ")", collapse = " + ")))
-      } else if (input$num_continuous > 0) {
-        script_content <- paste0(script_content, "formula <- yi, vi, mods = ~ ", paste(paste0("continuous_var_", seq_len(input$num_continuous)), collapse = " + "))
-      } else if (input$num_categorical > 0) {
-        script_content <- paste0(script_content, "formula <- yi, vi, mods = ~ ", paste(paste0("factor(categorical_var_", seq_len(input$num_categorical), ")", collapse = " + ")))
-      } else {
-        script_content <- paste0(script_content, "formula <- yi, vi")  # Default formula if no variables are selected
-      }
+      # Generate and assign continuous variables
+      script_content <- paste0(script_content, "# Continuous Variables\n")
+      continuous_vars <- sapply(seq_len(input$num_continuous), function(i) {
+        var_name <- input[[paste0("continuous_var_", i)]]
+        return(paste0(var_name, " <- df$", var_name))
+      })
       
-      script_content <- paste0(script_content, "\n\n")
+      script_content <- paste0(script_content, paste(continuous_vars, collapse = "\n"), "\n\n")
+      
+      # Generate and assign categorical variables
+      script_content <- paste0(script_content, "# Categorical Variables\n")
+      categorical_vars <- sapply(seq_len(input$num_categorical), function(i) {
+        var_name <- paste0("factor(df$", input[[paste0("categorical_var_", i)]], ")")
+        return(var_name)
+      })
+      
+      script_content <- paste0(script_content, paste(categorical_vars, collapse = "\n"), "\n\n")
+      
+      # Generate the formula
+      formula_parts <- c(continuous_vars, categorical_vars)
+      formula_str <- paste(formula_parts, collapse = " + ")
+      
+      script_content <- paste0(script_content, "# Meta-Analysis Model\n")
+      script_content <- paste0(script_content, "formula <- ~ ", formula_str, "\n\n")
       
       # Perform meta-analysis
-      script_content <- paste0(script_content, "mod_result <- rma(formula, data = uploaded_data)\n\n")
+      script_content <- paste0(script_content, "mod_result <- rma(yi, vi, mods = formula, data = df)\n\n")
       
       # Print summary of results
       script_content <- paste0(script_content, "summary(mod_result)\n")
@@ -2389,13 +2382,17 @@ server <- function(input, output, session) {
         "# Funnel plot\n",
         "funnel(res)\n\n",
         "# Egger's regression test\n",
-        "eggers <- regtest(res)\n\n",
+        "eggers <- regtest(res)\n",
+        "eggers\n\n",
         "# Rosenthal's fail-safe N\n",
-        "rosenthal <- fsn(yi, vi, data = df)\n\n",
+        "rosenthal <- fsn(yi, vi, data = df)\n",
+        "rosenthal\n\n",
         "# Orwin's fail-safe N\n",
-        "orwin <- fsn(yi, vi, data = df, type = \"Orwin\")\n\n",
+        "orwin <- fsn(yi, vi, data = df, type = \"Orwin\")\n",
+        "orwin\n\n",
         "# Rosenberg's fail-safe N\n",
-        "rosenberg <- fsn(yi, vi, data = df, type = \"Rosenberg\")\n\n"
+        "rosenberg <- fsn(yi, vi, data = df, type = \"Rosenberg\")\n",
+        "rosenberg"
       )
       
       # Return the results
