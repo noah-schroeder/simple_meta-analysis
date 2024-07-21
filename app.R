@@ -2385,6 +2385,8 @@ server <- function(input, output, session) {
         "res <- rma(yi, vi, data = df)\n\n",
         "# Funnel plot\n",
         "funnel(res)\n\n",
+        "# Trim and Fill\n",
+        "trimfill(res)\n\n",
         "# Egger's regression test\n",
         "eggers <- regtest(res)\n",
         "eggers\n\n",
