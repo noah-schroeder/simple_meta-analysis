@@ -5772,7 +5772,7 @@ generate_script_catmodrve <- reactive({
     "",
     "# Impute covariance matrix",
     sprintf("rho <- %.2f", rhoCat()),
-    "V_RVE <- impute_covariance_matrix(vi = filtered_data$vi, cluster = filtered_data$Study, r = rho)",
+    "V_RVE <- with(filtered_data, impute_covariance_matrix(vi = filtered_data$vi, cluster = filtered_data$Study, r = rho))",
     "",
     "# Run meta-analysis with intercept for Test of mod",
     sprintf("result_tom <- rma.mv(yi = filtered_data$yi, V = V_RVE, mods = ~ factor(filtered_data[['%s']]), random = ~ 1 | Study/ES_number, method = 'REML', test = 't', data = filtered_data)", input$mod_RVECat),
