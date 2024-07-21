@@ -541,8 +541,16 @@ tabItem(tabName = "subtab81",
 ##Change Log---- 
 tabItem(tabName = "subtab101",
         h2("Change Log"),
-        p("7.21.24 - Added multiple meta-regression for every analysis type. Added viewable and downloadable R scripts for every analysis for transparency and replicability. Removed old validation codes since each analysis now provides validation code customized to the user's data. Methods notes added to all three-level analyses."),
-        p("7.14.24 - Added residual heterogeneity to conventional meta-analysis for categorical and continuous moderator analyses. Updated those tables for consistent headings with other analyses. Updated p value display for those analyses so that instead of p = .001, it will display p < .001 if its less."),
+        h3("7.21.24"),
+        p("- Added multiple meta-regression for every analysis type."),
+        p("- Added viewable and downloadable R scripts for every analysis for transparency and replicability."),
+        p("- Removed old validation codes since each analysis now provides validation code customized to the user's data."),
+        p("- Methods notes added to all three-level analyses."),
+        
+        h3("7.14.24"),
+        p("- Added residual heterogeneity to conventional meta-analysis for categorical and continuous moderator analyses."),
+        p("- Updated those tables for consistent headings with other analyses."),
+        p("- Updated p value display for those analyses so that instead of p = .001, it will display p < .001 if its less."),
 )
     )
   )
@@ -1584,7 +1592,7 @@ server <- function(input, output, session) {
         ),
         h3("Model Results"),
         p("Below is our table that shows the effect sizes and accompanying statistics for each level of the moderator. Remember, your Qbetween tells you if there are significant differences between levels."),
-        downloadButton("download_resultsc", "Download Results"),
+        downloadButton("download_resultsc", "Download Formatted Results as Table"), downloadButton("download_resultscint", "Download Full Results (Intercept Model)"), downloadButton("download_resultscnoint", "Download Full Results (No Intercept Model)"),
         tableOutput("modtable_outputc"),
         h3("Basic Interpretation Tips"),
         p("First you should look at the", strong("Test_of_Moderator"), "column (commonly called Qbetween). If this is significant, it means there are significant differences between levels of your moderator."),
@@ -1742,6 +1750,38 @@ server <- function(input, output, session) {
   )
   
   
+  
+  # Define the download handler for the intercept model results
+  output$download_resultscint <- downloadHandler(
+    filename = function() {
+      paste("mod.", input$dropdownc, "_intercept_model_Full_results_", Sys.Date(), ".txt", sep = "")
+    },
+    content = function(file) {
+      req(input$run_analysisCcat, input$dropdownc)
+        mod_formula1_convc <- as.formula(paste("~ factor(", input$dropdownc, ")"))
+        mod_result_with_intercept1r_convc <- rma(yi, vi, mods = mod_formula1_convc, data = uploaded_datacc_convc())
+        output_text <- capture.output(mod_result_with_intercept1r_convc)
+        writeLines(output_text, file)
+      }
+  )
+  # Define the download handler for the no-intercept model results
+  output$download_resultscnoint <- downloadHandler(
+    filename = function() {
+      paste("mod.", input$dropdownc, "_no_intercept_model_Full_results_", Sys.Date(), ".txt", sep = "")
+    },
+    content = function(file) {
+      req(input$run_analysisCcat, input$dropdownc)
+      mod_formula_convc <- as.formula(paste("~ -1 + factor(", input$dropdownc, ")"))
+      mod_result_convc <- rma(yi, vi, mods = mod_formula_convc, data = uploaded_datacc_convc())
+      output_text <- capture.output(mod_result_convc)
+      writeLines(output_text, file)
+    }
+  )
+  
+  
+  
+  
+  
   # Define a reactive expression for generating R script
   generated_scriptc <- reactive({
     req(input$run_analysisCcat, input$dropdownc)  # Ensure dropdown choice is available
@@ -1822,7 +1862,7 @@ server <- function(input, output, session) {
         # Display the results
         h3("Effect Size Table"),
         p("Below is our table that shows the relevant statistics for your single-variable meta-regression. Remember, your Test of Moderators above tells you if the moderator is significant."),
-        downloadButton("download_resultscc", "Download Results"),
+        downloadButton("download_resultscc", "Download Formatted Results as Table"), downloadButton("download_resultsccint", "Download Full Results (Intercept Model)"),
         tableOutput("modtable_outputcc"),
         h3("Basic Interpretation Tips"),
         p("First you should look at the", strong("Test_of_Moderator"), "column (commonly called Qbetween). If this is significant, it means the variable examined is a significant moderator."),
@@ -1953,6 +1993,20 @@ server <- function(input, output, session) {
     }
   )
   
+  output$download_resultsccint <- downloadHandler(
+    filename = function() {
+      paste("mod.", input$dropdowncc, "_full_results", Sys.Date(), ".txt", sep = "")
+    },
+    content = function(file) {
+      req(input$run_analysiscc, input$dropdowncc)  # Ensure that analysis is ready and dropdown choice is available
+      # Run the meta-analysis with the selected moderator
+      mod_formula <- as.formula(paste("~", input$dropdowncc))
+      mod_result <- rma(yi, vi, mods = mod_formula, data = uploaded_datacc())
+      # Capture the full output of the rma model
+      output_text <- capture.output(mod_result)
+      # Write the combined output to a text file
+      writeLines(output_text, file)
+    })
   
   # Define a reactive expression for generating R script
   generated_scriptcc <- reactive({
