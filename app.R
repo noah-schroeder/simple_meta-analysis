@@ -57,7 +57,7 @@ ui <- dashboardPage(
                               menuSubItem("Underlying R Code", tabName = "subtab12")
                      ),
                      menuItem("Validation Evidence", tabName = "tab8", icon = icon("table"),
-                              menuSubItem("Validating the Analyses", tabName = "subtab81"),
+                              menuSubItem("Validating the Analyses", tabName = "subtab81")
                      ),
                      menuItem("Acknowledgements", tabName = "tab9", icon = icon("table"),
                               menuSubItem("Acknowledgements", tabName = "subtab91")
@@ -4602,7 +4602,8 @@ output$dynamicResultschevar <- renderUI({
     tagList(
       h3("I2 Results"),
       box(title = "Important Note", width = 12, status = "primary",
-          p("The i2 values are based on the CHE model and do not include RVE. At the time I created the app, the functions for i2 do not support robust models, but they do support .rma models with CHE.")),
+          p("The i2 values are based on the CHE model and do not include robust variance estimation. At the time I created the app, the functions for i2 do not support robust models, but they do support .rma models with CHE."),
+          "The random effects three-level CHE meta-analysis used Restricted Maximum Likelihood Estimation (REML) (the default in metafor package) and we used a three-level structure with ES_number nested within Study. We also used a t distribution rather than a z distribution. You can read about t distributions here:", HTML("<a href='https://wviechtb.github.io/metafor/reference/rma.mv.html'>metafor documentation about rma.mv</a>"),"."),
       downloadButton("download_i2_resultsRVE", label = "Download Results"),
       verbatimTextOutput("i2result_outputRVE"),
       verbatimTextOutput("totalI2_outputRVE"),
@@ -4820,6 +4821,8 @@ output$dynamicResultsinf <- renderUI({
       downloadButton("download_influencerve", "Download .csv with Influence Results"),
       h4("Influence Statistics"),
       tableOutput("influence_tablerve"),
+      h4("Methods Notes"),
+      p("The random effects three-level meta-analysis used correlated and hierarchical effects (CHE) and robust variance estimation. It used the correlation you chose as the correlation for CHE. Robust variance estimation was done using the clubSandwich package and metafor (the code is robust(...clubSandwich = TRUE)). You can read more about metafor and cluster-robust tests and confidence intervals here:", HTML("<a href='https://wviechtb.github.io/metafor/reference/robust.html'>metafor robust() documentation</a>"), "Otherwise, the analysis used Restricted Maximum Likelihood Estimation (REML) (the default in metafor package) and we used a three-level structure with ES_number nested within Study. We also used a t distribution rather than a z distribution. You can read about t distributions here:", HTML("<a href='https://wviechtb.github.io/metafor/reference/rma.mv.html'>metafor documentation about rma.mv</a>")),
       h3("R Script"),
       downloadButton("downloadRScriptoutlierinfRVE"),
       verbatimTextOutput("viewRScriptoutlierinfRVE"),
@@ -5190,6 +5193,8 @@ output$dynamicResults <- renderUI({
       p(strong("nexp"),"is the sample size of the intervention group, and", strong("nctrl"), "is the sample size of the control group. Note that this is not calculating the actual number of unique participants, because this code is simply conditionally summing the sample size columns in our data set. For example, if a study had one experimental group (n = 10) and one control group (n = 10), and had three outcomes that were included in the analysis (meaning, each appears as its own row in the data set), this code will say there were 30 participants in each group rather than 10. While this is expected in dependent data such as this, it is something to be aware of so you do not make a claim such as, “our analysis of 60 participants” when in reality, your analysis is only 20 unique participants. So, please be careful of your wording when you describe the participant numbers to ensure strict accuracy."),
       p(strong("kcomp"),"is the number of comparisons examined. The total number of kcomp in the table should correspond to the number of rows in your dataset."),
       p(strong("kstudies"),"is the number of studies providing comparisons in the analysis. Note that it is possible for this not to sum to the same number as appears in your data set. For example, if Study A provided 4 comparisons and 1 or more were at different levels of this moderator variable, kstudies will not equal the total number of unique studies in the dataset because it is being counted in multiple moderator levels."),
+      h4("Methods Notes"),
+      p("The random effects three-level meta-analysis used correlated and hierarchical effects (CHE) and robust variance estimation. It used the correlation you chose as the correlation for CHE. Robust variance estimation was done using the clubSandwich package and metafor (the code is robust(...clubSandwich = TRUE)). You can read more about metafor and cluster-robust tests and confidence intervals here:", HTML("<a href='https://wviechtb.github.io/metafor/reference/robust.html'>metafor robust() documentation</a>"), "Otherwise, the analysis used Restricted Maximum Likelihood Estimation (REML) (the default in metafor package) and we used a three-level structure with ES_number nested within Study. We also used a t distribution rather than a z distribution. You can read about t distributions here:", HTML("<a href='https://wviechtb.github.io/metafor/reference/rma.mv.html'>metafor documentation about rma.mv</a>")),
       h3("R Script"),
       downloadButton("download_scriptcatmodRVE"),
       verbatimTextOutput("replicate_scriptcatmodRVE"),
@@ -5582,6 +5587,8 @@ output$dynamicResultsCont <- renderUI({
       h3("Model Result"),
       downloadButton("downloadRVE_RVECont", "Download Results"),
       div(class = "scrollable", tableOutput("custom_results_RVECont")),
+      h4("Methods Notes"),
+      p("The random effects three-level meta-analysis used correlated and hierarchical effects (CHE) and robust variance estimation. It used the correlation you chose as the correlation for CHE. Robust variance estimation was done using the clubSandwich package and metafor (the code is robust(...clubSandwich = TRUE)). You can read more about metafor and cluster-robust tests and confidence intervals here:", HTML("<a href='https://wviechtb.github.io/metafor/reference/robust.html'>metafor robust() documentation</a>"), "Otherwise, the analysis used Restricted Maximum Likelihood Estimation (REML) (the default in metafor package) and we used a three-level structure with ES_number nested within Study. We also used a t distribution rather than a z distribution. You can read about t distributions here:", HTML("<a href='https://wviechtb.github.io/metafor/reference/rma.mv.html'>metafor documentation about rma.mv</a>")),
       h3("R Script"),
       downloadButton("download_scriptcontmodRVE"),
       verbatimTextOutput("replicate_scriptcontmodRVEa"),
@@ -5831,6 +5838,8 @@ output$dynamicResultsCmregResRVE <- renderUI({
       ),
       downloadButton("mregc_resdlRVE", "Download Results"),
       verbatimTextOutput("meta_resultsRVE"),
+      h4("Methods Notes"),
+      p("This random effects three-level meta-analysis used correlated and hierarchical effects (CHE) and robust variance estimation. It used the correlation you chose as the correlation for CHE. Robust variance estimation was done using the clubSandwich package and metafor (the code is robust(...clubSandwich = TRUE)). You can read more about metafor and cluster-robust tests and confidence intervals here:", HTML("<a href='https://wviechtb.github.io/metafor/reference/robust.html'>metafor robust() documentation</a>"), "Otherwise, the analysis used Restricted Maximum Likelihood Estimation (REML) (the default in metafor package) and we used a three-level structure with ES_number nested within Study. We also used a t distribution rather than a z distribution. You can read about t distributions here:", HTML("<a href='https://wviechtb.github.io/metafor/reference/rma.mv.html'>metafor documentation about rma.mv</a>")),
       h3("R Script"),
       downloadButton("download_codeRVE", "Download R Script"),
       # Display generated R script
@@ -6131,6 +6140,8 @@ output$dynamicResultcheplot <- renderUI({
       p("This funnel plot is based on the three-level meta-analysis with CHE RVE. Each comparison from the analysis is included."),
       downloadButton("downloadCheFunnel", "Download Standard Funnel Plot (Half-Page)"), downloadButton("downloadCheFunnelb", "Download Standard Funnel Plot (Full-Page)"),
       plotOutput("chefunnel", width = 800, height = 600),
+      h4("Methods Notes"),
+      p("The random effects three-level meta-analysis used correlated and hierarchical effects (CHE) and robust variance estimation. It used the correlation you chose as the correlation for CHE. Robust variance estimation was done using the clubSandwich package and metafor (the code is robust(...clubSandwich = TRUE)). You can read more about metafor and cluster-robust tests and confidence intervals here:", HTML("<a href='https://wviechtb.github.io/metafor/reference/robust.html'>metafor robust() documentation</a>"), "Otherwise, the analysis used Restricted Maximum Likelihood Estimation (REML) (the default in metafor package) and we used a three-level structure with ES_number nested within Study. We also used a t distribution rather than a z distribution. You can read about t distributions here:", HTML("<a href='https://wviechtb.github.io/metafor/reference/rma.mv.html'>metafor documentation about rma.mv</a>")),
       h3("R Script"),
       downloadButton("downloadScript_cheplots"),
       verbatimTextOutput("rScript_cheplots"),
