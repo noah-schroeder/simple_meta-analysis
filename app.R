@@ -3292,6 +3292,31 @@ server <- function(input, output, session) {
       sprintf("F(%d, %d) = %.3f, p-val = %.3f", df1_3lc, df2_3lc, QM_3lc, QMp_3lc)
     })
     
+    #### Residual Het expression
+    # Define a reactive expression for capturing the residual heterogeneity (Qw) information from a model with intercept
+    mod_with_intercept_3lc_qw <- reactive({
+      req(input$run_analysis, input$dropdown)
+      mod_formula_with_intercept_3lc <- as.formula(paste("~ factor(", input$dropdown, ")"))
+      mod_result_with_intercept_3lc <- rma.mv(yi, vi, random = ~ 1 | Study/ES_number, mods = mod_formula_with_intercept_3lc, 
+                                              test = "t", dfs = "contain", data = uploaded_data3lc())
+      
+      QE_convc <- mod_result_with_intercept_3lc$QE
+      QEdf_convc <- mod_result_with_intercept_3lc$QEdf
+      QE_convcp <- mod_result_with_intercept_3lc$QEp
+      
+      Qwithin <- ifelse(QE_convcp < 0.001, 
+                        paste("Qw(", QEdf_convc, ") =", round(QE_convc, 3), ", p-val < .001"),
+                        paste("Qw(", QEdf_convc, ") =", round(QE_convc, 3), ", p-val =", round(QE_convcp, 3)))
+      Qwithin
+    })
+    
+    
+    
+    
+    
+    
+    
+    
     # Define a reactive expression for running the moderator analysis without intercept
     mod_without_intercept_3lc <- reactive({
       req(input$run_analysis, input$dropdown)  # Ensure dropdown choice is available
@@ -3373,10 +3398,27 @@ server <- function(input, output, session) {
         test_mods_row$TestOfModerators <- test_of_mods_3lc
         result_table_data_3lc <- rbind(result_table_data_3lc, test_mods_row)
       }
-      # Determine the order of columns to place '95% CI' second to last, just before 'TestOfModerators'
+      
+      # Add the "Residual Heterogeneity" after numeric handling to prevent structure mismatch
+      residual_heterogeneity_3lc <- mod_with_intercept_3lc_qw()  # Get Residual Heterogeneity (Qw)
+      if (!is.na(residual_heterogeneity_3lc)) {
+        # Add Qwithin to the existing row for Test of Moderators or create a new row
+        if (nrow(result_table_data_3lc) > 0 && !is.na(result_table_data_3lc$TestOfModerators[nrow(result_table_data_3lc)])) {
+          result_table_data_3lc$ResidualHeterogeneity[nrow(result_table_data_3lc)] <- residual_heterogeneity_3lc
+        } else {
+          residual_heterogeneity_row <- setNames(as.data.frame(matrix("", ncol = ncol(result_table_data_3lc), nrow = 1)), names(result_table_data_3lc))
+          residual_heterogeneity_row$ResidualHeterogeneity <- residual_heterogeneity_3lc
+          result_table_data_3lc <- rbind(result_table_data_3lc, residual_heterogeneity_row)
+        }
+      }
+      
+      # Replace any remaining NAs in the ResidualHeterogeneity column with an empty string
+      result_table_data_3lc$ResidualHeterogeneity <- ifelse(is.na(result_table_data_3lc$ResidualHeterogeneity), "", result_table_data_3lc$ResidualHeterogeneity)
+      
+      # Determine the order of columns to place '95% CI' second to last, just before 'TestOfModerators' and 'ResidualHeterogeneity'
       all_columns <- names(result_table_data_3lc)
-      without_test_of_mods <- all_columns[!all_columns %in% c("95% CI", "TestOfModerators")]
-      desired_order <- c(without_test_of_mods, "95% CI", "TestOfModerators")
+      without_test_of_mods <- all_columns[!all_columns %in% c("95% CI", "TestOfModerators", "ResidualHeterogeneity")]
+      desired_order <- c(without_test_of_mods, "95% CI", "TestOfModerators", "ResidualHeterogeneity")
       
       result_table_data_3lc <- result_table_data_3lc[, desired_order]
       result_table_data_3lc
@@ -3418,10 +3460,25 @@ server <- function(input, output, session) {
           result_table_data_3lc <- rbind(result_table_data_3lc, test_mods_row)
         }
         
-        # Determine the order of columns to place '95% CI' second to last, just before 'TestOfModerators'
+        # Get Residual Heterogeneity (Qw), if available
+        residual_heterogeneity_3lc <- mod_with_intercept_3lc_qw()
+        if (!is.na(residual_heterogeneity_3lc)) {
+          if (nrow(result_table_data_3lc) > 0 && !is.na(result_table_data_3lc$TestOfModerators[nrow(result_table_data_3lc)])) {
+            result_table_data_3lc$ResidualHeterogeneity[nrow(result_table_data_3lc)] <- residual_heterogeneity_3lc
+          } else {
+            residual_heterogeneity_row <- setNames(as.data.frame(matrix("", ncol = ncol(result_table_data_3lc), nrow = 1)), names(result_table_data_3lc))
+            residual_heterogeneity_row$ResidualHeterogeneity <- residual_heterogeneity_3lc
+            result_table_data_3lc <- rbind(result_table_data_3lc, residual_heterogeneity_row)
+          }
+        }
+        
+        # Replace any remaining NAs in the ResidualHeterogeneity column with an empty string
+        result_table_data_3lc$ResidualHeterogeneity <- ifelse(is.na(result_table_data_3lc$ResidualHeterogeneity), "", result_table_data_3lc$ResidualHeterogeneity)
+        
+        # Determine the order of columns to place '95% CI' second to last, just before 'TestOfModerators' and 'ResidualHeterogeneity'
         all_columns <- names(result_table_data_3lc)
-        without_test_of_mods <- all_columns[!all_columns %in% c("95% CI", "TestOfModerators")]
-        desired_order <- c(without_test_of_mods, "95% CI", "TestOfModerators")
+        without_test_of_mods <- all_columns[!all_columns %in% c("95% CI", "TestOfModerators", "ResidualHeterogeneity")]
+        desired_order <- c(without_test_of_mods, "95% CI", "TestOfModerators", "ResidualHeterogeneity")
         
         result_table_data_3lc <- result_table_data_3lc[, desired_order]
         
@@ -3588,23 +3645,48 @@ server <- function(input, output, session) {
       QMpa <- round(mod_result_with_intercept$QMp, 3)
       df1a <- mod_result_with_intercept$QMdf[1]
       df2a <- mod_result_with_intercept$QMdf[2]
+      QWp <- round(mod_result_with_intercept$QEp, 3)
+      
+      QE_conva <- round(mod_result_with_intercept$QE, 3)
+      QEdf_conva <- mod_result_with_intercept$k - mod_result_with_intercept$p
+      
+      Qwithina <- ifelse(QWp < 0.001, 
+                         paste("Qw(", QEdf_conva, ") =", QE_conva, ", p-val < .001"),
+                         paste("Qw(", QEdf_conva, ") =", QE_conva, ", p-val =", QWp))
       
       # Combine CI_Lower and CI_Upper into one column formatted as [CI_Lower, CI_Upper]
       CI_formatted <- paste0("[", round(summary_tablea[, "ci.lb"], 3), ", ", round(summary_tablea[, "ci.ub"], 3), "]")
       
       result_tablea <- data.frame(
-        Term = c(rownames(summary_tablea), "Test of Moderator"),
-        Estimate = c(round(summary_tablea[, "estimate"], 3), NA),
-        SE = c(round(summary_tablea[, "se"], 3), NA),
-        tvalue = c(round(summary_tablea[, "tval"], 3), NA),
-        pvalue = c(round(summary_tablea[, "pval"], 3), NA),
-        `95% CI` = c(CI_formatted, NA),  # New CI column
-        TestOfModerator = c(rep(NA, nrow(summary_tablea)), sprintf("F(%d, %d) = %.3f, p-val = %.3f", 
-                                                                   df1a, df2a, QMa, QMpa)),
+        Term = rownames(summary_tablea),
+        Estimate = round(summary_tablea[, "estimate"], 3),
+        SE = round(summary_tablea[, "se"], 3),
+        tvalue = round(summary_tablea[, "tval"], 3),
+        pvalue = round(summary_tablea[, "pval"], 3),
+        `95% CI` = CI_formatted,  # New CI column
+        TestOfModerator = NA,
+        ResidualHeterogeneity = NA,
         check.names = FALSE
       )
-      # Replace values less than 0.001 with "<0.001" in the "p-value" column
-      result_tablea$pvalue[result_tablea$PValue < 0.001] <- "< 0.001"
+      
+      # Add the Test of Moderator and Residual Heterogeneity to the last row
+      test_of_moderator_row <- data.frame(
+        Term = "",
+        Estimate = NA,
+        SE = NA,
+        tvalue = NA,
+        pvalue = NA,
+        `95% CI` = NA,
+        TestOfModerator = sprintf("F(%d, %d) = %.3f, p-val = %.3f", df1a, df2a, QMa, QMpa),
+        ResidualHeterogeneity = Qwithina,
+        check.names = FALSE
+      )
+      
+      # Append the test of moderator row to the result table
+      result_tablea <- rbind(result_tablea, test_of_moderator_row)
+      
+      # Replace values less than 0.001 with "<0.001" in the "pvalue" column
+      result_tablea$pvalue[result_tablea$pvalue < 0.001] <- "< 0.001"
       return(result_tablea)
     })
     
@@ -3617,12 +3699,14 @@ server <- function(input, output, session) {
     output$download_resultsa <- downloadHandler(
       filename = function() {
         paste("mod.", input$dropdowna, Sys.Date(), ".csv", sep = "")
-        },
+      },
       content = function(file) {
         req(mod_summary3lma())
         write.csv(mod_summary3lma(), file, row.names = FALSE, na = "")  # Write empty strings instead of NA
       }
     )
+    
+    
 
     
     # Generate R script as a reactive expression
