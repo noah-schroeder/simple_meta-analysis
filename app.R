@@ -46,6 +46,7 @@ ui <- dashboardPage(
                               menuSubItem("Step 3: Check for Outliers and Influence", tabName = "subtab54"),
                               menuSubItem("Step 4a: Categorical Moderator Analysis", tabName = "subtab55"),
                               menuSubItem("Step 4b: Continuous Moderator Analysis", tabName = "subtab56"),
+                              menuSubItem("Step 4c: Multiple Meta-Regression", tabName = "subtab561"),
                               menuSubItem("Step 5: Publication Bias and Plots", tabName = "subtab57")
                      ),
                      menuItem("Cite This Software", tabName = "tab6", icon = icon("table"),
@@ -473,6 +474,28 @@ tabItem(tabName = "subtab56",
         # Button to run analysis
         actionButton("run_cheCont", "Run Analysis", icon = icon("play")),
         uiOutput("dynamicResultsCont"),
+),
+######Meta-regression----
+tabItem(tabName = "subtab561",
+        h2("Multiple Meta-Regression"),
+        p("This analysis will help you run a random effects multiple meta-regression with your robust variance estimation (RVE) model using any combination of continuous and categorical variables. The first step is to upload your data. Please use the same file you used to run your meta-analysis."),
+        # File upload
+        fileInput("mregcRVE", "Upload CSV File", accept = ".csv"),
+        # Header and paragraph for correlation setting
+        h3("Correlation to be assumed"),
+        p("You should assume the same correlation that you set for your overall meta-analysis."),
+        selectInput("correlationmreg", "Set rho value:", choices = seq(-1, 1, by = 0.01), selected = 0.60),
+        # Continuous variables selection
+        p("Next, specify how many continuous and categorical variables you would like to include in your model. You can select 0-20 of each type of variable if your dataset supports it."),
+        numericInput("num_continuousRVE", "How many continuous variables?",
+                     min = 0, max = 20, value = 0),
+        # Categorical variables selection
+        numericInput("num_categoricalRVE", "How many categorical variables?",
+                     min = 0, max = 20, value = 0),
+        # Render variables button
+        actionButton("render_variablesRVE", "Select My Variables"),
+        uiOutput("dynamicResultsCmregVarRVE"),
+        uiOutput("dynamicResultsCmregResRVE"),
 ),
   tabItem(tabName = "subtab57",
           h3("Upload Your Data"),
@@ -5769,6 +5792,332 @@ output$download_scriptcontmodRVE <- downloadHandler(
     writeLines(generate_script_contmodrve(), file)
   }
 )
+
+
+#### Meta-Reg CHERVE ----
+
+
+# Initialize a reactive value for displaying results
+resultsvisibleCmregRVE <- reactiveVal(FALSE)
+resultsvisiblecmregallRVE <- reactiveVal(FALSE)
+
+observeEvent(input$render_variablesRVE, {
+  resultsvisibleCmregRVE(TRUE)
+})
+
+observeEvent(input$run_analysismregcRVE, {
+  resultsvisiblecmregallRVE(TRUE)
+})
+
+observeEvent(input$num_continuousRVE, {
+  resultsvisibleCmregRVE(FALSE)
+  resultsvisiblecmregallRVE(FALSE)
+})
+
+observeEvent(input$num_categoricalRVE, {
+  resultsvisibleCmregRVE(FALSE)
+  resultsvisiblecmregallRVE(FALSE)
+})
+
+# Observe changes in the correlation input to reset results visibility
+observeEvent(input$correlationmreg, {
+  resultsvisiblecmregallRVE(FALSE)
+})
+
+# Observe changes in individual variable selections to reset results visibility
+observe({
+  lapply(seq_len(input$num_continuousRVE), function(i) {
+    input[[paste0("continuous_var_RVE_", i)]]
+  })
+  lapply(seq_len(input$num_categoricalRVE), function(i) {
+    input[[paste0("categorical_var_RVE_", i)]]
+  })
+  resultsvisiblecmregallRVE(FALSE)
+})
+
+output$dynamicResultsCmregVarRVE <- renderUI({
+  if (resultsvisibleCmregRVE()) {
+    tagList(
+      # Display the results
+      # Display variable selection
+      uiOutput("variable_selectionRVE"),
+      # Run analysis button
+      actionButton("run_analysismregcRVE", "Run Analysis"),
+    )
+  }
+})
+
+output$dynamicResultsCmregResRVE <- renderUI({
+  if (resultsvisiblecmregallRVE()) {
+    tagList(
+      h3("Results"),
+      # Display meta-analysis results
+      box(title = "Important Note", width = 12, status = "primary",
+          p("Note that categorical moderators are treated as factors with distinct levels. The results below are from the model including an intercept."),
+      ),
+      downloadButton("mregc_resdlRVE", "Download Results"),
+      verbatimTextOutput("meta_resultsRVE"),
+      h3("R Script"),
+      downloadButton("download_codeRVE", "Download R Script"),
+      # Display generated R script
+      verbatimTextOutput("generated_scriptRVE"),
+      h3("Need Help Understanding The Results?"),
+      p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#moderator-analysis'>my open book</a>"),
+      ),
+    )
+  }
+})
+
+# Reactive function to read uploaded CSV data
+uploaded_datamregRVE <- reactive({
+  req(input$mregcRVE)
+  datamregrve <- read.csv(input$mregcRVE$datapath)
+})
+
+
+# Reactive value for rhoCat
+rhomreg <- reactive({
+  rho_value <- as.numeric(input$correlationmreg)
+  if (is.na(rho_value)) {
+    print("Invalid rho value")
+    return(0)  # Default or error handling value
+  }
+  rho_value
+})
+
+# Correct use of reactive expressions with parentheses
+V_RVE_mreg <- reactive({
+  req(uploaded_datamregRVE())  # Notice the parentheses
+  data_filtered <- uploaded_datamregRVE()  # Accessing the reactive result
+  tryCatch({
+    result <- with(data_filtered, impute_covariance_matrix(vi = vi, cluster = Study, r = rhomreg()))  # Correctly calling rhoCat()
+    result
+  }, error = function(e) {
+    print(paste("Error in computing V_RVE:", e$message))  # More informative error message
+    NULL
+  })
+})
+
+
+# Reactive expression to construct the meta-analysis model formula
+meta_formulaRVE <- reactive({
+  continuous_mods <- paste(sapply(seq_len(input$num_continuousRVE), function(i) {
+    input[[paste0("continuous_var_RVE_", i)]]
+  }), collapse = " + ")
+  
+  categorical_mods <- paste(sapply(seq_len(input$num_categoricalRVE), function(i) {
+    paste0("factor(", input[[paste0("categorical_var_RVE_", i)]], ")")
+  }), collapse = " + ")
+  
+  # Construct the formula based on user inputs
+  if (input$num_continuousRVE > 0 && input$num_categoricalRVE > 0) {
+    formula <- as.formula(paste("yi ~", continuous_mods, "+", categorical_mods))
+  } else if (input$num_continuousRVE > 0) {
+    formula <- as.formula(paste("yi ~", continuous_mods))
+  } else if (input$num_categoricalRVE > 0) {
+    formula <- as.formula(paste("yi ~", categorical_mods))
+  } else {
+    formula <- as.formula("yi ~ 1")  # Default formula if no variables are selected
+  }
+  
+  formula
+})
+
+# Event observer for rendering variable selection
+observeEvent(input$render_variablesRVE, {
+  # Render UI for variable selection
+  output$variable_selectionRVE <- renderUI({
+    req(uploaded_datamregRVE())  # Ensure uploaded data is available
+    
+    continuous_inputs <- lapply(seq_len(input$num_continuousRVE), function(i) {
+      selectInput(paste0("continuous_var_RVE_", i), 
+                  label = paste("Continuous Variable", i),
+                  choices = colnames(uploaded_datamregRVE()))
+    })
+    
+    categorical_inputs <- lapply(seq_len(input$num_categoricalRVE), function(i) {
+      selectInput(paste0("categorical_var_RVE_", i), 
+                  label = paste("Categorical Variable", i),
+                  choices = colnames(uploaded_datamregRVE()))
+    })
+    
+    fluidRow(
+      column(6, tagList(continuous_inputs)),
+      column(6, tagList(categorical_inputs))
+    )
+  })
+})
+
+# Reactive expression for running the meta-analysis
+run_analysismregcRVE <- eventReactive(input$run_analysismregcRVE, {
+  req(uploaded_datamregRVE(), meta_formulaRVE(), V_RVE_mreg())
+  #read label data
+  datamregrve <- read.csv(input$mregcRVE$datapath)
+  
+  # Perform meta-analysis
+  mod_result <- rma.mv(yi, V_RVE_mreg(), random = ~ 1 | Study/ES_number, mods = meta_formulaRVE(), method = "REML", test = "t", dfs = "contain", data = uploaded_datamregRVE())
+  #robust result
+  robust_modelRVEmreg <- robust(mod_result, cluster = datamregrve$Study, clubSandwich = TRUE, digits = 3)
+})
+
+# Output for displaying results
+output$meta_resultsRVE <- renderPrint({
+  req(run_analysismregcRVE())
+  summary(run_analysismregcRVE())
+})
+
+# Download handler for analysis results
+output$mregc_resdlRVE <- downloadHandler(
+  filename = function() {
+    paste("MetaReg_CHERVE_results.", Sys.Date(), ".txt", sep = "")
+  },
+  content = function(file) {
+    req(run_analysismregcRVE())
+    result_summary <- capture.output(summary(run_analysismregcRVE()))
+    writeLines(result_summary, con = file)
+  }
+)
+
+# Event observer for generating R script
+observeEvent(input$run_analysismregcRVE, {
+  # Generate R script content dynamically
+  script_content <- capture.output({
+    cat("# Meta-Regression Script\n\n")
+    cat("# Load required packages\n")
+    cat("library(metafor)\n")
+    cat("library(clubSandwich)\n\n")
+    
+    cat("# Read data\n")
+    sanitized_filename <- gsub("[^a-zA-Z0-9._-]", "_", input$mregcRVE$name)
+    cat("df <- read.csv(\"", sanitized_filename, "\")\n\n", sep = "")
+    
+    # Generate and assign continuous variables
+    cat("# Continuous Variables\n")
+    continuous_vars <- sapply(seq_len(input$num_continuousRVE), function(i) {
+      var_name <- input[[paste0("continuous_var_RVE_", i)]]
+      cat(paste0(var_name, " <- df$", var_name, "\n"))
+      return(var_name)
+    })
+    
+    cat("\n")
+    
+    # Generate and assign categorical variables (with factor() in the formula)
+    cat("# Categorical Variables\n")
+    categorical_vars <- sapply(seq_len(input$num_categoricalRVE), function(i) {
+      var_name <- input[[paste0("categorical_var_RVE_", i)]]
+      cat(paste0(var_name, " <- df$", var_name, "\n"))
+      return(paste0("factor(", var_name, ")"))
+    })
+    
+    cat("\n")
+    
+    # Generate the formula
+    formula_parts <- c(continuous_vars, categorical_vars)
+    formula_str <- paste(formula_parts, collapse = " + ")
+    
+    cat("# Formula to display moderators\n")
+    cat("formula <- ~ ", formula_str, "\n\n")
+    
+    # Include rho value in the script
+    rho_value <- input$correlationmreg
+    cat("# Correlation parameter\n")
+    cat("rho <- ", rho_value, "\n\n")
+    
+    # Compute the covariance matrix with the rho value
+    cat("# Compute the covariance matrix with the rho value\n")
+    cat("V <- with(df, impute_covariance_matrix(vi = df$vi, cluster = df$Study, r = rho))\n\n")
+    
+    # Perform meta-analysis with robust variance estimation
+    cat("# Perform meta-analysis\n")
+    cat("mod_result <- rma.mv(yi, V, random = ~ 1 | Study/ES_number, mods = formula, method = \"REML\", test = \"t\", dfs = \"contain\", data = df)\n\n")
+    cat("robust_model <- robust(mod_result, cluster = df$Study, clubSandwich = TRUE, digits = 3)\n\n")
+    
+    # Print summary of results
+    cat("summary(robust_model)\n")
+  })
+  
+  # Store the cleaned script content in a reactive value
+  output$generated_scriptRVE <- renderPrint({
+    cat(script_content, sep = "\n")
+  })
+})
+
+# Download handler for downloading the generated R script
+output$download_codeRVE <- downloadHandler(
+  filename = function() {
+    "script.metaregRVE.txt"
+  },
+  content = function(file) {
+    # Initialize script content
+    script_content <- "# Meta-Regression Script\n\n"
+    script_content <- paste0(script_content, "# Load required packages\n")
+    script_content <- paste0(script_content, "library(metafor)\n")
+    script_content <- paste0(script_content, "library(clubSandwich)\n\n")
+    script_content <- paste0(script_content, "# Read data\n")
+    
+    # Data loading step
+    sanitized_filename <- gsub("[^a-zA-Z0-9._-]", "_", input$mregcRVE$name)
+    script_content <- paste0(script_content, "df <- read.csv(\"", sanitized_filename, "\")\n\n")
+    
+    # Generate and assign continuous variables
+    continuous_vars <- c()
+    if (input$num_continuousRVE > 0) {
+      script_content <- paste0(script_content, "# Continuous Variables\n")
+      continuous_vars <- sapply(seq_len(input$num_continuousRVE), function(i) {
+        var_name <- input[[paste0("continuous_var_RVE_", i)]]
+        script_content <<- paste0(script_content, var_name, " <- df$", var_name, "\n")
+        return(var_name)
+      })
+      script_content <- paste0(script_content, "\n")
+    }
+    
+    # Generate and assign categorical variables (with factor() in the formula)
+    categorical_vars <- c()
+    if (input$num_categoricalRVE > 0) {
+      script_content <- paste0(script_content, "# Categorical Variables\n")
+      categorical_vars <- sapply(seq_len(input$num_categoricalRVE), function(i) {
+        var_name <- input[[paste0("categorical_var_RVE_", i)]]
+        script_content <<- paste0(script_content, var_name, " <- df$", var_name, "\n")
+        return(paste0("factor(", var_name, ")"))
+      })
+      script_content <- paste0(script_content, "\n")
+    }
+    
+    # Generate the formula
+    script_content <- paste0(script_content, "# Formula to display moderators\n")
+    formula_parts <- c(continuous_vars, categorical_vars)
+    formula_str <- paste(formula_parts, collapse = " + ")
+    script_content <- paste0(script_content, "formula <- ~ ", formula_str, "\n\n")
+    
+    # Include rho value in the script
+    rho_value <- input$correlationmreg
+    script_content <- paste0(script_content, "# Correlation parameter\n")
+    script_content <- paste0(script_content, "rho <- ", rho_value, "\n\n")
+    
+    # Compute the covariance matrix with the rho value
+    script_content <- paste0(script_content, "# Compute the covariance matrix with the rho value\n")
+    script_content <- paste0(script_content, "V <- with(df, impute_covariance_matrix(vi = df$vi, cluster = df$Study, r = rho))\n\n")
+    
+    # Perform meta-analysis with robust variance estimation
+    script_content <- paste0(script_content, "# Perform meta-analysis\n")
+    script_content <- paste0(script_content, "mod_result <- rma.mv(yi, V, random = ~ 1 | Study/ES_number, mods = formula, method = \"REML\", test = \"t\", dfs = \"contain\", data = df)\n\n")
+    script_content <- paste0(script_content, "robust_model <- robust(mod_result, cluster = df$Study, clubSandwich = TRUE, digits = 3)\n\n")
+    
+    # Print summary of results
+    script_content <- paste0(script_content, "summary(robust_model)\n")
+    
+    writeLines(script_content, file)
+  }
+)
+
+
+
+
+
+
+
+
+
 
 
 
