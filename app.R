@@ -2229,10 +2229,11 @@ server <- function(input, output, session) {
       formula_parts <- c(continuous_vars, categorical_vars)
       formula_str <- paste(formula_parts, collapse = " + ")
       
-      cat("# Meta-Regression Model\n")
+      cat("# Formula for moderators\n")
       cat("formula <- ~ ", formula_str, "\n\n")
       
       # Perform meta-analysis
+      cat("# Meta-Regression Model\n")
       cat("mod_result <- rma(yi, vi, mods = formula, data = df)\n\n")
       
       # Print summary of results
@@ -2285,10 +2286,11 @@ server <- function(input, output, session) {
         formula_parts <- c(continuous_vars, categorical_vars)
         formula_str <- paste(formula_parts, collapse = " + ")
         
-        cat("# Meta-Regression Model\n")
+        cat("# Formula for moderators\n")
         cat("formula <- ~ ", formula_str, "\n\n")
         
         # Perform meta-analysis
+        cat("# Meta-Regression Model\n")
         cat("mod_result <- rma(yi, vi, mods = formula, data = df)\n\n")
         
         # Print summary of results
