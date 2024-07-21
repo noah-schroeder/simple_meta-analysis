@@ -535,6 +535,9 @@ tabItem(tabName = "subtab81",
   ################# Define content for Acknowledgments sub-tabs
    tabItem(tabName = "subtab91",
           h2("Acknowledgements"),
+          h4("Developers"),
+          p("This software would not be possible without the variety of R packages and codes that it utilizes. While all the packages should be cited on the references page, SMA utilizes metafor for all its meta-analysis functions and clubSandwich for robust variance estimation. So, I am grateful for those like Wolfgang Viechtbauer (metafor) and James Pustejovsky (clubSandwich) who are creating R packages to help us all do our research."),
+          h4("Generative AI"),
           p("I was not famililar with Shiny when I began building this app, so a lot of the code was created with the assistance of ChatGPT 3.5 and Claude."),
       ),
 ################# Define content for Change log 
@@ -546,6 +549,7 @@ tabItem(tabName = "subtab101",
         p("- Added viewable and downloadable R scripts for every analysis for transparency and replicability."),
         p("- Removed old validation codes since each analysis now provides validation code customized to the user's data."),
         p("- Methods notes added to all three-level analyses."),
+        p("- Added options to download full results straight from R instead of tables as formatted in SMA."),
         
         h3("7.14.24"),
         p("- Added residual heterogeneity to conventional meta-analysis for categorical and continuous moderator analyses."),
@@ -3251,7 +3255,7 @@ server <- function(input, output, session) {
           # Display the results
           box(title="Important Note", width = 12, status = "primary",
           p("In metafor there are two different tests of the moderator. The table below presents the omnibus test of moderators from the model with an intercept. This is the same statistic as you may be used to seeing as Qbetween in conventional meta-analysis. The effect sizes etc. provided in the moderator table below are from the model without an intercept. In a conventional meta-analysis, this is a presentation consistent with what you may expect to see from other software packages such as Comprehensive Meta-Analysis.")),
-          downloadButton("download_results", "Download Results"),
+          downloadButton("download_results", "Download Formatted Results as Table"), downloadButton("download_results_int", "Download Full Results (Intercept Model)"), downloadButton("download_results_noint", "Download Full Results (No Intercept Model)"),
           tableOutput("modtable_output"),
           h3("Basic Interpretation Tips"),
           p("First you should look at the", strong("TestOfModerators"), "column. If this is significant, it means there are significant differences between levels of your moderator."),
@@ -3631,6 +3635,51 @@ server <- function(input, output, session) {
       }
     )
 
+    output$download_results_int <- downloadHandler(
+      filename = function() {
+        paste("mod.", input$dropdown, "_full_results_intercept_model", Sys.Date(), ".txt", sep = "")
+      },
+      content = function(file) {
+        req(input$run_analysis, input$dropdown)  # Ensure that analysis is ready and dropdown choice is available
+        
+        # Run the meta-analysis with intercept
+        mod_formula_with_intercept_3lc <- as.formula(paste("~ factor(", input$dropdown, ")"))
+        mod_result_with_intercept_3lc <- rma.mv(yi, vi, random = ~ 1 | Study/ES_number, mods = mod_formula_with_intercept_3lc, 
+                                                test = "t", dfs = "contain", data = uploaded_data3lc())
+        
+        # Capture the full output of the rma.mv model
+        output_text <- capture.output(mod_result_with_intercept_3lc)
+  
+        # Write to the specified file
+        writeLines(output_text, file)
+      }
+    )
+    
+    output$download_results_noint <- downloadHandler(
+      filename = function() {
+        paste("mod.", input$dropdown, "_full_results_no_intercept_model", Sys.Date(), ".txt", sep = "")
+      },
+      content = function(file) {
+        req(input$run_analysis, input$dropdown)  # Ensure that analysis is ready and dropdown choice is available
+        
+        # Run the meta-analysis without intercept
+        mod_formula_no_intercept_3lc <- as.formula(paste("~ -1 + factor(", input$dropdown, ")"))
+        mod_result_no_intercept_3lc <- rma.mv(yi, vi, random = ~ 1 | Study/ES_number, mods = mod_formula_no_intercept_3lc, 
+                                              test = "t", dfs = "contain", data = uploaded_data3lc())
+        
+        # Capture the full output of the rma.mv model
+        output_text <- capture.output(mod_result_no_intercept_3lc)
+   
+        # Write to the specified file
+        writeLines(output_text, file)
+      }
+    )
+    
+    
+    
+    
+    
+    
     
     
 ###Cont Mod Analysis 3lma ----
@@ -3656,7 +3705,8 @@ server <- function(input, output, session) {
           # Display the results
           box( title= "Important Note", width = 12, status = "primary",
           p("In metafor there are two different tests of the moderator. The table below presents the omnibus test of moderators from the model with an intercept. This is the same statistic as you may be used to seeing as Qbetween in conventional meta-analysis. The effect sizes etc. provided in the moderator table below are from the model without an intercept. In a conventional meta-analysis, this is a presentation consistent with what you may expect to see from other software packages such as Comprehensive Meta-Analysis.")),
-          downloadButton("download_resultsa", "Download Results"),
+          downloadButton("download_resultsa", "Download Formatted Results as Table"),downloadButton("download_resultsaint", "Download Full Results (Intercept Model)"),
+
           tableOutput("modtable_outputa"),
           h3("Basic Interpretation Tips"),
           p("First you should look at the", strong("TestOfModerators"), "column. If this is significant, it means your moderator significantly influences the overall effect."),
@@ -3808,6 +3858,32 @@ server <- function(input, output, session) {
     )
 
  
+    # Download handler for the analysis with intercept
+    output$download_resultsaint <- downloadHandler(
+      filename = function() {
+        paste("mod.", input$dropdowna, "_full results_intercept_model", Sys.Date(), ".txt", sep = "")
+      },
+      content = function(file) {
+        # Run the analysis and get the results
+        req(input$run_analysisa, input$dropdowna)
+        mod_formula <- as.formula(paste("~", input$dropdowna))
+        
+        mod_result_with_intercept <- rma.mv(yi, vi, random = ~ 1 | Study/ES_number, mods = mod_formula,
+                                            test = "t", dfs = "contain", data = uploaded_dataa())
+        model_summarya <- summary(mod_result_with_intercept)
+        
+        # Capture the results from the rma.mv output
+        results_text <- capture.output({print(mod_result_with_intercept)
+        })
+        
+        # Write the results to the file
+        writeLines(results_text, con = file)
+      }
+    )
+    
+    
+    
+    
     
 
     ## Multiple Meta-Regression ---- 
@@ -5341,7 +5417,7 @@ output$dynamicResults <- renderUI({
            p("Please also note that since we are using CHE RVE, any levels of the moderator that only have 1 comparison will be automatically removed and noted in the last row of the table."),
            p("Finally, note that it is possible for the Test of Moderators to show a p value of NA. This typically occurs when there are few comparisons for levels of the moderator. If this occurs you can do a few things. First, you may decide to create larger categories of your moderator so you have more comparisons at each level. Alternatively, you may decide that you do not want to use a CHE RVE approach for this analysis (the standard three-level analysis in this app will likely produce a result for you). Finally, you may decide that the NA result is OK because it shows the nature of your sample. There are likely other approaches you can take, as with many things in meta-analysis, it may be somewhat subjective as to what approach to take with NA results from this analysis.")),
       h3("Model Result"),
-      downloadButton("downloadRVE_RVE", "Download Results"),
+      downloadButton("downloadRVE_RVE", "Download Formatted Results as Table"),downloadButton("downloadRVE_RVE_int", "Download Full Results (Intercept Model)"),downloadButton("downloadRVE_RVE_noint", "Download Full Results (No Intercept Model)"),
       div(class = "scrollable", tableOutput("custom_results_RVE")),
       h3("Basic Interpretation Tips"),
       p("First you should look at the", strong("Test of Moderators"), "column. If this is significant, it means there are significant differences between levels of your moderator."),
@@ -5732,6 +5808,42 @@ output$download_scriptcatmodRVE <- downloadHandler(
 )
 
 
+# Download handler for the analysis with intercept
+output$downloadRVE_RVE_int <- downloadHandler(
+  filename = function() {
+    paste("mod.", input$mod_RVECat, "full_results_intercept_model", Sys.Date(), ".txt", sep = "")
+  },
+  content = function(file) {
+    # Run the analysis and get the results
+    req(CHEresult_RVECatInt(), filtered_data(), V_RVE())
+    result_with_intercept <- CHEresult_RVECatInt()
+    
+    # Capture the results from the rma.mv output and robust model
+    results_text <- capture.output({print(result_with_intercept)
+    })
+    
+    # Write the results to the file
+    writeLines(results_text, con = file)
+  }
+)
+
+
+# Download handler for the analysis without intercept
+output$downloadRVE_RVE_noint <- downloadHandler(
+  filename = function() {
+    paste("mod.", input$mod_RVECat, "full_results_no_intercept_model", Sys.Date(), ".txt", sep = "")
+  },
+  content = function(file) {
+    # Run the analysis and get the results
+    req(CHEresult_RVE(), summarized_data())
+    robust_result <- CHEresult_RVE()
+    # Capture the results from the rma.mv output and summarized data
+    results_text <- capture.output({print(robust_result)
+    })
+    # Write the results to the file
+    writeLines(results_text, con = file)
+  }
+)
 
 
 
@@ -5759,13 +5871,13 @@ output$dynamicResultsCont <- renderUI({
   if (resultsVisibleRVECont()) {
     tagList(
       h3("Model Result"),
-      downloadButton("downloadRVE_RVECont", "Download Results"),
+      downloadButton("downloadRVE_RVECont", "Download Formatted Results as Table"),downloadButton("downloadRVE_RVECont_int", "Download Full Results (Intercept Model)"),
       div(class = "scrollable", tableOutput("custom_results_RVECont")),
-      h4("Methods Notes"),
-      p("The random effects three-level meta-analysis used correlated and hierarchical effects (CHE) and robust variance estimation. It used the correlation you chose as the correlation for CHE. Robust variance estimation was done using the clubSandwich package and metafor (the code is robust(...clubSandwich = TRUE)). You can read more about metafor and cluster-robust tests and confidence intervals here:", HTML("<a href='https://wviechtb.github.io/metafor/reference/robust.html'>metafor robust() documentation</a>"), "Otherwise, the analysis used Restricted Maximum Likelihood Estimation (REML) (the default in metafor package) and we used a three-level structure with ES_number nested within Study. We also used a t distribution rather than a z distribution. You can read about t distributions here:", HTML("<a href='https://wviechtb.github.io/metafor/reference/rma.mv.html'>metafor documentation about rma.mv</a>")),
       h3("Basic Interpretation Tips"),
       p("First you should look at the", strong("TestOfModerators"), "column. If this is significant, it means your moderator significantly influences the overall effect."),
       p("Next you should look at the", strong("Residual_Heterogeneity"), "column (commonly called Qwithin). If this is significant, it means there is significant hetereogenity that the moderator does", strong("not"), "explain."),
+      h4("Methods Notes"),
+      p("The random effects three-level meta-analysis used correlated and hierarchical effects (CHE) and robust variance estimation. It used the correlation you chose as the correlation for CHE. Robust variance estimation was done using the clubSandwich package and metafor (the code is robust(...clubSandwich = TRUE)). You can read more about metafor and cluster-robust tests and confidence intervals here:", HTML("<a href='https://wviechtb.github.io/metafor/reference/robust.html'>metafor robust() documentation</a>"), "Otherwise, the analysis used Restricted Maximum Likelihood Estimation (REML) (the default in metafor package) and we used a three-level structure with ES_number nested within Study. We also used a t distribution rather than a z distribution. You can read about t distributions here:", HTML("<a href='https://wviechtb.github.io/metafor/reference/rma.mv.html'>metafor documentation about rma.mv</a>")),
       h3("R Script"),
       downloadButton("download_scriptcontmodRVE"),
       verbatimTextOutput("replicate_scriptcontmodRVEa"),
@@ -5950,6 +6062,44 @@ output$download_scriptcontmodRVE <- downloadHandler(
     writeLines(generate_script_contmodrve(), file)
   }
 )
+
+
+# Download handler for the analysis with intercept
+output$downloadRVE_RVECont_int <- downloadHandler(
+  filename = function() {
+    paste("mod.", input$mod_RVECont, "full_results_intercept_model", Sys.Date(), ".txt", sep = "")
+  },
+  content = function(file) {
+    # Run the analysis and get the results
+    req(input$run_cheCont, mod_summary(), V_RVE_Cont())
+    
+    data <- read.csv(input$chefileCont$datapath)
+    # Create the formula for the moderator
+    mod_formula <- as.formula(paste("~", input$mod_RVECont))
+    
+    # Perform the analysis
+    resultRVECont <- rma.mv(
+      yi = yi, 
+      V = V_RVE_Cont(), 
+      mods = mod_formula,
+      random = ~ 1 | Study / ES_number,
+      method = "REML",
+      test = "t",
+      dfs = "contain",
+      data = data,
+      Sparse = TRUE
+    )
+    robust_modelRVEContInt <- robust(resultRVECont, cluster = data$Study, clubSandwich = TRUE, digits = 3)
+    
+    # Capture the results from the rma.mv output and robust model
+    results_text <- capture.output({print(robust_modelRVEContInt)
+    })
+    
+    # Write the results to the file
+    writeLines(results_text, con = file)
+  }
+)
+
 
 
 #### Meta-Reg CHERVE ----
