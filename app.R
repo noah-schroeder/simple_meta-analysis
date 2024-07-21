@@ -5764,7 +5764,7 @@ generate_script_contmodrve <- reactive({
      "",
     "# Impute covariance matrix",
     sprintf("rho <- %.2f", rho_value),
-    "V_RVE <- impute_covariance_matrix(vi = data$vi, cluster = data$Study, r = rho)",
+    "V_RVE <- with(data, impute_covariance_matrix(vi = data$vi, cluster = data$Study, r = rho))",
     "",
     "# Run meta-analysis with intercept",
     sprintf("result <- rma.mv(yi = data$yi, V = V_RVE, mods = ~ %s, random = ~ 1 | Study / ES_number, method = 'REML', test = 't', data = data)",
@@ -5786,7 +5786,7 @@ output$replicate_scriptcontmodRVEa <- renderText({
 # Download handler for the script
 output$download_scriptcontmodRVE <- downloadHandler(
   filename = function() {
-    paste0("script.mod.", input$mod_RVECat, ".txt")
+    paste0("script.mod.", input$mod_RVECont, ".txt")
   },
   content = function(file) {
     writeLines(generate_script_contmodrve(), file)
@@ -6415,7 +6415,7 @@ generate_script_cheplots <- reactive({
     "",
     "# Impute covariance matrix",
     sprintf("rho <- %.2f", rhocheplot()),
-    "V_RVE <- impute_covariance_matrix(vi = data$vi, cluster = data$Study, r = rho)",
+    "V_RVE <- with(data, impute_covariance_matrix(vi = data$vi, cluster = data$Study, r = rho))",
     "",
     "# Run meta-analysis with intercept",
     "result <- rma.mv(yi = data$yi, V = V_RVE, random = ~ 1 | Study / ES_number, method = 'REML', test = 't', data = data)",
@@ -6429,7 +6429,7 @@ generate_script_cheplots <- reactive({
     "aggregated_data <- aggregate(cbind(yi, vi) ~ Study, data = data, function(x) mean(x, na.rm = TRUE))",
     "",
     "# Impute covariance matrix for aggregated data",
-    "V_aggregated <- impute_covariance_matrix(vi = aggregated_data$vi, cluster = aggregated_data$Study, r = rho)",
+    "V_aggregated <- with(aggregated_data, impute_covariance_matrix(vi = aggregated_data$vi, cluster = aggregated_data$Study, r = rho))",
     "",
     "# Run meta-analysis for aggregated data",
     "result_aggregated <- rma.mv(yi = aggregated_data$yi, V = V_aggregated, random = ~ 1 | Study, method = 'REML', test = 't', data = aggregated_data)",
@@ -6453,7 +6453,7 @@ output$downloadScript_cheplots <- downloadHandler(
     paste("script.CHERVEplots", Sys.Date(), ".txt", sep = "")
   },
   content = function(file) {
-    writeLines(generate_script_contmodrve(), file)
+    writeLines(generate_script_cheplots(), file)
   }
 )
 
