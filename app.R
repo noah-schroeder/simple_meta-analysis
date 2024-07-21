@@ -3201,6 +3201,7 @@ server <- function(input, output, session) {
           tableOutput("modtable_output"),
           h3("Basic Interpretation Tips"),
           p("First you should look at the", strong("TestOfModerators"), "column. If this is significant, it means there are significant differences between levels of your moderator."),
+          p("Next you should look at the", strong("Residual_Heterogeneity"), "column (commonly called Qwithin). If this is significant, it means there is significant hetereogenity that the moderator does", strong("not"), "explain."),
           p("Note the following columns I have created to aid in interpretation:"),
           p(strong("nexp"),"is the sample size of the intervention group, and", strong("nctrl"), "is the sample size of the control group. Note that this is not calculating the actual number of unique participants, because this code is simply conditionally summing the sample size columns in our data set. For example, if a study had one experimental group (n = 10) and one control group (n = 10), and had three outcomes that were included in the analysis (meaning, each appears as its own row in the data set), this code will say there were 30 participants in each group rather than 10. While this is expected in dependent data such as this, it is something to be aware of so you do not make a claim such as, “our analysis of 60 participants” when in reality, your analysis is only 20 unique participants. So, please be careful of your wording when you describe the participant numbers to ensure strict accuracy."),
           p(strong("kcomp"),"is the number of comparisons examined. The total number of kcomp in the table should correspond to the number of rows in your dataset."),
@@ -3603,6 +3604,9 @@ server <- function(input, output, session) {
           p("In metafor there are two different tests of the moderator. The table below presents the omnibus test of moderators from the model with an intercept. This is the same statistic as you may be used to seeing as Qbetween in conventional meta-analysis. The effect sizes etc. provided in the moderator table below are from the model without an intercept. In a conventional meta-analysis, this is a presentation consistent with what you may expect to see from other software packages such as Comprehensive Meta-Analysis.")),
           downloadButton("download_resultsa", "Download Results"),
           tableOutput("modtable_outputa"),
+          h3("Basic Interpretation Tips"),
+          p("First you should look at the", strong("TestOfModerators"), "column. If this is significant, it means your moderator significantly influences the overall effect."),
+          p("Next you should look at the", strong("Residual_Heterogeneity"), "column (commonly called Qwithin). If this is significant, it means there is significant hetereogenity that the moderator does", strong("not"), "explain."),
           h4("Methods Notes"),
           p("This random effects three-level meta-analysis used Restricted Maximum Likelihood Estimation (REML) (the default in metafor package). We used a three-level structure with ES_number nested within Study. We also used a t distribution rather than a z distribution. You can read about t distributions here:", HTML("<a href='https://wviechtb.github.io/metafor/reference/rma.mv.html'>metafor documentation about rma.mv</a>")),
           h3("R Script"),
@@ -3648,11 +3652,11 @@ server <- function(input, output, session) {
       QWp <- round(mod_result_with_intercept$QEp, 3)
       
       QE_conva <- round(mod_result_with_intercept$QE, 3)
-      QEdf_conva <- mod_result_with_intercept$k - mod_result_with_intercept$p
+      QEdf_conva <- mod_result_with_intercept$QEdf
       
       Qwithina <- ifelse(QWp < 0.001, 
-                         paste("Qw(", QEdf_conva, ") =", QE_conva, ", p-val < .001"),
-                         paste("Qw(", QEdf_conva, ") =", QE_conva, ", p-val =", QWp))
+                         paste("Qw(",QEdf_conva,") =", QE_conva, ", p-val < .001"),
+                         paste("Qw(",QEdf_conva,") =", QE_conva, ", p-val =", QWp))
       
       # Combine CI_Lower and CI_Upper into one column formatted as [CI_Lower, CI_Upper]
       CI_formatted <- paste0("[", round(summary_tablea[, "ci.lb"], 3), ", ", round(summary_tablea[, "ci.ub"], 3), "]")
@@ -5287,6 +5291,7 @@ output$dynamicResults <- renderUI({
       div(class = "scrollable", tableOutput("custom_results_RVE")),
       h3("Basic Interpretation Tips"),
       p("First you should look at the", strong("Test of Moderators"), "column. If this is significant, it means there are significant differences between levels of your moderator."),
+      p("Next you should look at the", strong("Residual_Heterogeneity"), "column (commonly called Qwithin). If this is significant, it means there is significant hetereogenity that the moderator does", strong("not"), "explain."),
       p("Note the following columns I have created to aid in interpretation:"),
       p(strong("nexp"),"is the sample size of the intervention group, and", strong("nctrl"), "is the sample size of the control group. Note that this is not calculating the actual number of unique participants, because this code is simply conditionally summing the sample size columns in our data set. For example, if a study had one experimental group (n = 10) and one control group (n = 10), and had three outcomes that were included in the analysis (meaning, each appears as its own row in the data set), this code will say there were 30 participants in each group rather than 10. While this is expected in dependent data such as this, it is something to be aware of so you do not make a claim such as, “our analysis of 60 participants” when in reality, your analysis is only 20 unique participants. So, please be careful of your wording when you describe the participant numbers to ensure strict accuracy."),
       p(strong("kcomp"),"is the number of comparisons examined. The total number of kcomp in the table should correspond to the number of rows in your dataset."),
@@ -5503,16 +5508,29 @@ results_df_RVEInt <- reactive({
     QMp_RVECat <- result_with_intercept$QMp
     df1_RVECat <- result_with_intercept$QMdf[1]
     df2_RVECat <- result_with_intercept$QMdf[2]
+    QWp_RVECat <- result_with_intercept$QEp
+    
+    # Calculate residual heterogeneity
+    QE_conv <- round(result_with_intercept$QE, 3)
+    QEdf_conv <- result_with_intercept$QEdf
+    Qwithin <- ifelse(QWp_RVECat < 0.001, 
+                      paste("Qw(", QEdf_conv, ") =", QE_conv, ", p-val < .001"),
+                      paste("Qw(", QEdf_conv, ") =", QE_conv, ", p-val =", QWp_RVECat))
     
     # Return the formatted string indicating the results of the test of moderators
-    sprintf("F(%.2f, %.2f) = %.3f, p-val = %.3f", df1_RVECat, df2_RVECat, QM_RVECat, QMp_RVECat)
+    list(
+      TestOfModerator = sprintf("F(%.2f, %.2f) = %.3f, p-val = %.3f", df1_RVECat, df2_RVECat, QM_RVECat, QMp_RVECat),
+      ResidualHeterogeneity = Qwithin
+    )
   } else {
     # Return NA if the required data is not available
-    NA
+    list(
+      TestOfModerator = NA,
+      ResidualHeterogeneity = NA
+    )
   }
 })
 
-# Generate a results data frame that includes summarized data
 results_df_RVE <- reactive({
   req(CHEresult_RVE(), summarized_data())
   robust_result <- CHEresult_RVE()
@@ -5535,14 +5553,16 @@ results_df_RVE <- reactive({
     `t-value` = safe_round(robust_result$zval),
     `p-value` = safe_round(robust_result$pval),
     `95% CI` = sprintf("[%s, %s]", safe_round(robust_result$ci.lb), safe_round(robust_result$ci.ub)),
-    `Test of Moderator` = rep("", nrow(summary_data))  # Initially, fill with empty strings
+    `Test of Moderator` = rep("", nrow(summary_data)),  # Initially, fill with empty strings
+    `Residual Heterogeneity` = rep("", nrow(summary_data))  # Initially, fill with empty strings
   )
+  
   # Replace values less than 0.001 with "<0.001" in the "p-value" column
   df$p.value[df$p.value < 0.001] <- "< 0.001"
   
-  # Append the test of moderator result if available
+  # Append the test of moderator result and residual heterogeneity if available
   test_of_moderator <- results_df_RVEInt()
-  if (!is.na(test_of_moderator) && !is.null(test_of_moderator)) {
+  if (!is.na(test_of_moderator$TestOfModerator) && !is.null(test_of_moderator$TestOfModerator)) {
     moderator_row <- data.frame(
       Model = "",  # Leave this empty for the Test of Moderator row
       nexp = "",   # Empty string for other cells
@@ -5554,7 +5574,8 @@ results_df_RVE <- reactive({
       `t-value` = "",
       `p-value` = "",
       `95% CI` = "",
-      `Test of Moderator` = test_of_moderator
+      `Test of Moderator` = test_of_moderator$TestOfModerator,
+      `Residual Heterogeneity` = test_of_moderator$ResidualHeterogeneity
     )
     df <- rbind(df, moderator_row)  # Append this row
   }
@@ -5578,7 +5599,8 @@ results_df_RVE <- reactive({
     "t-value",
     "p-value",
     "95% CI",
-    "Test of Moderator"
+    "Test of Moderator",
+    "Residual Heterogeneity"  # New column for residual heterogeneity
   )
   df
 })
@@ -5687,6 +5709,9 @@ output$dynamicResultsCont <- renderUI({
       div(class = "scrollable", tableOutput("custom_results_RVECont")),
       h4("Methods Notes"),
       p("The random effects three-level meta-analysis used correlated and hierarchical effects (CHE) and robust variance estimation. It used the correlation you chose as the correlation for CHE. Robust variance estimation was done using the clubSandwich package and metafor (the code is robust(...clubSandwich = TRUE)). You can read more about metafor and cluster-robust tests and confidence intervals here:", HTML("<a href='https://wviechtb.github.io/metafor/reference/robust.html'>metafor robust() documentation</a>"), "Otherwise, the analysis used Restricted Maximum Likelihood Estimation (REML) (the default in metafor package) and we used a three-level structure with ES_number nested within Study. We also used a t distribution rather than a z distribution. You can read about t distributions here:", HTML("<a href='https://wviechtb.github.io/metafor/reference/rma.mv.html'>metafor documentation about rma.mv</a>")),
+      h3("Basic Interpretation Tips"),
+      p("First you should look at the", strong("TestOfModerators"), "column. If this is significant, it means your moderator significantly influences the overall effect."),
+      p("Next you should look at the", strong("Residual_Heterogeneity"), "column (commonly called Qwithin). If this is significant, it means there is significant hetereogenity that the moderator does", strong("not"), "explain."),
       h3("R Script"),
       downloadButton("download_scriptcontmodRVE"),
       verbatimTextOutput("replicate_scriptcontmodRVEa"),
@@ -5694,11 +5719,10 @@ output$dynamicResultsCont <- renderUI({
   }
 })
 
-# Make sure to correctly trigger and use results_df_RVE
 output$custom_results_RVECont <- renderTable({
-  req(results_df_RVECont())
-  results_df_RVECont()
-})
+  req(mod_summary())
+  mod_summary()
+}, na = '')  # Display NA as empty cells
 
 
 # Reactive value for rhoCont
@@ -5790,6 +5814,9 @@ mod_summary <- reactive({
   QMp <- round(robust_modelRVEContInt$QMp, 3)
   df1 <- robust_modelRVEContInt$QMdf[1]
   df2 <- robust_modelRVEContInt$QMdf[2]
+  QW <- round(robust_modelRVEContInt$QE, 3)
+  QWp <- round(robust_modelRVEContInt$QEp, 3)
+  QEdf <- robust_modelRVEContInt$QEdf
   
   # Combine CI_Lower and CI_Upper into one column formatted as [CI_Lower, CI_Upper]
   CI_formatted <- paste0("[", round(summary_table[, "ci.lb"], 3), ", ", round(summary_table[, "ci.ub"], 3), "]")
@@ -5804,6 +5831,9 @@ mod_summary <- reactive({
     `95% CI` = c(CI_formatted, NA),  # New CI column
     TestOfModerator = c(rep(NA, nrow(summary_table)), sprintf("F(%.2f, %.2f) = %.3f, p-val = %.3f", 
                                                               df1, df2, QM, QMp)),
+    ResidualHeterogeneity = c(rep(NA, nrow(summary_table)), 
+                              ifelse(QWp < 0.001, paste("Qw(", QEdf, ") =", QW, ", p-val < .001"),
+                                     paste("Qw(", QEdf, ") =", QW, ", p-val =", QWp))),
     check.names = FALSE
   )
   
@@ -5811,11 +5841,6 @@ mod_summary <- reactive({
   result_table$PValue[result_table$PValue < 0.001] <- "< 0.001"
   result_table
 })
-
-output$custom_results_RVECont <- renderTable({
-  req(mod_summary())
-  mod_summary()
-}, na = '')  # Display NA as empty cells
 
 # Download handler for exporting the results as a CSV file
 output$downloadRVE_RVECont <- downloadHandler(
