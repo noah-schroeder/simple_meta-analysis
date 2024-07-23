@@ -476,7 +476,7 @@ tabItem(tabName = "subtab56",
 ######Meta-regression----
 tabItem(tabName = "subtab561",
         h2("Multiple Meta-Regression"),
-        p("This analysis will help you run a random effects multiple meta-regression with your robust variance estimation (RVE) model using any combination of continuous and categorical variables. The first step is to upload your data. Please use the same file you used to run your meta-analysis."),
+        p("This analysis will help you run a random effects multiple meta-regression with your correlated and hierarchical effects model with robust variance estimation (RVE) using any combination of continuous and categorical variables. The first step is to upload your data. Please use the same file you used to run your meta-analysis."),
         # File upload
         fileInput("mregcRVE", "Upload CSV File", accept = ".csv"),
         # Header and paragraph for correlation setting
