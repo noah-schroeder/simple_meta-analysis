@@ -544,6 +544,8 @@ tabItem(tabName = "subtab81",
 ##Change Log---- 
 tabItem(tabName = "subtab101",
         h2("Change Log"),
+        h3("8.18.24"),
+        p("- Changed impute_covariance_matrix() from clubSandwich to vcalc() from metafor for all 3LMA CHERVE analyses due to impute_covariance_matrix() being deprecated."),
         h3("7.21.24"),
         p("- Added multiple meta-regression for every analysis type."),
         p("- Added viewable and downloadable R scripts for every analysis for transparency and replicability."),
@@ -4516,9 +4518,8 @@ uploaded_data <- reactive({
 # Reactive covariance matrix calculation
 V <- reactive({
   req(uploaded_data())
-  with(uploaded_data(), impute_covariance_matrix(vi = vi, cluster = Study, r = rho()))
+  vcalc(vi, cluster = Study, obs=ES_number, data=uploaded_data(), rho=rho())
 })
-
 # Compute CHE results
 CHEresult <- eventReactive(input$run_che, {
   tryCatch({
@@ -4579,7 +4580,7 @@ new_rho1 <- reactive({
 # Reactive covariance matrix calculation
 V_upper <- reactive({
   req(uploaded_data())
-  with(uploaded_data(), impute_covariance_matrix(vi = vi, cluster = Study, r = new_rho1()))
+  vcalc(vi, cluster = Study, obs=ES_number, data=uploaded_data(), rho=new_rho1())
 })
 
 # Analyses with rho adjusted by +0.2
@@ -4619,7 +4620,7 @@ new_rho <- reactive({
 # Reactive covariance matrix calculation
 V_lower <- reactive({
   req(uploaded_data())
-  with(uploaded_data(), impute_covariance_matrix(vi = vi, cluster = Study, r = new_rho()))
+  vcalc(vi, cluster = Study, obs=ES_number, data=uploaded_data(), rho=new_rho())
 })
 
 # Analyses with rho adjusted by -0.2
@@ -4729,7 +4730,7 @@ generateRScriptcherve3lma <- function(datafile, correlation) {
     "# Define rho value\n",
     "rho <- ", correlation, "\n\n",
     "# Calculate covariance matrix for rho\n",
-    "V <- with(data, impute_covariance_matrix(vi = vi, cluster = Study, r = rho))\n\n",
+    "V <- vcalc(vi, cluster = Study, obs = ES_number, data = data, rho = rho)\n\n",
     "# Compute CHE results for rho\n",
     "CHEresult <- rma.mv(yi, V,\n",
     "                   random = ~ 1 | Study/ES_number,\n",
@@ -4745,7 +4746,7 @@ generateRScriptcherve3lma <- function(datafile, correlation) {
     "# Define rho value - 0.2\n",
     "rho_lower <- ", correlation - 0.2, "\n\n",
     "# Calculate covariance matrix for rho - 0.2\n",
-    "V_lower <- with(data, impute_covariance_matrix(vi = vi, cluster = Study, r = rho_lower))\n\n",
+    "V_lower <- vcalc(vi, cluster = Study, obs = ES_number, data = data, rho = rho_lower)\n\n",
     "# Compute CHE results for rho - 0.2\n",
     "CHEresult_lower <- rma.mv(yi, V_lower,\n",
     "                         random = ~ 1 | Study/ES_number,\n",
@@ -4761,7 +4762,7 @@ generateRScriptcherve3lma <- function(datafile, correlation) {
     "# Define rho value + 0.2\n",
     "rho_upper <- ", correlation + 0.2, "\n\n",
     "# Calculate covariance matrix for rho + 0.2\n",
-    "V_upper <- with(data, impute_covariance_matrix(vi = vi, cluster = Study, r = rho_upper))\n\n",
+    "V_upper <- vcalc(vi, cluster = Study, obs = ES_number, data = data, rho = rho_upper)\n\n",
     "# Compute CHE results for rho + 0.2\n",
     "CHEresult_upper <- rma.mv(yi, V_upper,\n",
     "                         random = ~ 1 | Study/ES_number,\n",
@@ -4834,7 +4835,7 @@ output$dynamicResultschevar <- renderUI({
     tagList(
       h3("I2 Results"),
       box(title = "Important Note", width = 12, status = "primary",
-          p("The i2 values are based on the CHE model and do not include robust variance estimation. At the time I created the app, the functions for i2 do not support robust models, but they do support .rma models with CHE."),
+          p("The i2 values are based on the CHE model and do not include robust variance estimation. "),
           "The random effects three-level CHE meta-analysis used Restricted Maximum Likelihood Estimation (REML) (the default in metafor package) and we used a three-level structure with ES_number nested within Study. We also used a t distribution rather than a z distribution. You can read about t distributions here:", HTML("<a href='https://wviechtb.github.io/metafor/reference/rma.mv.html'>metafor documentation about rma.mv</a>"),"."),
       downloadButton("download_i2_resultsRVE", label = "Download Results"),
       verbatimTextOutput("i2result_outputRVE"),
@@ -4865,7 +4866,7 @@ i2_datRVE <- eventReactive(input$run_i2RVE, {
 Vi2 <- eventReactive(input$run_i2RVE, {
   req(i2_datRVE())
   datavi2 <- i2_datRVE()
-  vii <- with(datavi2, impute_covariance_matrix(vi = vi, cluster = Study, r = rhoi2()))
+  vii <- vcalc(vi, cluster = Study, obs=ES_number, data=datavi2, rho=rhoi2())
   vii
 })
 
@@ -4964,8 +4965,8 @@ generateRScripti2RVE <- function(datafile, correlation) {
     "rho <- ", correlation, "\n\n",
     
     "# Calculate covariance matrix\n",
-    "V <- with(data, impute_covariance_matrix(vi = vi, cluster = Study, r = rho))\n\n",
-    
+    "V <- vcalc(vi, cluster = Study, obs = ES_number, data = data, rho = rho)\n\n",
+
     "# Run 3-level meta-analysis\n",
     "m_multi <- rma.mv(yi, V,\n",
     "                  random = ~ 1 | Study/ES_number,\n",
@@ -5092,7 +5093,7 @@ V_RVErve <- reactive({
   }
   
   tryCatch({
-    result <- impute_covariance_matrix(vi = data$vi, cluster = data$Study, r = rhorve())  # Use rhorve() directly
+    result <- vcalc(vi, cluster = Study, obs=ES_number, data=data, rho=rhorve())
   }, error = function(e) {
     stop("Error in computing V_RVErve: ", e$message)
   })
@@ -5291,7 +5292,7 @@ generateRScriptRVE <- function(datafile, correlation) {
     "rho <- ", correlation, "\n\n",
     
     "# Calculate covariance matrix\n",
-    "V <- with(data, impute_covariance_matrix(vi = vi, cluster = Study, r = rho))\n\n",
+    "V <- vcalc(vi, cluster = Study, obs = ES_number, data = data, rho = rho)\n\n",
     
     "# Run the meta-analysis\n",
     "m_multi <- rma.mv(yi, V,\n",
@@ -5468,7 +5469,7 @@ V_RVE <- reactive({
   req(filtered_data())  # Notice the parentheses
   data_filtered <- filtered_data()  # Accessing the reactive result
   tryCatch({
-    result <- with(data_filtered, impute_covariance_matrix(vi = vi, cluster = Study, r = rhoCat()))  # Correctly calling rhoCat()
+    result <- vcalc(vi, cluster = Study, obs=ES_number, data=data_filtered, rho=rhoCat())
     print("Covariance matrix calculated.")  # Debug print
     result
   }, error = function(e) {
@@ -5544,7 +5545,7 @@ V_RVE <- reactive({
   }
   
   tryCatch({
-    impute_covariance_matrix(vi = data$vi, cluster = data$Study, r = rhoCat())  # Use rhoCat() directly
+    vcalc(vi, cluster = Study, obs=ES_number, data=data, rho=rhoCat())
   }, error = function(e) {
     stop("Error in computing V_RVE: ", e$message)
   })
@@ -5772,7 +5773,7 @@ generate_script_catmodrve <- reactive({
     "",
     "# Impute covariance matrix",
     sprintf("rho <- %.2f", rhoCat()),
-    "V_RVE <- impute_covariance_matrix(vi = filtered_data$vi, cluster = filtered_data$Study, r = rho)",
+    "V_RVE <- vcalc(vi, cluster = Study, obs = ES_number, data = filtered_data, rho = rho)",
     "",
     "# Run meta-analysis with intercept for Test of mod",
     sprintf("result_tom <- rma.mv(yi = filtered_data$yi, V = V_RVE, mods = ~ factor(filtered_data[['%s']]), random = ~ 1 | Study/ES_number, method = 'REML', test = 't', data = filtered_data)", input$mod_RVECat),
@@ -5913,7 +5914,7 @@ V_RVE_Cont <- reactive({
   req(uploaded_dataRVECont())  # Notice the parentheses
   data_filtered <- uploaded_dataRVECont()  # Accessing the reactive result
   tryCatch({
-    result <- with(data_filtered, impute_covariance_matrix(vi = vi, cluster = Study, r = rhoCont()))  # Correctly calling rhoCat()
+    result <- vcalc(vi, cluster = Study, obs=ES_number, data=data_filtered, rho=rhoCont())
     result
   }, error = function(e) {
     print(paste("Error in computing V_RVE:", e$message))  # More informative error message
@@ -5989,7 +5990,7 @@ mod_summary <- reactive({
   
   # Prepare the results table
   result_table <- data.frame(
-    Term = c(rownames(summary_table), "Test of Moderator"),
+    Term = c(rownames(summary_table), ""),
     Estimate = c(round(summary_table[, "estimate"], 3), NA),
     StdError = c(round(summary_table[, "se"], 3), NA),
     TValue = c(round(summary_table[, "tval"], 3), NA),
@@ -6034,8 +6035,7 @@ generate_script_contmodrve <- reactive({
      "",
     "# Impute covariance matrix",
     sprintf("rho <- %.2f", rho_value),
-    "V_RVE <- with(data, impute_covariance_matrix(vi = data$vi, cluster = data$Study, r = rho))",
-    "",
+    "V_RVE <- vcalc(vi, cluster = Study, obs = ES_number, data = data, rho = rho)\n\n",
     "# Run meta-analysis with intercept",
     sprintf("result <- rma.mv(yi = data$yi, V = V_RVE, mods = ~ %s, random = ~ 1 | Study / ES_number, method = 'REML', test = 't', data = data)",
             input$mod_RVECont),
@@ -6200,7 +6200,7 @@ V_RVE_mreg <- reactive({
   req(uploaded_datamregRVE())  # Notice the parentheses
   data_filtered <- uploaded_datamregRVE()  # Accessing the reactive result
   tryCatch({
-    result <- with(data_filtered, impute_covariance_matrix(vi = vi, cluster = Study, r = rhomreg()))  # Correctly calling rhoCat()
+    result <- vcalc(vi, cluster = Study, obs=ES_number, data=data_filtered, rho=rhomreg())
     result
   }, error = function(e) {
     print(paste("Error in computing V_RVE:", e$message))  # More informative error message
@@ -6335,7 +6335,7 @@ observeEvent(input$run_analysismregcRVE, {
     
     # Compute the covariance matrix with the rho value
     cat("# Compute the covariance matrix with the rho value\n")
-    cat("V <- with(df, impute_covariance_matrix(vi = df$vi, cluster = df$Study, r = rho))\n\n")
+    cat("V <- vcalc(vi, cluster = Study, obs = ES_number, data = df, rho = rho)\n\n")
     
     # Perform meta-analysis with robust variance estimation
     cat("# Perform meta-analysis\n")
@@ -6406,7 +6406,7 @@ output$download_codeRVE <- downloadHandler(
     
     # Compute the covariance matrix with the rho value
     script_content <- paste0(script_content, "# Compute the covariance matrix with the rho value\n")
-    script_content <- paste0(script_content, "V <- with(df, impute_covariance_matrix(vi = df$vi, cluster = df$Study, r = rho))\n\n")
+    script_content <- paste0(script_content, "V <- vcalc(vi, cluster = Study, obs = ES_number, data = df, rho = rho)\n\n")
     
     # Perform meta-analysis with robust variance estimation
     script_content <- paste0(script_content, "# Perform meta-analysis\n")
@@ -6496,7 +6496,7 @@ rhocheplot <- reactive({
 # Reactive covariance matrix calculation
 Vcheplot <- reactive({
   req(uploaded_datacheplot())
-  with(uploaded_datacheplot(), impute_covariance_matrix(vi = vi, cluster = Study, r = rhocheplot()))
+  vcalc(vi, cluster = Study, obs=ES_number, data=uploaded_datacheplot(), rho=rhocheplot())
 })
 
 # Compute CHE results
@@ -6581,8 +6581,7 @@ aggregated_datacheplot2 <- reactive({
   aggregatedcheplot2 <- aggregate(cbind(yi, vi) ~ Study, data = dat, function(x) mean(x, na.rm = TRUE))
   
   # Compute new covariance matrix for aggregated data
-  V <- impute_covariance_matrix(vi = aggregatedcheplot2$vi, cluster = aggregatedcheplot2$Study, r = rho)
-  
+  V <- vcalc(aggregatedcheplot2$vi, cluster = aggregatedcheplot2$Study, data=aggregatedcheplot2, rho=rho())
   list(data = aggregatedcheplot2, V = V)
 })
 
@@ -6727,7 +6726,7 @@ generate_script_cheplots <- reactive({
     "",
     "# Impute covariance matrix",
     sprintf("rho <- %.2f", rhocheplot()),
-    "V_RVE <- with(data, impute_covariance_matrix(vi = data$vi, cluster = data$Study, r = rho))",
+    "V_RVE <- vcalc(vi, cluster = Study, obs = ES_number, data = data, rho = rho)",
     "",
     "# Run meta-analysis with intercept",
     "result <- rma.mv(yi = data$yi, V = V_RVE, random = ~ 1 | Study / ES_number, method = 'REML', test = 't', data = data)",
@@ -6741,7 +6740,7 @@ generate_script_cheplots <- reactive({
     "aggregated_data <- aggregate(cbind(yi, vi) ~ Study, data = data, function(x) mean(x, na.rm = TRUE))",
     "",
     "# Impute covariance matrix for aggregated data",
-    "V_aggregated <- with(aggregated_data, impute_covariance_matrix(vi = aggregated_data$vi, cluster = aggregated_data$Study, r = rho))",
+    "V_aggregated <- vcalc(aggregated_data$vi, cluster = aggregated_data$Study, data = aggregated_data, rho = rho)",
     "",
     "# Run meta-analysis for aggregated data",
     "result_aggregated <- rma.mv(yi = aggregated_data$yi, V = V_aggregated, random = ~ 1 | Study, method = 'REML', test = 't', data = aggregated_data)",
