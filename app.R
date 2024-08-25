@@ -68,32 +68,142 @@ ui <- dashboardPage(
                    )
   ),
   dashboardBody(
+    
     tags$head(
       tags$style(HTML(".scrollable {overflow-x: auto; }")),
       tags$style(HTML("
-      .btn-primary {
-        color: #fff;
-        background-color: #007BFF;
-        border-color: #007BFF;
-        padding: 10px 20px;
-        text-align: center;
-        text-decoration: none;
-        display: inline-block;
-        font-size: 16px;
-        margin: 4px 2px;
-        cursor: pointer;
-        border-radius: 8px;
-      }
-      .btn-primary:hover {
-        background-color: #0056b3;
-        border-color: #0056b3;
-      }
+      /* Global styles */
+        body {
+          font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+          background-color: #f5f7fa;
+          color: #333;
+          line-height: 1.6;
+        }
+        
+        /* Header styles */
+        h2 {
+          color: #2c3e50;
+          border-bottom: 2px solid #3498db;
+          padding-bottom: 10px;
+          margin-top: 30px;
+          margin-bottom: 20px;
+        }
+        
+        /* Paragraph styles */
+        p {
+          margin-bottom: 20px;
+          font-size: 16px;
+        }
+        
+        /* Box styles */
+        .box {
+          background-color: #ffffff;
+          border: none;
+          border-radius: 8px;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          margin-bottom: 30px;
+        }
+        
+        .box-header {
+          background-color: #3498db;
+          color: #ffffff;
+          border-radius: 8px 8px 0 0;
+        }
+        
+        .box-title {
+          font-size: 18px;
+          font-weight: 500;
+        }
+        
+        .box-body {
+          padding: 20px;
+        }
+        
+        /* Button styles */
+        .btn-primary {
+          background-color: #3498db;
+          border-color: #3498db;
+          color: #ffffff;
+          padding: 10px 20px;
+          font-size: 16px;
+          border-radius: 5px;
+          transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+          background-color: #2980b9;
+          border-color: #2980b9;
+        }
+        
+        /* Link styles */
+        a {
+          color: #3498db;
+          text-decoration: none;
+          transition: color 0.3s ease;
+        }
+        
+        a:hover {
+          color: #2980b9;
+          text-decoration: underline;
+        }
+        
+       /* Keep all your existing global styles, button styles, etc. */
+
+/* Page content container */
+.page-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 1700px;
+  margin: 20px auto;
+  padding: 0 15px;
+}
+
+/* Common styles for both input and output boxes */
+.content-box {
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  padding: 30px;
+  margin-bottom: 20px;
+}
+
+/* Input section styles */
+.input-section h3 {
+  color: #2c3e50;
+  border-bottom: 2px solid #2c3e50;
+  padding-bottom: 10px;
+  margin-top: 0;
+}
+
+/* Output section styles */
+.output-section h3 {
+  color: #3498db;
+  border-bottom: 2px solid #3498db;
+  padding-bottom: 10px;
+  margin-top: 0;
+}
+
+/* Additional content outside of boxes */
+.additional-content {
+  margin-top: 20px;
+}
+.output-section:empty {
+      display: none;
+    }
     ")),
       ),
+    
+
+ 
+   
     # Main content area
     tabItems(
   ################# Define content for Welcome sub-tabs
       tabItem(tabName = "subtab10",
+              div(class = "page-content",
+                  # Input Section
+                  div(class = "content-box input-section",
               h2("Welcome!"),
               p("Welcome to Simple Meta-Analysis, a software program designed to enable the non-R-coding meta-analyst to use meta-analytical techniques that do not (at the time of writing) exist in any GUI-based software. This software can help you calculate standardized mean difference effect sizes, run random effects conventional meta-analysis, random effects three-level meta-analysis, and random effects three-level meta-analysis with correlated and hierarchical robust variance estimation."),
               p("This app is primarily built upon the metafor package for R, as well as the clubSandwich package. The goal was to help make these packages accessible to the non-coding meta-analyst. Please note that the packages are capable of much more than only the functionality built into this app, however I have tried to focus the app on the techniques that most meta-analysts I know are using (or should be using)."),
@@ -107,24 +217,45 @@ ui <- dashboardPage(
               p("If you use this software, please be sure to cite the software:"),
               box(title = "Citation", width = 12, status = "primary",
                   p("Schroeder, N. L. (2024). Simple meta-analysis. Available from https://github.com/noah-schroeder/simple_meta-analysis/")),
-      ), 
+              ),
+              ),
+      ),
       tabItem(tabName = "subtab11",
+              div(class = "page-content",
+                  # Input Section
+                  div(class = "content-box input-section",
               h2("Need Help Learning Meta-Analysis?"),
               p("If you want help learning meta-analysis or interpreting the results presented by this app, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/'>my open book</a>"), "."),
               ),
+              ),
+      ),
       tabItem(tabName = "subtab12",
+              div(class = "page-content",
+                  # Input Section
+                  div(class = "content-box input-section",
               h2("Underlying R Code"),
               p("The app code repo is located at", HTML("<a href='https://github.com/noah-schroeder/simple_meta-analysis'>github</a>"),"."),
+      
+              ),
+              ),
       ),
       tabItem(tabName = "subtab61",
-              h2("Please Cite This Software"),
+              div(class = "page-content",
+                  # Input Section
+                  div(class = "content-box input-section",
+                      h2("Please Cite This Software"),
               p("If you use this software, please be sure to cite the software:"),
               box(title = "Citation", width = 12, status = "primary",
                   p("Schroeder, N. L. (2024). Simple meta-analysis. Available from https://github.com/noah-schroeder/simple_meta-analysis/")),
       ),
+              ),
+      ),
 
   ### Conventional MA sub-tabs----
       tabItem(tabName = "subtab30",
+              div(class = "page-content",
+                  # Input Section
+                  div(class = "content-box input-section",
               h2("Data Formatting"),
               h4("General Considerations"),
               p(" In conventional meta-analysis, a very important limitation is known as the principle of statistical independence, meaning that each participant can only be counted once. What does this mean for you as a researcher?"),
@@ -137,8 +268,13 @@ ui <- dashboardPage(
               h2("Sample Data Table"),
               p("Note that the ES_number column is not necessary for conventional meta-analysis. However, you should have a Study column with Author names, a yi column (effect size), and a vi column (effect size variance)."),
               div(class = "scrollable", tableOutput("sampledata1")),
+                  ),
+              ),
   ),    
        tabItem(tabName = "subtab31",
+               div(class = "page-content",
+                   # Input Section
+                   div(class = "content-box input-section",
               h2("Calculating effect sizes"), p("In order for this app to calcuate your standardized mean difference effect size (Hedge's g) for each comparison, there are two requirements."),
               h3("Data File Requirements"),
               p("1. Your file must be in .csv format."),
@@ -156,9 +292,14 @@ ui <- dashboardPage(
               p("When your file is properly formatted, you can upload your file and proceed."),
               fileInput("cesfile", "Data", accept = ".csv"),
               actionButton("calc_es_c", "Calculate Effect Sizes and Variances"),
+                   ),
               uiOutput("dynamicResultses")
               ),
+       ),
       tabItem(tabName = "subtab32",
+              div(class = "page-content",
+                  # Input Section
+                  div(class = "content-box input-section",
               h2("Run the Meta-Analysis"),
               p("Now you are ready to run your conventional meta-analysis. This app will help you run a random effects meta-analysis."),
               h3("Upload Your Dataset"),
@@ -171,37 +312,59 @@ ui <- dashboardPage(
               h3("Run the Meta-Analysis"),
               p("As long as your data uploaded, press the Run Meta-Analysis button to run a random effects meta-analysis."),
               actionButton("run_cmac", "Run Meta-Analysis"),
+                  ),
+              # Output Section
               uiOutput("dynamicResultscma")
+           
+              )
       ),
       tabItem(tabName = "subtab33",
+              div(class = "page-content",
+                  # Input Section
+                  div(class = "content-box input-section",
               h2("Check for Outliers and Influence"),
               p("Now you that you ran your meta-analysis, we need to make sure there isn't undue influence or outliers in the data set. We will do that using the influence function in metafor. You should upload the same dataset file as you used to run the meta-analysis."),
               h3("Upload Your Dataset"),
               p("Please use the same file you used to run your meta-analysis."),
               fileInput("inffilec", "Data", accept = ".csv"),
               actionButton("run_infc", "Run Outlier and Influence Analysis"),
+                  ),
               uiOutput("dynamicResultscmainf")
+                  ),
       ),
   tabItem(tabName = "subtab34",
+          div(class = "page-content",
+              # Input Section
+              div(class = "content-box input-section",
           h2("Categorical Moderating Variables"),
           p("This tool will help you check for", strong("categorical"), "moderating variables. Do not use this tool for continuous variables! The first step is to upload your data. Please use the same file you used to run your meta-analysis."),
           fileInput("modfilec", "Upload Moderator Analysis Data", accept = ".csv"),
           p("Once your file is uploaded, you can choose which column in your spreadsheet you want to examine as a moderator variable. Again,", strong("this is for categorical moderators only."), "After you choose your variable from the dropdown menu, click run and your results will be shown."),
           selectInput("dropdownc", "Choose Column for Moderator Analysis", choices = NULL),
           actionButton("run_analysisCcat", "Run Moderator Analysis"),
+              ),
           uiOutput("dynamicResultsCcat"),
+          ),
   ),
   tabItem(tabName = "subtab341",
+          div(class = "page-content",
+              # Input Section
+              div(class = "content-box input-section",
           h2("Continuous Moderator Analysis"),
           p("Continuous Moderator Analysis (single variable meta-regression) can be used to examine the impact of potentially moderating", strong("continuous"), "variables. Do not use this tool for categorical variables you want examined as categorical! The first step is to upload your data. Please use the same file you used to run your meta-analysis."),
           fileInput("modfilecc", "Upload Meta-Regression Analysis Data", accept = ".csv"),
           p("Once your file is uploaded, you can choose which column in your spreadsheet you want to examine as a moderator variable. Again,", strong("this is for continuous moderators only."), "After you choose your variable from the dropdown menu, click run and your results will be shown."),
           selectInput("dropdowncc", "Choose Column for Moderator Analysis", choices = NULL),
           actionButton("run_analysiscc", "Run Moderator Analysis"),
+              ),
           uiOutput("dynamicResultsCc")
+              ),
   ),
   ######Meta-regression----
   tabItem(tabName = "subtab342",
+          div(class = "page-content",
+              # Input Section
+              div(class = "content-box input-section",
           h2("Multiple Meta-Regression"),
           p("This analysis will help you run a random effects multiple meta-regression using any combination of continuous and categorical variables. The first step is to upload your data. Please use the same file you used to run your meta-analysis."),
           # File upload
@@ -215,22 +378,31 @@ ui <- dashboardPage(
                        min = 0, max = 20, value = 0),
           # Render variables button
           actionButton("render_variables", "Select My Variables"),
+              ),
           uiOutput("dynamicResultsCmregVar"),
           uiOutput("dynamicResultsCmregRes"),
-          
+          ),
   ),
    tabItem(tabName = "subtab35",
+           div(class = "page-content",
+               # Input Section
+               div(class = "content-box input-section",
               h2("Publication Bias"),
               p("There are a variety of ways to evaluate publication bias. This tool provides a number of computational and graphic options."),
               h3("Upload Your Data"),
               p("First you need to upload your data. Please use the same file you used to run your meta-analysis."),
               fileInput("pubbiasfilec", "Upload Data", accept = ".csv"),
               actionButton("run_pubc", "Run Publication Bias Analyses"),
+               ),
               uiOutput("dynamicResultsCpub"),
+           ),
       ),
   
   ### 3LMA MA sub-tabs ----
   tabItem(tabName = "subtab401",
+          div(class = "page-content",
+              # Input Section
+              div(class = "content-box input-section",
           h2("General Considerations"),
           p("In conventional meta-analysis each participant can only be counted once. That means we exclude A LOT of data when we use conventional meta-analysis in many education fields. We can use three-level meta-analysis to get around that because it allows us to use dependent data in our analysis. Let’s look at an example: Say you are comparing the impact of learning from a virtual character to a game on learning outcomes. The study you’re coding has two groups, a virtual character group and a game group. It has an immediate learning test, a one week delayed learning test, and a month delayed learning test. Which test do you code? In a three-level meta-analysis, you can code all three! This calculator will help you run a random effects three-level meta-analysis."),
           box(title = "Data Formatting Requirements", width = 12, status = "primary", 
@@ -247,35 +419,13 @@ ui <- dashboardPage(
           h4("Sample Data File"),
           p("In the table below you will see the columns as indicated above. The additional columns are moderator variables. The order of your columns does not matter, only the titles of the columns listed above. Your moderators can have any name, but I recommend having no spaces in the name."),
           div(class = "scrollable", tableOutput("sampledatatable3lma")),
-  ),    
-  tabItem(tabName = "subtab41",
-              h1("Calculating effect sizes"), p("In order for this app to calcuate your standardized mean difference effect size (Hedge's g) for each comparison, there are two requirements."),
-              h2("Data File Requirements"),
-              p("1. Your file must be in .csv format."),
-              p("2. Your data must be organized in a specific way. "),
-              h3("Your data file must contain columns labeled as follows:"),
-              p("You should have a column labeled", strong("ES_number"), "which sequentially numbers every row."),
-              p("You should have a column labeled", strong("Study"), "which is the name of each study."),
-              p("Treatment mean must be labeled", strong("intmean")),
-              p("Treatment standard deviation must be labeled", strong("intsd")),
-              p("Treatment sample size must be labeled", strong("intn")),
-              p("Control mean must be labeled", strong("cmean")),
-              p("Control standard deviation must be labeled", strong("csd")),
-              p("Control sample size must be labeled", strong("cn")),
-              h3("Sample Data File"),
-              p("A sample data file is available at:", HTML("<a href='https://github.com/noah-schroeder/reviewbook/blob/abfdb439ef81267b388ef75067a03262e1e59020/360%20sample%20data.csv'>Sample Data File</a>")),
-              p("When your file is properly formatted, you can upload your file and proceed."),
-              fileInput("file", "Data", accept = ".csv"),
-              actionButton("calc_es", "Calculate Effect Sizes and Variances"),
-              conditionalPanel(
-                condition = "input.calc_es > 0",
-                h2("Understand the results"),
-                p("Your results appear below. You will see your entire data file, but at the end are appended columns yi and vi, which are your effect size (Hedge's g) and variance, respectively. You are now ready to move forward to data analysis."), strong("You must download the result of this analysis to use for the rest of your analysis. Simply click 'download data' and save the file, then proceed to the next step."),
-                downloadButton("download_button", label = "Download Data"),
-                verbatimTextOutput("esresult_output")
               ),
-      ),
+          ),
+  ),    
       tabItem(tabName = "subtab42",
+              div(class = "page-content",
+                  # Input Section
+                  div(class = "content-box input-section",
               h2("Run the Meta-Analysis"),
               p("Now you are ready to run your three-level meta-analysis. This app will help you run a random effects meta-analysis."),
               h3("Upload Your Dataset"),
@@ -285,9 +435,14 @@ ui <- dashboardPage(
               h3("Run the Meta-Analysis"),
               p("As long as your data uploaded, press the Run Meta-Analysis button to run a random effects meta-analysis."),
               actionButton("run_cma", "Run Meta-Analysis"),
+                  ),
               uiOutput("dynamicResults3lmaoverall"),
+              ),
       ),
       tabItem(tabName = "subtab43",
+              div(class = "page-content",
+                  # Input Section
+                  div(class = "content-box input-section",
               h2("Explaining the Variance"),
               p("Before moving forward, it is important to understand the variance within your three-level meta-analysis. Let's explore that by calculating I", HTML("<sup>2</sup>.")),
               h3("Upload Your Dataset"),
@@ -297,41 +452,62 @@ ui <- dashboardPage(
               h3("Calculate I2"),
               p("As long as your data uploaded, press the Calculate I2", "button to examine where the variance in your model can be attributed to."),
               actionButton("run_i2", "Calculate I2"),
+                  ),
               uiOutput("dynamicResults3lmai2"),
+              ),
       ),
   tabItem(tabName = "subtab44",
+          div(class = "page-content",
+              # Input Section
+              div(class = "content-box input-section",
           h2("Check for Outliers and Influence"),
           p("Now you that you ran your meta-analysis, we need to make sure there isn't undue influence or outliers in the data set. We will do that using the van Lissa's (n.d.) method of checking for outliers, and examining the Cook's Distance, DFBETAs, and hat values for influence."),
           h3("Upload Your Dataset"),
           p("You should use the same data file you used to run the meta-analysis. The file must be a .csv."),
           fileInput("inffile", "Data", accept = ".csv"),
           actionButton("run_inf", "Run Outlier and Influence Analysis"),
+              ),
           conditionalPanel(
             condition = "input.run_inf > 0",
             box( title = "Important Note", width = 12, status = "primary",
                  p("The results may take a minute (literally a minute) to load. Please be patient. If you're seeing this message, the app is processing the analyses. There is a progress bar in the bottom right corner of the screen. The DFBETAS analysis typically takes the longest to run."))),
+              
           uiOutput("dynamicResults3lmaout"),
+          ),
   ),
       tabItem(tabName = "subtab45",
+              div(class = "page-content",
+                  # Input Section
+                  div(class = "content-box input-section",
               h2("Categorical Moderating Variables"),
               p("This tool will help you check for", strong("categorical"), "moderating variables. Do not use this tool for continuous variables! The first step is to upload your data. This should be the same data you used to run the meta-analysis."),
               fileInput("modfile", "Upload Moderator Analysis Data", accept = ".csv"),
               p("Once your file is uploaded, you can choose which column in your spreadsheet you want to examine as a moderator variable. Again,", strong("this is for categorical moderators only."), "After you choose your variable from the dropdown menu, click run and your results will be shown."),
               selectInput("dropdown", "Choose Column for Moderator Analysis", choices = NULL),
               actionButton("run_analysis", "Run Moderator Analysis"),
+                  ),
               uiOutput("dynamicResults3lCcat")
+              ),
       ),
   tabItem(tabName = "subtab451",
+          div(class = "page-content",
+              # Input Section
+              div(class = "content-box input-section",
           h2("Continuous Moderator Analysis"),
           p("This tool will help you check for", strong("continuous"), "moderating variables (single variable meta-regression). Do not use this tool for categorical variables you wish to examine by category! The first step is to upload your data. This should be the same data you used to run the meta-analysis."),
           fileInput("modfilea", "Upload Moderator Analysis Data", accept = ".csv"),
           p("Once your file is uploaded, you can choose which column in your spreadsheet you want to examine as a moderator variable. Again,", strong("this is for continuous moderators only."), "After you choose your variable from the dropdown menu, click run and your results will be shown."),
           selectInput("dropdowna", "Choose Column for Moderator Analysis", choices = NULL),
           actionButton("run_analysisa", "Run Moderator Analysis"),
+          ),
           uiOutput("dynamicResults3lCcont")
+          ),
   ),
   ######Meta-regression----
   tabItem(tabName = "subtab452",
+          div(class = "page-content",
+              # Input Section
+              div(class = "content-box input-section",
           h2("Multiple Meta-Regression"),
           p("This analysis will help you run a random effects multiple meta-regression with your three-level meta-analysis model using any combination of continuous and categorical variables. The first step is to upload your data. Please use the same file you used to run your meta-analysis."),
           # File upload
@@ -345,21 +521,31 @@ ui <- dashboardPage(
                        min = 0, max = 20, value = 0),
           # Render variables button
           actionButton("render_variables3lma", "Select My Variables"),
+              ),
           uiOutput("dynamicResultsCmregVar3lma"),
           uiOutput("dynamicResultsCmregRes3lma"),
+          ), 
           
   ),
       tabItem(tabName = "subtab46",
+              div(class = "page-content",
+                  # Input Section
+                  div(class = "content-box input-section",
               h2("Publication Bias"),
               p("There are a variety of ways to evaluate publication bias. This tool provides a number of computational and graphic options."),
               h3("Upload Your Data"),
               p("First you need to upload your data. This is the same data file you used for the overall meta-analysis and moderator analysis. Only .csv files are accepted."),
               fileInput("pubbiasfile", "Upload Data", accept = ".csv"),
               actionButton("run_pub", "Run Publication Bias Analyses"),
+              ),
               uiOutput("dynamicResults3lpub"),
+              ),
       ),
 ### CHERVE 3LMA Subtabs ---- 
       tabItem(tabName = "subtab51",
+              div(class = "page-content",
+                  # Input Section
+                  div(class = "content-box input-section",
               h2("General Considerations"),
               p("In conventional meta-analysis each participant can only be counted once. That means we exclude A LOT of data when we use conventional meta-analysis in many education fields. We can use three-level meta-analysis with correlated and hierarchical effects and robust variance estimation to get around that because it allows us to use dependent data in our analysis. Let’s look at an example: Say you are comparing the impact of learning from a virtual character to a game on learning outcomes. The study you’re coding has two groups, a virtual character group and a game group. It has an immediate learning test, a one week delayed learning test, and a month delayed learning test. Which test do you code? In a three-level meta-analysis, you can code all three! With CHE RVE, we can also make assumptions about the correlation between these tests, leading to a more precise estimate. This calculator will help you run a random effects three-level meta-analysis with CHE RVE."),
               box(title = "Data Formatting Requirements", width = 12, status = "primary", 
@@ -376,9 +562,14 @@ ui <- dashboardPage(
               h4("Sample Data File"),
               p("In the table below you will see the columns as indicated above. The additional columns are moderator variables. The order of your columns does not matter, only the titles of the columns listed above. Your moderators can have any name, but I recommend having no spaces in the name."),
               div(class = "scrollable", tableOutput("sampledatatable")),
+                  ),
+              ),
       ),
   tabItem(tabName = "subtab52",
           # Header and paragraph for data upload
+          div(class = "page-content",
+              # Input Section
+              div(class = "content-box input-section",
           h2("Upload Your Data"),
           p("First you need to upload your data. This is the same data file you used for the overall meta-analysis and moderator analysis. Only .csv files are accepted."),
           fileInput("chefile", "Upload Data", accept = ".csv"),
@@ -392,9 +583,14 @@ ui <- dashboardPage(
           h4("Correlation to be assumed"),
           selectInput("correlation", label = NULL, choices = seq(-1, 1, by = 0.01), selected = 0.60),
           actionButton("run_che", "Run Three-level CHE RVE Meta-Analysis"),
+              ),
           uiOutput("dynamicResultsche"),
+          ),
      ),
   tabItem(tabName = "subtab53",
+          div(class = "page-content",
+              # Input Section
+              div(class = "content-box input-section",
           h2("Explaining the Variance"),
           p("Before moving forward, it is important to understand the variance within your three-level CHE RVE meta-analysis. Let's explore that by calculating I", HTML("<sup>2</sup>.")),
           h3("Upload Your Dataset"),
@@ -406,9 +602,14 @@ ui <- dashboardPage(
           h3("Calculate I2"),
           p("As long as your data uploaded, press the Calculate I2", "button to examine where the variance in your model can be attributed to."),
           actionButton("run_i2RVE", "Calculate I2"),
+          ), 
           uiOutput("dynamicResultschevar")
+          ),
   ),
   tabItem(tabName = "subtab54",
+          div(class = "page-content",
+              # Input Section
+              div(class = "content-box input-section",
           h2("Check for Outliers and Influence"),
           p("Now you that you ran your meta-analysis, we need to make sure there isn't undue influence or outliers in the data set. We will do that using the van Lissa's (n.d.) method of checking for outliers, and examining the Cook's Distance, DFBETAs, and hat values for influence."),
           h3("Upload Your Dataset"),
@@ -421,6 +622,7 @@ ui <- dashboardPage(
           selectInput("correlationrve", "Set rho value:", choices = seq(-1, 1, by = 0.01), selected = 0.60),
           # Button to run analysis
           actionButton("run_infrve", "Run Outlier and Influence Analysis"),
+              ),
           conditionalPanel(
             condition = "input.run_infrve > 0",
             box(title = "Important Note", width = 12, status = "primary", 
@@ -430,8 +632,12 @@ ui <- dashboardPage(
             uiOutput("progressrve"),
           ),
           uiOutput("dynamicResultsinf"),  
+          ),
   ),
   tabItem(tabName = "subtab55",
+          div(class = "page-content",
+              # Input Section
+              div(class = "content-box input-section",
           # Header and paragraph for data upload
           h2(" Categorical Moderating Variables"),
           p("This tool will help you check for", strong("categorical"), "moderating variables. Do not use this tool for continuous variables! The first step is to upload your data. This should be the same data you used to run the meta-analysis."),
@@ -450,9 +656,14 @@ ui <- dashboardPage(
           selectInput("mod_RVECat", "Select Moderator Variable:", choices = NULL),
           # Button to run analysis
           actionButton("run_cheCat", "Run Analysis", icon = icon("play")),
+              ),
           uiOutput("dynamicResults"),
+          ),
   ),
 tabItem(tabName = "subtab56",
+        div(class = "page-content",
+            # Input Section
+            div(class = "content-box input-section",
         # Header and paragraph for data upload
         h2("Continuous Moderator Analysis"),
         p("This tool will help you check for", strong("continuous"), "moderating variables (single variable meta-regression). Do not use this tool for categorical variables you wish to examine by category! The first step is to upload your data. This should be the same data you used to run the meta-analysis."),
@@ -471,10 +682,15 @@ tabItem(tabName = "subtab56",
         selectInput("mod_RVECont", "Select Moderator Variable:", choices = NULL),
         # Button to run analysis
         actionButton("run_cheCont", "Run Analysis", icon = icon("play")),
+            ),
         uiOutput("dynamicResultsCont"),
+        ),
 ),
 ######Meta-regression----
 tabItem(tabName = "subtab561",
+        div(class = "page-content",
+            # Input Section
+            div(class = "content-box input-section",
         h2("Multiple Meta-Regression"),
         p("This analysis will help you run a random effects multiple meta-regression with your correlated and hierarchical effects model with robust variance estimation (RVE) using any combination of continuous and categorical variables. The first step is to upload your data. Please use the same file you used to run your meta-analysis."),
         # File upload
@@ -492,10 +708,15 @@ tabItem(tabName = "subtab561",
                      min = 0, max = 20, value = 0),
         # Render variables button
         actionButton("render_variablesRVE", "Select My Variables"),
+            ),
         uiOutput("dynamicResultsCmregVarRVE"),
         uiOutput("dynamicResultsCmregResRVE"),
+        ),
 ),
   tabItem(tabName = "subtab57",
+          div(class = "page-content",
+              # Input Section
+              div(class = "content-box input-section",
           h3("Upload Your Data"),
           p("First you need to upload your data. This is the same data file you used for the overall meta-analysis and moderator analysis. Only .csv files are accepted."),
           fileInput("chefileplot", "Upload Data", accept = ".csv"),
@@ -508,11 +729,16 @@ tabItem(tabName = "subtab561",
           
           # Button to run analysis
           actionButton("run_cheplot", "Create Plots", icon = icon("play")),
+          ),
           uiOutput("dynamicResultcheplot"),
+          ),
   ),
 
 ### References----
       tabItem(tabName = "subtab71",
+              div(class = "page-content",
+                  # Input Section
+                  div(class = "content-box input-section",
               h2("References"),
               p("Chang, W, Cheng, J, Allaire, J, Sievert, C, Schloerke, B, Xie, Y, Allen, J, McPherson, J, Dipert, A, Borges, B. (2023). _shiny: Web Application Framework for R_. R package version 1.8.0, <https://CRAN.R-project.org/package=shiny>."),
               p("Cheung, M. W. L. (2015). Meta-analysis: A structural equation modeling approach. Wiley Interdisciplinary Reviews: Computational Statistics, 7(3), 149-161. doi:10.1002/wics.1340"),
@@ -525,25 +751,41 @@ tabItem(tabName = "subtab561",
               p("Wickham, H. (2011). The split-apply-combine strategy for data analysis. Journal of Statistical Software, 40(1), 1-29. Retrieved from https://www.jstatsoft.org/v40/i01/"),
               p("Wickham, H., Averick, M., Bryan, J., Chang, W., McGowan, L. D. A., François, R., ... & Yutani, H. (2019). Welcome to the Tidyverse. Journal of open source software, 4(43), 1686."),
               p("Wickham, H., François, R., Henry, L., & Müller, K. (2021). dplyr: A grammar of data manipulation. R package version 1.0.8. https://CRAN.R-project.org/package=dplyr")
-              
+                  ),
+              ),
       ),
 ##Validation ----
 tabItem(tabName = "subtab81",
+        div(class = "page-content",
+            # Input Section
+            div(class = "content-box input-section",
         h2("Validating the Analyses"),
         p("All analyses now provide the R code to replicate the analysis. Each code can be downloaded and is customized to your data."),
 ),
+),
+        ),
   ################# Define content for Acknowledgments sub-tabs
    tabItem(tabName = "subtab91",
-          h2("Acknowledgements"),
+           div(class = "page-content",
+               # Input Section
+               div(class = "content-box input-section",
+           h2("Acknowledgements"),
           h4("Developers"),
           p("This software would not be possible without the variety of R packages and codes that it utilizes. While all the packages should be cited on the references page, SMA utilizes metafor for all its meta-analysis functions and clubSandwich for robust variance estimation. So, I am grateful for those like Wolfgang Viechtbauer (metafor) and James Pustejovsky (clubSandwich) who are creating R packages to help us all do our research."),
           h4("Generative AI"),
           p("I was not famililar with Shiny when I began building this app, so a lot of the code was created with the assistance of ChatGPT 3.5 and Claude."),
-      ),
+               ),
+           ),
+          ),
 ################# Define content for Change log 
 ##Change Log---- 
 tabItem(tabName = "subtab101",
+        div(class = "page-content",
+            # Input Section
+            div(class = "content-box input-section",
         h2("Change Log"),
+        h3("8.18.24"),
+        p("- Substantial changes to the user interface to modernize it."),
         h3("8.18.24"),
         p("- Changed impute_covariance_matrix() from clubSandwich to vcalc() from metafor for all 3LMA CHERVE analyses due to impute_covariance_matrix() being deprecated."),
         h3("7.21.24"),
@@ -557,7 +799,9 @@ tabItem(tabName = "subtab101",
         p("- Added residual heterogeneity to conventional meta-analysis for categorical and continuous moderator analyses."),
         p("- Updated those tables for consistent headings with other analyses."),
         p("- Updated p value display for those analyses so that instead of p = .001, it will display p < .001 if its less."),
-)
+),
+),
+        )
     )
   )
 )
@@ -1210,11 +1454,13 @@ server <- function(input, output, session) {
   output$dynamicResultses <- renderUI({
     if (resultsVisiblees()) {
       tagList(
-          h2("Understand the results"),
+        div(class = "content-box output-section",  
+        h2("Understand the results"),
           p("Your results appear below. You will see your entire data file, but at the end are appended columns yi and vi, which are your effect size (Hedge's g) and variance, respectively. You are now ready to move forward to data analysis."), strong("You must download the result of this analysis to use for the rest of your analysis. Simply click 'download data' and save the file, then proceed to the next step."),
           p(""), 
           downloadButton("download_button_c", label = "Download Data"),
           verbatimTextOutput("esresultc_output")
+        ),
         )
     }
   })
@@ -1269,6 +1515,7 @@ server <- function(input, output, session) {
   output$dynamicResultscma <- renderUI({
     if (resultsVisiblecma()) {
       tagList(
+        div(class = "content-box output-section",
           h3("Random Effects Meta-Analysis of Standardized Mean Differences Results"),
           downloadButton("cmadownload_buttonc", label = "Download Results"),
           verbatimTextOutput("cmaresultc_output"),
@@ -1288,6 +1535,7 @@ server <- function(input, output, session) {
           h3("Need Help Understanding The Results?"),
           p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#interpreting-the-results'>my open book</a>"),
           ),
+        )
       )
     }
   })
@@ -1456,7 +1704,8 @@ server <- function(input, output, session) {
   output$dynamicResultscmainf <- renderUI({
     if (resultsVisiblecinf()) {
       tagList(
-          h3("Outlier and Influence Results"),
+        div(class = "content-box output-section",  
+        h3("Outlier and Influence Results"),
           p("Check the 'inf' column. If you see an asterisk (*), it means at least one criteria exceeded a critical value and the study should be examined."),
           downloadButton("infdownload_buttonc", label = "Download Infuence Analysis Results"),
           verbatimTextOutput("resultforinf_outputc"),
@@ -1466,6 +1715,7 @@ server <- function(input, output, session) {
           h3("Need Help Understanding The Results?"),
           p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#checking-for-outliers-and-influence'>my open book</a>"),
           ),
+        ),
         )
     }
   })
@@ -1592,6 +1842,7 @@ server <- function(input, output, session) {
   output$dynamicResultsCcat <- renderUI({
     if (resultsvisibleCcat()) {
       tagList(
+        div(class = "content-box output-section",
         # Display the results
         box(title = "Important Note", width = 12, status = "primary",
         p("In metafor there are two different tests of the moderator. The table below presents the omnibus test of moderators from the model with an intercept. This is the same statistic as you may be used to seeing as Qbetween in conventional meta-analysis. The effect sizes etc. provided in the moderator table below are from the model without an intercept. In a conventional meta-analysis, this is a presentation consistent with what you may expect to see from other software packages such as Comprehensive Meta-Analysis."),
@@ -1611,6 +1862,7 @@ server <- function(input, output, session) {
         verbatimTextOutput("generated_scriptc"),
         h3("Need Help Understanding The Results?"),
         p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#moderator-analysis'>my open book</a>"),
+        ),
         ),
       )
     }
@@ -1865,6 +2117,7 @@ server <- function(input, output, session) {
   output$dynamicResultsCc <- renderUI({
     if (resultsvisibleCc()) {
       tagList(
+        div(class = "content-box output-section",
         # Display the results
         h3("Effect Size Table"),
         p("Below is our table that shows the relevant statistics for your single-variable meta-regression. Remember, your Test of Moderators above tells you if the moderator is significant."),
@@ -1878,6 +2131,7 @@ server <- function(input, output, session) {
         verbatimTextOutput("generated_scriptcc"),
         h3("Need Help Understanding The Results?"),
         p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#moderator-analysis'>my open book</a>"),
+        ),
         ),
       )
     }
@@ -2104,11 +2358,14 @@ server <- function(input, output, session) {
   output$dynamicResultsCmregVar <- renderUI({
     if (resultsvisibleCmreg()) {
       tagList(
+        div(class = "content-box output-section",
         # Display the results
         # Display variable selection
+        h2("Select Your Variables"),
         uiOutput("variable_selection"),
         # Run analysis button
         actionButton("run_analysismregc", "Run Analysis"),
+        ),
       )
     }
   })
@@ -2116,6 +2373,7 @@ server <- function(input, output, session) {
     output$dynamicResultsCmregRes <- renderUI({
       if (resultsvisiblecmregall()) {
         tagList(
+          div(class = "content-box output-section",
           h3("Results"),
         # Display meta-analysis results
         box(title = "Important Note", width = 12, status = "primary",
@@ -2130,6 +2388,7 @@ server <- function(input, output, session) {
         h3("Need Help Understanding The Results?"),
         p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#moderator-analysis'>my open book</a>"),
         ),
+          ),
       )
     }
   })
@@ -2356,7 +2615,8 @@ server <- function(input, output, session) {
   output$dynamicResultsCpub  <- renderUI({
     if (resultsvisibleCpub()) {
       tagList(
-          h3("Funnel Plot"),
+        div(class = "content-box output-section",  
+        h3("Funnel Plot"),
           downloadButton("download_funnelc", "Download Funnel Plot"),
           plotOutput("funnel_plotc", width = 800, height = 600),
           h3("Trim and Fill Analysis"),
@@ -2379,6 +2639,7 @@ server <- function(input, output, session) {
           verbatimTextOutput("generated_codepubbias"),
           h3("Need Help Understanding The Results?"),
           p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#publication-bias'>my open book</a>")),
+        ),
         )
     }
   })
@@ -2720,7 +2981,8 @@ server <- function(input, output, session) {
       if (resultsvisible3lmaoverall()) {
         tagList(
           # Display the results
-            h3("Random Effects Meta-Analysis of Standardized Mean Differences Results"),
+          div(class = "content-box output-section",  
+          h3("Random Effects Meta-Analysis of Standardized Mean Differences Results"),
             downloadButton("cmadownload_button", label = "Download Results"),
             verbatimTextOutput("cmaresult_output"),
             h4("Methods Notes"),
@@ -2731,7 +2993,8 @@ server <- function(input, output, session) {
             h3("Need Help Understanding The Results?"),
             p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#interpreting-the-results'>my open book</a>"),
             ),
-          )
+          ),
+        )
       }
     })
     
@@ -2855,7 +3118,8 @@ server <- function(input, output, session) {
     output$dynamicResults3lmai2 <- renderUI({
       if (resultsvisible3lmai2()) {
         tagList(
-            #display result
+          div(class = "content-box output-section",  
+          #display result
             h3("I2 Results"),
             downloadButton("download_i2_results", label = "Download Results"),
             verbatimTextOutput("i2result_output"),
@@ -2868,6 +3132,7 @@ server <- function(input, output, session) {
             h3("Need Help Understanding The Results?"),
             p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#interpreting-the-results'>my open book</a>"),
             ),
+          ),
          )}
     })
     
@@ -2993,6 +3258,7 @@ server <- function(input, output, session) {
     output$dynamicResults3lmaout <- renderUI({
       if (resultsvisible3lmaout()) {
         tagList(
+          div(class = "content-box output-section",
           #progress bar
             conditionalPanel(
               condition = "output.progressActive",
@@ -3013,6 +3279,7 @@ server <- function(input, output, session) {
             h3("Need Help Understanding The Results?"),
             p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#checking-for-outliers-and-influence'>my open book</a>"),
             ),
+          ),
           )
     }
     })
@@ -3254,6 +3521,7 @@ server <- function(input, output, session) {
     output$dynamicResults3lCcat <- renderUI({
       if (resultsvisible3lCcat()) {
         tagList(
+          div(class = "content-box output-section",
           # Display the results
           box(title="Important Note", width = 12, status = "primary",
           p("In metafor there are two different tests of the moderator. The table below presents the omnibus test of moderators from the model with an intercept. This is the same statistic as you may be used to seeing as Qbetween in conventional meta-analysis. The effect sizes etc. provided in the moderator table below are from the model without an intercept. In a conventional meta-analysis, this is a presentation consistent with what you may expect to see from other software packages such as Comprehensive Meta-Analysis.")),
@@ -3273,6 +3541,7 @@ server <- function(input, output, session) {
           verbatimTextOutput("script_display_catmodtlma"),
           h3("Need Help Understanding The Results?"),
           p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#moderator-analysis'>my open book</a>"),
+          ),
           ),
         )
       }
@@ -3704,6 +3973,7 @@ server <- function(input, output, session) {
     output$dynamicResults3lCcont <- renderUI({
       if (resultsvisibleRVECont3lCcont()) {
         tagList(
+          div(class = "content-box output-section",
           # Display the results
           box( title= "Important Note", width = 12, status = "primary",
           p("In metafor there are two different tests of the moderator. The table below presents the omnibus test of moderators from the model with an intercept. This is the same statistic as you may be used to seeing as Qbetween in conventional meta-analysis. The effect sizes etc. provided in the moderator table below are from the model without an intercept. In a conventional meta-analysis, this is a presentation consistent with what you may expect to see from other software packages such as Comprehensive Meta-Analysis.")),
@@ -3720,6 +3990,7 @@ server <- function(input, output, session) {
           verbatimTextOutput("script_display_contmodtlma"),
           h3("Need Help Understanding The Results?"),
           p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#moderator-analysis'>my open book</a>"),
+          ),
           ),
         )
       }
@@ -3925,11 +4196,14 @@ server <- function(input, output, session) {
     output$dynamicResultsCmregVar3lma <- renderUI({
       if (resultsvisibleCmreg3lma()) {
         tagList(
+          div(class = "content-box output-section",
           # Display the results
           # Display variable selection
+          h2("Select Your Variables"),
           uiOutput("variable_selection3lma"),
           # Run analysis button
           actionButton("run_analysismregc3lma", "Run Analysis"),
+          ),
         )
       }
     })
@@ -3937,6 +4211,7 @@ server <- function(input, output, session) {
     output$dynamicResultsCmregRes3lma <- renderUI({
       if (resultsvisiblecmregall3lma()) {
         tagList(
+          div(class = "content-box output-section",
           h3("Results"),
           # Display meta-analysis results
           box(title = "Important Note", width = 12, status = "primary",
@@ -3952,6 +4227,7 @@ server <- function(input, output, session) {
           verbatimTextOutput("generated_script3lma"),
           h3("Need Help Understanding The Results?"),
           p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#moderator-analysis'>my open book</a>"),
+          ),
           ),
         )
       }
@@ -4183,13 +4459,16 @@ server <- function(input, output, session) {
     output$dynamicResults3lpub <- renderUI({
       if (resultsvisibleRVECont3lpub()) {
         tagList(
-            h3("Check The Data Preparation"),
+          div(class = "content-box output-section",  
+          h3("Check The Data Preparation"),
             p("The app has added a few columns to your data, so it is imporant to check them before creating our plots. The most important item to check is to make sure that your unique studies are sequentially numbered. The table below presents your data, organized by author name alphabetically. Each unique study should be assigned a unique number in the Study column. If that is correct, the other items should be correct as well. Column 'out' refers to unique outcomes; these are organized by how they are organized in your data file so they may not be sequentially numbered here. That is OK and you generally do not need to check this column. You also generally do not need to check the standard error calculation, however you are of course welcome to if you wish."),
             div(class = "scrollable",  tableOutput("data_summary")),
             h3("Forest Plot"),
             actionButton("forest", "Generate Forest and Funnel Plots"),
-            conditionalPanel(
+          ),
+          conditionalPanel(
               condition = "input.forest > 0",
+              div(class = "content-box output-section",
               box( title = "*Important Note*", width = 12, status = "primary",
                    p("The plots are rendered at 'half-page' height (800px by 600px) within the software. You may choose to download at this size (about half a standard page in height) or full-page size. If you need a taller image (most typical on the comparison-level forest plot) than the 'full-page' download size may be helpful.",
                    )),
@@ -4212,6 +4491,7 @@ server <- function(input, output, session) {
               h3("Need Help Understanding The Results?"),
               p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#publication-bias'>my open book</a>")),
             ),
+          ),
           )
       }
     })
@@ -4489,7 +4769,8 @@ observeEvent(input$chefile, {
 output$dynamicResultsche <- renderUI({
   if (resultsVisibleRVE()) {
     tagList(
-      h3("Model Result"),
+      div(class = "content-box output-section",
+          h3("Model Result"),
       downloadButton("downloadRVEvar", "Download RVE Results"),
       verbatimTextOutput("che_resultsrobust"),
       h2("Sensitivity Check"),
@@ -4500,6 +4781,7 @@ output$dynamicResultsche <- renderUI({
       h3("R Script"),
       downloadButton("downloadRScriptche"),
       verbatimTextOutput("viewRScriptche"),
+      ),
       )
   }
 })
@@ -4833,6 +5115,7 @@ observeEvent(input$i2fileRVE, {
 output$dynamicResultschevar <- renderUI({
   if (resultsVisibleRVEvar()) {
     tagList(
+      div(class = "content-box output-section",
       h3("I2 Results"),
       box(title = "Important Note", width = 12, status = "primary",
           p("The i2 values are based on the CHE model and do not include robust variance estimation. "),
@@ -4845,6 +5128,7 @@ output$dynamicResultschevar <- renderUI({
       verbatimTextOutput("viewRScripti2RVE"),
       h3("Need Help Understanding The Results?"),
       p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#interpreting-the-results'>my open book</a>"),
+      ),
       ),
     )
   }
@@ -5046,6 +5330,7 @@ observeEvent(input$inffilerve, {
 output$dynamicResultsinf <- renderUI({
   if (resultsVisibleRVEinf()) {
     tagList(
+      div(class = "content-box output-section",
       h3("Outlier Results"),
       downloadButton("download_outliersrve", "Download Outlier Plot"),
       plotOutput("outlier_plotrve"),
@@ -5061,6 +5346,7 @@ output$dynamicResultsinf <- renderUI({
       verbatimTextOutput("viewRScriptoutlierinfRVE"),
       h3("Need Help Understanding The Results?"),
       p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#checking-for-outliers-and-influence'>my open book</a>"),
+      ),
       ),
     )
   }
@@ -5413,6 +5699,7 @@ observeEvent(input$chefileCat, {
 output$dynamicResults <- renderUI({
   if (resultsVisibleRVECat()) {
     tagList(
+      div(class = "content-box output-section",
       box(title = "Important Notes*", width = 12, status = "primary",
            p("In metafor there are two different tests of the moderator. The table below presents the omnibus test of moderators from the model with an intercept. This is the same statistic as you may be used to seeing as Qbetween in conventional meta-analysis. The effect sizes etc. provided in the moderator table below are from the model without an intercept. In a conventional meta-analysis, this is a presentation consistent with what you may expect to see from other software packages such as Comprehensive Meta-Analysis."),
            p("Please also note that since we are using CHE RVE, any levels of the moderator that only have 1 comparison will be automatically removed and noted in the last row of the table."),
@@ -5434,6 +5721,7 @@ output$dynamicResults <- renderUI({
       verbatimTextOutput("replicate_scriptcatmodRVE"),
       h3("Need Help Understanding The Results?"),
       p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#moderator-analysis'>my open book</a>"),
+      ),
       ),
     )
   }
@@ -5871,6 +6159,7 @@ observeEvent(input$chefileCont, {
 output$dynamicResultsCont <- renderUI({
   if (resultsVisibleRVECont()) {
     tagList(
+      div(class = "content-box output-section",
       h3("Model Result"),
       downloadButton("downloadRVE_RVECont", "Download Formatted Results as Table"),downloadButton("downloadRVE_RVECont_int", "Download Full Results (Intercept Model)"),
       div(class = "scrollable", tableOutput("custom_results_RVECont")),
@@ -5882,6 +6171,7 @@ output$dynamicResultsCont <- renderUI({
       h3("R Script"),
       downloadButton("download_scriptcontmodRVE"),
       verbatimTextOutput("replicate_scriptcontmodRVEa"),
+      ),
     )
   }
 })
@@ -6146,11 +6436,13 @@ observe({
 output$dynamicResultsCmregVarRVE <- renderUI({
   if (resultsvisibleCmregRVE()) {
     tagList(
-      # Display the results
+      div(class = "content-box output-section",# Display the results
       # Display variable selection
+      h2("Select Your Variables"),
       uiOutput("variable_selectionRVE"),
       # Run analysis button
       actionButton("run_analysismregcRVE", "Run Analysis"),
+      ),
     )
   }
 })
@@ -6158,7 +6450,8 @@ output$dynamicResultsCmregVarRVE <- renderUI({
 output$dynamicResultsCmregResRVE <- renderUI({
   if (resultsvisiblecmregallRVE()) {
     tagList(
-      h3("Results"),
+      div(class = "content-box output-section",
+          h3("Results"),
       # Display meta-analysis results
       box(title = "Important Note", width = 12, status = "primary",
           p("Note that categorical moderators are treated as factors with distinct levels. The results below are from the model including an intercept."),
@@ -6173,6 +6466,7 @@ output$dynamicResultsCmregResRVE <- renderUI({
       verbatimTextOutput("generated_scriptRVE"),
       h3("Need Help Understanding The Results?"),
       p("If you want help interpreting these results, please see ", HTML("<a href='https://noah-schroeder.github.io/reviewbook/meta.html#moderator-analysis'>my open book</a>"),
+      ),
       ),
     )
   }
@@ -6452,7 +6746,8 @@ observeEvent(input$correlationplot, {
 output$dynamicResultcheplot <- renderUI({
   if (resultsVisibleRVEplots()) {
     tagList(
-      box( title = "*Important Note*", width = 12, status = "primary",
+      div(class = "content-box output-section",
+          box( title = "*Important Note*", width = 12, status = "primary",
            p("The plots are rendered at 'half-page' height (800px by 600px) within the software. You may choose to download at this size (about half a standard page in height) or full-page size. If you need a taller image (most typical on the comparison-level forest plot) than the 'full-page' download size may be helpful.",
            )),
       h4("Comparison-level Forest Plot"),
@@ -6472,6 +6767,7 @@ output$dynamicResultcheplot <- renderUI({
       h3("R Script"),
       downloadButton("downloadScript_cheplots"),
       verbatimTextOutput("rScript_cheplots"),
+      ),
     )
   }
 })
@@ -6771,11 +7067,6 @@ output$downloadScript_cheplots <- downloadHandler(
 
 
 
-
-
-
-
-    
     
     
 # end don't change below this line'   ----      
