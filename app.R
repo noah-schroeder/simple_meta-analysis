@@ -3,7 +3,7 @@ library(shiny)
 library(shinydashboard)
 
 # Define UI ---- 
-ui <- dashboardPage(
+ui <- dashboardPage(title= "Simple Meta-Analysis",
   dashboardHeader(
     title = tags$div(
       tags$img(src = "bird.png", style = "height:3em; vertical-align:middle; padding-right:1px;"),
@@ -806,7 +806,9 @@ tabItem(tabName = "subtab101",
             # Input Section
             div(class = "content-box input-section",
         h2("Change Log"),
-        h3("8.18.24"),
+        h3("9.12.24"),
+        p("- Fixed title bar so it displays properly in browser window."),
+        h3("8.25.24"),
         p("- Substantial changes to the user interface to modernize it."),
         h3("8.18.24"),
         p("- Changed impute_covariance_matrix() from clubSandwich to vcalc() from metafor for all 3LMA CHERVE analyses due to impute_covariance_matrix() being deprecated."),
